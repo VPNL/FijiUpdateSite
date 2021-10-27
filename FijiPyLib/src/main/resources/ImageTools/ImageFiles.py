@@ -175,4 +175,16 @@ def findSubDirs(searchPath):
 
     # Use os.listdir to get all contents under searchPath, and check to
     # see what are subdirectories
-    return [dir for dir in os.listdir(searchPath) if os.path.isdir(os.path.join(searchPath,dir))]
+    subdirs = [dir for dir in os.listdir(searchPath) if os.path.isdir(os.path.join(searchPath,dir))]
+
+    # If there was more than one sub directory...
+    if len(subdirs) > 1:
+
+        # ... return the whole list
+        return subdirs
+
+    # If there was only one sub directory ...
+    else:
+
+        # ... return that sub directory
+        return subdirs[0]
