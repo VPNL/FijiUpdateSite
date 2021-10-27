@@ -40,7 +40,7 @@ This module contains tools to work easily with Fiji ROIs
 '''
 
 ########################################################################
-################### IMPORT PACKAGES AND READ INPUT #####################
+########################### IMPORT PACKAGES ############################
 ########################################################################
 
 # Import floor and ceil so we can round down
