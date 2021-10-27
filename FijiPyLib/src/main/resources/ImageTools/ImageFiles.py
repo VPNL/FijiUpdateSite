@@ -8,6 +8,11 @@ This module contains tools to work easily with image files.
         - Looks inside a directory for files (like images) of a specific
           file type and contain an optional key phrase in the file name.
 
+    findSubDirs(searchPath)
+
+        - Returns all sub directories directly under the folder
+          indicated by the user
+
 '''
 
 ########################################################################
@@ -146,3 +151,28 @@ def findImgsInDir(dirPath,fileType=None,searchPhrase=None):
 
     # Return a list of all the files that pass our checks
     return files2return
+
+########################################################################
+############################## findSubDirs #############################
+########################################################################
+
+# Define a function that will return all sub directories under a path
+def findSubDirs(searchPath):
+    '''
+    Returns all sub directories directly under the folder indicated by
+    the user
+
+    findSubDirs(searchPath)
+
+        - searchPath (String): Path to folder under which you would like
+                               to find sub directories
+
+    OUTPUT list of strings giving the names of all sub directories under
+           searchPath
+
+    AR Oct 2021
+    '''
+
+    # Use os.listdir to get all contents under searchPath, and check to
+    # see what are subdirectories
+    return [dir for dir in os.listdir(searchPath) if os.path.isdir(os.path.join(searchPath,dir))]
