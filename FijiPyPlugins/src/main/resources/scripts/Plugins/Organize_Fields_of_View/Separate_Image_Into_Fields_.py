@@ -77,8 +77,6 @@ import ROITools
 # Import our ImageProcessing library
 from ImageTools import ImageProcessing
 
-from sys import exit
-
 ########################################################################
 ## IDENTIFY WHICH IMAGE FILES SHOULD BE SEPARATED INTO FIELDS OF VIEW ##
 ########################################################################
