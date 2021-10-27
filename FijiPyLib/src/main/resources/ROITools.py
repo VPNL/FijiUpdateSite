@@ -37,6 +37,11 @@ This module contains tools to work easily with Fiji ROIs
 
         - Function that will save either singular or sets of ROIs to a
           file
+
+    openROIFile(ROIFile)
+
+        - Function that will open and ROI File and return all ROIs that
+          were saved
 '''
 
 ########################################################################
@@ -330,3 +335,47 @@ def saveROIs(ROIs,outFilePath):
         # Return the ROI Manager back to its original state by loading
         # back the ROIs
         addROIs2Manager(openROIs)
+
+########################################################################
+############################# openROIFile ##############################
+########################################################################
+
+# Define a function to open ROI files
+def openROIFile(ROIFile):
+    '''
+    Function that will open and ROI File and return all ROIs that were
+    saved
+
+    openROIFile(ROIFile)
+
+        - ROIFile (String): Path to file containing ROIs you want to
+                            open
+
+    OUTPUT List of Fiji ROI objects or a singular ROI object that was
+           saved in your ROI File
+
+    AR Oct 2021
+    '''
+
+    # Store all currently open ROI objects in the ROI Manager so we can
+    # re-load them after opening the file
+    openROIs = getOpenROIs()
+
+    # Remove all ROIs from the ROI Manager
+    rm.reset()
+
+    # Read the ROI file and open all saved ROIs into the ROI Manager
+    rm.runCommand('Open',ROIFile)
+
+    # Get all of the ROIs we just opened
+    ROIsFromFile = getOpenROIs()
+
+    # Remove all ROIs from ROI Manager
+    rm.reset()
+
+    # Re-load all ROIs that were open before running the function
+    if openROIs is not None:
+        addROIs2Manager(openROIs)
+
+    # Return the ROIs we opened from the file
+    return ROIsFromFile
