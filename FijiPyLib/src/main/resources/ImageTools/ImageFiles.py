@@ -3,7 +3,7 @@ ImageFiles Module
 
 This module contains tools to work easily with image files.
 
-    findImgsInDir(dirPath,fileType='tif',searchPhrase=None)
+    findImgsInDir(dirPath,fileType=None,searchPhrase=None)
 
         - Looks inside a directory for files (like images) of a specific
           file type and contain an optional key phrase in the file name.
