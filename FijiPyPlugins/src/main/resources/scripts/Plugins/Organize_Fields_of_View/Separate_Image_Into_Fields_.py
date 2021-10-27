@@ -60,6 +60,9 @@ del input_dir
 # Import tools that will allow us to work easily with files
 from ImageTools import ImageFiles
 
+# Import our user interface library
+import UIs
+
 # Import generic dialog so we can make quick and dirty UI's
 from ij.gui import GenericDialog
 
@@ -85,32 +88,12 @@ from ImageTools import ImageProcessing
 # files
 allFilesInDir = ImageFiles.findImgsInDir(inputDir)
 
-# Create a user interface that will ask the user to specify which image
-# files they would like to separate into unique fields of view
-whichFilesUI = GenericDialog('Check off all files containing the separate channels imaged over the same area that you would like to separate into fields of view.')
+# Ask the user to specify which image files they would like to separate
+# into unique fields of view
+imgs2separate = UIs.checkBoxUI('Check off all files containing the separate channels imaged over the same area that you would like to separate into fields of view.',
+							  allFilesInDir)
 
-# Create checkboxes so that the user can indicate which files they want
-# to separate into unique fields of view
-whichFilesUI.addCheckboxGroup(len(allFilesInDir),2,allFilesInDir,[False]*len(allFilesInDir))
-
-# Display the UI
-whichFilesUI.showDialog()
-
-# Initialize a list that will store all image files the user wanted to
-# separate into fields of view
-imgs2separate = []
-
-# Loop across all image files found in the input directory
-for fileInDir in allFilesInDir:
-
-	# Check to see if the user specified that they want to process this
-	# file
-	if whichFilesUI.getNextBoolean():
-
-		# If the user wanted to process this image, add it to our list
-		imgs2separate.append(fileInDir)
-
-del allFilesInDir, whichFilesUI, fileInDir
+del allFilesInDir
 
 ########################################################################
 ###### IDENTIFY WHICH MARKER (E.G. DAPI) WAS IMAGED IN EACH IMAGE ######
