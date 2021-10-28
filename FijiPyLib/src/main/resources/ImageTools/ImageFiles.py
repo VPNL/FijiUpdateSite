@@ -17,6 +17,7 @@ This module contains tools to work easily with image files.
 
         - Creates a new desired folder
 
+
     makeSoftLink(file2Link,linkPath)
 
         - Creates a softlink for a file
@@ -257,3 +258,4 @@ def makeSoftLink(file2Link,linkPath):
 
     # Create the softlink
     os.symlink(linkRelPath,linkPath)
+
