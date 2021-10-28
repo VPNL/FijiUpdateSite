@@ -17,6 +17,11 @@ This module contains tools to work easily with image files.
 
         - Creates a new desired folder
 
+
+    makeSoftLink(file2Link,linkPath)
+
+        - Creates a softlink for a file
+
 '''
 
 ########################################################################
@@ -219,3 +224,38 @@ def makedir(dir2make):
 
         # Make the folder if it doesn't already exist
         os.makedirs(dir2make)
+
+########################################################################
+############################# makeSoftLink #############################
+########################################################################
+
+# Define a function for making soft links
+def makeSoftLink(file2Link,linkPath):
+    '''
+    Creates a softlink for a file
+
+    makeSoftLink(file2Link,linkPath)
+
+        - file2Link (String): Path to the file you want to make a
+                              softlink to
+
+        - linkPath (String): File path to where you want to make your
+                             soft link
+
+    AR Oct 2021
+    '''
+
+    # Store the directory where the link will be saved
+    linkDir = os.path.dirname(linkPath)
+
+    # Change the current working directory to where we want to make the
+    # soft link
+    os.chdir(linkDir)
+
+    # Store the relative path from where the file to be linked is
+    # located to where we want to make the soft link
+    linkRelPath = os.path.relpath(file2Link,linkDir)
+
+    # Create the softlink
+    os.symlink(linkRelPath,linkPath)
+
