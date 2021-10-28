@@ -206,9 +206,8 @@ def breakupIntoFields(img2separate,markerInImg):
 	# channel will be stored
 	outDir = os.path.join(inputDir,'FieldsOfView',str(field_size) + 'pxlFields',markerInImg)
 
-	# Create this output directory if necessary
-	if not os.path.exists(outDir):
-		os.makedirs(outDir)
+	# Create this output directory
+	ImageFiles.makedir(outDir)
 
 	# Crop, normalize and save all fields of view from this image
 	[crop_norm_save_fov(img2separate,fieldOfViewROI,outDir) for fieldOfViewROI in fovGrid.ROIs]

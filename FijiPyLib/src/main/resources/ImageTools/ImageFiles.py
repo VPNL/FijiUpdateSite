@@ -13,6 +13,10 @@ This module contains tools to work easily with image files.
         - Returns all sub directories directly under the folder
           indicated by the user
 
+    makedir(dir2make)
+
+        - Creates a new desired folder
+
 '''
 
 ########################################################################
@@ -188,3 +192,30 @@ def findSubDirs(searchPath):
 
         # ... return that sub directory
         return subdirs[0]
+
+########################################################################
+################################ makedir ###############################
+########################################################################
+
+# Define a function that will make new directories
+def makedir(dir2make):
+    '''
+    Creates a new desired folder
+
+    makedir(dir2make)
+
+        - dir2make (String): Path to the location of the new directory
+                             you want to make
+
+    Will first check to see if the directory you are trying to make
+    already exists. It it doesn't already exist, this function will make
+    the folder.
+
+    AR Oct 2021
+    '''
+
+    # Check to see if the folder already exists
+    if not os.path.exists(dir2make):
+
+        # Make the folder if it doesn't already exist
+        os.makedirs(dir2make)
