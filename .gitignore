@@ -1,0 +1,7 @@
+# IGNORE OS GENERATED FILES #
+#############################
+*.DS_Store
+
+# IGNORE MAVEN BUILD OUTPUT DIRECTORIES #
+#########################################
+*/target
