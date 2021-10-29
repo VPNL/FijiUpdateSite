@@ -96,6 +96,8 @@ markersImaged = ImageFiles.findSubDirs(os.path.join(fieldsDir,fieldSize))
 markers2Assign = UIs.checkBoxUI('Which markers are you planning on analyzing?',
                                 markersImaged)
 
+del markersImaged
+
 # Create a list of lists of all fields of view image files for each
 # of the markers to assign to researchers
 fieldsByMarker = [ImageFiles.findImgsInDir(os.path.join(fieldsDir,fieldSize,marker)) for marker in markers2Assign]
@@ -114,6 +116,8 @@ fieldsROIs = ROITools.openROIFile(os.path.join(fieldsDir,'..','ROIs',fieldSize +
 # previously in Separate Image Into Fields
 fieldRowsCols = [fieldROI.getName() for fieldROI in fieldsROIs]
 
+del fieldsROIs
+
 # Randomly shuffle this list of fields of view
 random.shuffle(fieldRowsCols)
 
@@ -124,6 +128,8 @@ random.shuffle(fieldRowsCols)
 # Divide up the fields of view so they are roughly equally distributed
 # amongst the researchers
 fieldsByResearcher = [fieldRowsCols[i::NResearchers] for i in xrange(NResearchers)]
+
+del fieldRowsCols
 
 # Loop across researchers that will be assigned fields of view
 researcherNum = 1
