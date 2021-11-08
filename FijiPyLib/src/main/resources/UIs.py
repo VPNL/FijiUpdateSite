@@ -13,7 +13,10 @@ Contains functions to generate UIs used by our plugins
         - Creates a UI that will ask the user to check off which choices
           they would like
 
-    orderListUI()
+    orderListUI(list2order,instructions4user,titleOfUI='')
+
+        - Creates a UI that will ask the user to order a list of
+          elements
 '''
 
 ########################################################################
@@ -132,6 +135,19 @@ def checkBoxUI(title,choices):
 # list of options
 def orderListUI(list2order,instructions4user,titleOfUI=''):
     '''
+    Creates a UI that will ask the user to order a list of elements
+
+    orderListUI(list2order,instructions4user,titleOfUI='')
+
+        - list2order (List of Strings): List of elements that you want
+                                        the user to re-order
+
+        - instructions4user (String): Instructions that will appear to
+                                      tell the user what to do
+
+        - titleOfUI (String): The title you want to display at the top
+                              of the UI (default is no title)
+
     AR Nov 2021
     '''
 
