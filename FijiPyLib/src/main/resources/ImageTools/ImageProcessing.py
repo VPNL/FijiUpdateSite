@@ -62,9 +62,20 @@ class zStack:
         - centerOfStack(): Method that will return the slice identified
                            as the center of the z-stack
 
-        - maxProj(nSlices): Method that will return a maximum intensity
-                            projection across only the desired number of
-                            z-slices
+        - setZLevels4Focus(slices): Method that will return the starting
+                                    and ending z-levels to be focused
+                                    on. If a number of slices is
+                                    provided by the user, this method
+                                    will choose this number of z-levels
+                                    surrounding the center for focusing.
+                                    If a list of two slice numbers is
+                                    provided directly by the user, these
+                                    will be used as the z-levels for
+                                    focusing.
+
+        - maxProj(slices): Method that will return a maximum intensity
+                           projection across only the desired number of
+                           z-slices
 
         - TODO cropZStack(nSlices): Method that will return a z-stack
                                containing only the desired number of
@@ -72,6 +83,7 @@ class zStack:
 
 
     AR Oct 2021
+    AR Nov 2021, added setZLevels4Focus method
     '''
 
     # Initialize object
@@ -126,26 +138,109 @@ class zStack:
         # intensity
         return self.centralSlice
 
+    # Define a method that will return some specified number of z-levels
+    # surrounding the center of the z-stack
+    def setZLevels4Focus(self,slices):
+        '''
+        Method that will return the starting and ending z-levels to be
+        focused on. If a number of slices is provided by the user, this
+        method will choose this number of z-levels surrounding the
+        center for focusing. If a list of two slice numbers is provided
+        directly by the user, these will be used as the z-levels for
+        focusing.
+
+        setZLevels4Focus(slices)
+
+            - slices (Int): The total number of z-slices you want to be
+                            included in your final list of z-levels to
+                            be focused on.
+
+        setZLevels4Focus(slices)
+
+            - slices (List of 2 Ints): The starting and ending z-levels
+                                       for the z-stack you want.
+
+        ATTRIBUTES added
+
+            - centralSlice (Int): Slice number at the center of the
+                                  z-stack.
+
+            - starting_z_included (Int): The starting z-slice included
+                                         in the calculation of the max
+                                         projection
+
+            - ending_z_included (Int): The ending z-slice included in
+                                       the calculation of the max
+                                       projection
+
+        AR Nov 2021
+        '''
+
+        # Check to see if the staring and ending z-levels of the z-stack
+        # were directly provided by the user
+        if isinstance(slices,(list,tuple)):
+
+            # Store the starting and ending slice as attributes of this
+            # object
+            self.starting_z_included = slices[0]
+            self.ending_z_included = slices[-1]
+
+            # Finish this method without returning anything
+            return
+
+        # Halve the desired number of slices, rounding down
+        half_nSlices = int(floor(float(slices)/2.0))
+
+        # Check to see we've already computed the central slice of
+        # this z-stack
+        if not hasattr(self,'centralSlice'):
+
+            # If the central slice attribute hasn't been computed,
+            # compute it now
+            self.centerOfStack()
+
+        # Make sure the central z-plane isn't too close to the edges
+        # of the z-stack
+        if self.centralSlice < half_nSlices + 1 or self.centralSlice > self.orig_z_stack.getNSlices() - half_nSlices:
+
+            # If the central slice is too close to the edges, return None
+            return
+
+        # Store the starting and ending slice that will be included
+        # in the maximum intensity projection
+        self.starting_z_included = int(self.centralSlice - half_nSlices)
+        self.ending_z_included = int(self.centralSlice + half_nSlices)
+
+        # Return the starting and ending z-levels
+        return [self.starting_z_included,self.ending_z_included]
+
     # Define a method to build a maximum intensity projection using only
     # slices where we expect there to be stain
-    def maxProj(self,nSlices=None):
+    def maxProj(self,slices=None):
         '''
         Method that will produce a maximum intensity projection,
         focusing only on slices where we expect the stain to have
         penetrated
 
-        maxProj(nSlices)
+        maxProj(slices)
 
-            - nSlices (Int): The total number of z-slices you want to be
-                             included in the calculation of the maximum
-                             intensity projection. Optional, defaults to
-                             the total number of z-slices in the z-stack
+            - slices (Int): The total number of z-slices you want to be
+                            included in your final list of z-levels to
+                            be focused on.
+
+        maxProj(slices)
+
+            - slices (List of 2 Ints): The starting and ending z-levels
+                                       for the z-stack you want.
 
         OUTPUT (Fiji ImagePlus) Maximum intensity projection. If the
                                 center of the stack is too close to the
                                 edges of the z-stack, returns None
 
         ATTRIBUTES added
+
+            - centralSlice (Int): Slice number at the center of the
+                                  z-stack.
 
             - starting_z_included (Int): The starting z-slice included
                                          in the calculation of the max
@@ -160,42 +255,24 @@ class zStack:
 
         # Check to see if the user specified across how many slices they
         # would like to compute the projection
-        if nSlices is None:
+        if all([slices is None, not hasattr(self,'starting_z_included'),
+               not hasattr(self,'ending_z_included')]):
 
             # If the number of slices wasn't specified, compute the max
             # projection across all slices in the image. Return this
             # projection
             return zprojector.run(self.orig_z_stack,'max')
 
-        # If the user specified the number of slices across which to
-        # perform the max projection
+        # If the user specified the slices across which to perform the
+        # max projection
         else:
 
-            # Halve this number of slices
-            half_nSlices = int(floor(float(nSlices)/2.0))
-
-            # Check to see we've already computed the central slice of
-            # this z-stack
-            if not hasattr(self,'centralSlice'):
-
-                # If the central slice attribute hasn't been computed,
-                # compute it now
-                self.centerOfStack()
-
-            # Make sure the central z-plane isn't too close to the edges
-            # of the z-stack
-            if self.centralSlice < half_nSlices + 1 or self.centralSlice > self.orig_z_stack.getNSlices() - half_nSlices:
-
-                # If the central slice is too close to the edges, return None
-                return None
-
-            # Store the starting and ending slice that will be included
-            # in the maximum intensity projection
-            self.starting_z_included = int(self.centralSlice - half_nSlices)
-            self.ending_z_included = int(self.centralSlice + half_nSlices)
+            # Set the starting and ending slices to be included in the
+            # max projection
+            self.setZLevels4Focus(slices)
 
             # Compute and return the maximum intensity projection across
-            # the z-slices
+            # the z-slices that we wanted to focus on
             return zprojector.run(self.orig_z_stack,'max',self.starting_z_included,self.ending_z_included)
 
 ########################################################################
