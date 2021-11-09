@@ -144,7 +144,7 @@ def findImgsInDir(dirPath,fileType=None,searchPhrase=None):
 
         # Check to make sure this content is a file rather than a
         # directory
-        if os.path.isfile(full_path):
+        if os.path.isfile(full_path) or os.path.islink(full_path):
 
             # Check the file type
             if is_file_type(file_name):
@@ -157,7 +157,14 @@ def findImgsInDir(dirPath,fileType=None,searchPhrase=None):
                     # it
                     files2return.append(full_path)
 
-    # Return a list of all the files that pass our checks
+    # Check to see if there was only one file to return
+    if len(files2return) == 1:
+
+        # Return just that one file as a string instead of list
+        return files2return[0]
+
+    # Otherwise, if there are multiple files to return, just return full
+    # list
     return files2return
 
 ########################################################################
