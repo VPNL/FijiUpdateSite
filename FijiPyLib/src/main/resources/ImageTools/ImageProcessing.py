@@ -15,6 +15,15 @@ This module contains tools to process images in Fiji.
         - Automatically adjusts the brightness/contrast of an image and
           performs a histogram normalization
 
+    smoothImg(img)
+
+        - Automatically smooths image using Fiji's Gaussian Blur Plugin
+
+    segmentImg(img)
+
+        - Automatically segments an image using Fiji's Statistical
+          Region Merging plugin
+
 '''
 
 ########################################################################
@@ -40,6 +49,9 @@ zprojector = ZProjector()
 
 # Import floor from math so we can round down
 from math import floor
+
+# Import GaussianBlur class so we can smooth images
+from ij.plugin.filter import GaussianBlur
 
 ########################################################################
 ################################ zStack ################################
@@ -323,3 +335,117 @@ def normalizeImg(img):
 
     # Return the normalized z-stack
     return z_stack
+
+########################################################################
+############################### smoothImg ##############################
+########################################################################
+
+# Define a function to smooth images
+def smoothImg(img,radius=6):
+    '''
+    Automatically smooths image using Fiji's Gaussian Blur Plugin.
+
+    smoothImg(img,radius)
+
+        - img (Fiji ImagePlus): Single z-plane image you want to smooth
+
+        - radius (Int or Float): Radius of the Gaussian filter you want
+                                 to use for smoothing (default = 6)
+
+    OUTPUTS blurred image as a Fiji ImagePlus object
+
+    AR Nov 2021
+    '''
+
+    # Duplicate the image so that we don't edit it directly. This image
+    # will later be smoothed using a Gaussian blur
+    gausBlur = Duplicator().run(img)
+
+    # Rename this image so that the user knows it is a blurred image
+    gausBlur.setTitle('Gaussian_Blur_{}'.format(img.getTitle()))
+
+    # Smooth the image using a Gaussian filter of specified radius
+    GaussianBlur().blurGaussian(gausBlur.getProcessor(),radius)
+
+    # Return the smoothed image
+    return gausBlur
+
+########################################################################
+############################## segmentImg ##############################
+########################################################################
+
+# Define a function to segment an image
+def segmentImg(img,gausRadius=6,q=17,autoThreshMethod='Mean dark'):
+    '''
+    Automatically segments an image using Fiji's Statistical Region
+    Merging plugin.
+
+    segmentImg(img)
+
+        - img (Fiji ImagePlus): Single z-plane image you would like to
+                                segment
+
+        - gausRadius (Int or Float): Radius of the Gaussian filter you
+                                     want to use for smoothing the
+                                     image before segmenting. (default
+                                     = 6)
+
+        - q (Int): Parameter used for the Statitical Region Merging
+                   Plugin. It is a rough estimate of the number of
+                   regions in the image (default = 17)
+
+        - autoThreshMethod (String): Method of Fiji's automated
+                                     thresholding plugin to use (default
+                                     = 'Mean dark')
+
+    OUTPUTS segmented image as a Fiji ImagePlus object
+
+    AR Nov 2021
+    '''
+
+    # Get a smoothed version of that image
+    smoothedImg = smoothImg(img,gausRadius)
+
+    # Run the statitical region merging algorithm on this blurred image
+    IJ.run(smoothedImg,'Statistical Region Merging','q={} showaverages'.format(q))
+
+    # As a result of running the statistical region merging algorithm, a
+    # new image will pop up with the resulting segmented image. Grab
+    # this new image.
+    regMergImg = IJ.getImage()
+
+    # Next we'll want to use Fiji's automated thresholding algorithm to
+    # binarize this region merging segmentation. However, Fiji's
+    # automated thresholding algorithm only support 8 or 16 bit images.
+    # Check to see the bit depth of our current image
+    if regMergImg.getBitDepth() in (8,16):
+
+        # If the image is not 8 or 16 bit, convert to 16 bit
+        IJ.run('16-bit')
+
+    # Make sure Fiji knows that we want the background of our final
+    # segmentation to be black
+    IJ.run("Options...", "iterations=1 count=1 black do=Nothing")
+
+    # Use Fiji's automated thresholding algorithm to binarize this
+    # segmentation
+    IJ.setAutoThreshold(regMergImg,autoThreshMethod)
+
+    # Convert this threshold into a mask
+    IJ.run('Convert to Mask')
+
+    # Finally, clean up the segmentation using quick binary commands
+    IJ.run("Dilate")
+    IJ.run("Close-")
+    IJ.run("Fill Holes")
+    IJ.run("Erode")
+    IJ.run("Watershed")
+
+    # Hide this new image from view so we're not overwhelmed with popups
+    regMergImg.hide()
+
+    # Rename the image to specify what it was segmenting
+    regMergImg.setTitle('Segmented_{}'.format(img.getTitle()))
+
+    # Return this final segmented image
+    return regMergImg
