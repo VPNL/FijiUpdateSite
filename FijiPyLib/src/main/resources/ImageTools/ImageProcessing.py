@@ -30,22 +30,18 @@ This module contains tools to process images in Fiji.
 ############################ IMPORT PACKAGES ###########################
 ########################################################################
 
-# Import Fiji's z projection module so we can generate max intensity
-# projections
-from ij.plugin import ZProjector
-
-# Import Fiji's contrast enhancement package
-from ij.plugin import ContrastEnhancer
-
-# Import IJ so we can run macros commands
-from ij import IJ
-
 # Import the ZProjector so we can perform maximum intensity projections
 # and the Duplicator so we can duplicate ImagePlus objects
 from ij.plugin import ZProjector, Duplicator
 
 # Initialize instance of ZProjector
 zprojector = ZProjector()
+
+# Import Fiji's contrast enhancement package
+from ij.plugin import ContrastEnhancer
+
+# Import IJ so we can run macros commands
+from ij import IJ
 
 # Import floor from math so we can round down
 from math import floor
