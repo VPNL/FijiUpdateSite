@@ -42,6 +42,10 @@ This module contains tools to work easily with Fiji ROIs
 
         - Function that will open and ROI File and return all ROIs that
           were saved
+
+    clearROIs()
+
+        - Function that clears all of the ROIs in the ROI Manager
 '''
 
 ########################################################################
@@ -317,7 +321,7 @@ def saveROIs(ROIs,outFilePath):
     openROIs = getOpenROIs()
 
     # Remove all ROIs from the ROI Manager
-    rm.reset()
+    clearROIs()
 
     # Add the ROI(s) to the ROI Manager
     addROIs2Manager(ROIs)
@@ -326,7 +330,7 @@ def saveROIs(ROIs,outFilePath):
     rm.runCommand('Save',outFilePath)
 
     # Clear the ROI manager
-    rm.reset()
+    clearROIs()
 
     # Check to see if there were ROIs in the ROI Manager before this
     # function was called
@@ -362,7 +366,7 @@ def openROIFile(ROIFile):
     openROIs = getOpenROIs()
 
     # Remove all ROIs from the ROI Manager
-    rm.reset()
+    clearROIs()
 
     # Read the ROI file and open all saved ROIs into the ROI Manager
     rm.runCommand('Open',ROIFile)
@@ -371,7 +375,7 @@ def openROIFile(ROIFile):
     ROIsFromFile = getOpenROIs()
 
     # Remove all ROIs from ROI Manager
-    rm.reset()
+    clearROIs()
 
     # Re-load all ROIs that were open before running the function
     if openROIs is not None:
@@ -379,3 +383,20 @@ def openROIFile(ROIFile):
 
     # Return the ROIs we opened from the file
     return ROIsFromFile
+
+########################################################################
+############################### clearROIs ##############################
+########################################################################
+
+# Define a function to clear ROIs from the ROI Manager
+def clearROIs():
+    '''
+    Function that clears all of the ROIs in the ROI Manager
+
+    clearROIs()
+
+    AR Nov 2021
+    '''
+
+    # Clear all ROIs from the ROI Manager
+    rm.reset()
