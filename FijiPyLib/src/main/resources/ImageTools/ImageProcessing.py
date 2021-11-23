@@ -34,8 +34,9 @@ This module contains tools to process images in Fiji.
 # and the Duplicator so we can duplicate ImagePlus objects
 from ij.plugin import ZProjector, Duplicator
 
-# Initialize instance of ZProjector
+# Initialize instance of ZProjector and Duplicator
 zprojector = ZProjector()
+duplicator = Duplicator()
 
 # Import Fiji's contrast enhancement package
 from ij.plugin import ContrastEnhancer
@@ -85,13 +86,11 @@ class zStack:
                            projection across only the desired number of
                            z-slices
 
-        - TODO cropZStack(nSlices): Method that will return a z-stack
-                               containing only the desired number of
-                               z-slices
-
+        - cropZStack(slices): Method that will return a z-stack
+                              containing only the desired z-slices
 
     AR Oct 2021
-    AR Nov 2021, added setZLevels4Focus method
+    AR Nov 2021, added setZLevels4Focus and cropZStack methods
     '''
 
     # Initialize object
@@ -283,6 +282,67 @@ class zStack:
             # the z-slices that we wanted to focus on
             return zprojector.run(self.orig_z_stack,'max',self.starting_z_included,self.ending_z_included)
 
+    # Define a method to crop the z-stack so that only the desired
+    # z-slices are present
+    def cropZStack(self,slices=None):
+        '''
+        Method that will return a z-stack containing only the desired
+        z-slices
+
+        cropZStack(slices)
+
+            - slices (Int): The total number of z-slices you want to be
+                            included in your final list of z-levels to
+                            be focused on.
+
+        cropZStack(slices)
+
+            - slices (List of 2 Ints): The starting and ending z-levels
+                                       for the z-stack you want.
+
+        OUTPUT (Fiji ImagePlus) z-stack cropped to only contain the
+                                desired z-slices
+
+        ATTRIBUTES added
+
+            - centralSlice (Int): Slice number at the center of the
+                                  z-stack.
+
+            - starting_z_included (Int): The starting z-slice included
+                                         in the calculation of the max
+                                         projection
+
+            - ending_z_included (Int): The ending z-slice included in
+                                       the calculation of the max
+                                       projection
+
+        AR Nov 2021
+        '''
+
+        # Check to see if the user specified across how many slices they
+        # would like to include in the final z-stack
+        if all([slices is None, not hasattr(self,'starting_z_included'),
+                not hasattr(self,'ending_z_included')]):
+
+            # If no number of slices were included, return the full
+            # z-stack
+            return duplicator.run(self.orig_z_stack)
+
+        # If the user has at some point specified the number of slices
+        # to be included...
+        else:
+
+            # Check to see if slices was defined
+            if slices is not None:
+
+                # Set the starting and ending slices to be included in
+                # the max projection
+                self.setZLevels4Focus(slices)
+
+            # Return a copy of the z-stack including only our desired
+            # z-slices
+            return duplicator.run(self.orig_z_stack,self.starting_z_included,self.ending_z_included)
+
 ########################################################################
 ############################ normalizeImg ##############################
 ########################################################################
@@ -303,7 +363,7 @@ def normalizeImg(img):
     '''
 
     # Duplicate the input z-stack
-    z_stack = Duplicator().run(img)
+    z_stack = duplicator.run(img)
 
     # Compute the maximum intensity projection of our image using the
     # zStack object
@@ -355,7 +415,7 @@ def smoothImg(img,radius=6):
 
     # Duplicate the image so that we don't edit it directly. This image
     # will later be smoothed using a Gaussian blur
-    gausBlur = Duplicator().run(img)
+    gausBlur = duplicator.run(img)
 
     # Rename this image so that the user knows it is a blurred image
     gausBlur.setTitle('Gaussian_Blur_{}'.format(img.getTitle()))
