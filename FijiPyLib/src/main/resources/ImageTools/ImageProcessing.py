@@ -24,6 +24,11 @@ This module contains tools to process images in Fiji.
         - Automatically segments an image using Fiji's Statistical
           Region Merging plugin
 
+    segmentation2ROIs(seg)
+
+        - Converts a segmentation, for instance of a nuclear stain, into
+          a set of ROIs
+
 '''
 
 ########################################################################
@@ -49,6 +54,9 @@ from math import floor
 
 # Import GaussianBlur class so we can smooth images
 from ij.plugin.filter import GaussianBlur
+
+# Import ROI Tools so we can work with Fiji ROIs
+import ROITools
 
 ########################################################################
 ################################ zStack ################################
@@ -505,3 +513,63 @@ def segmentImg(img,gausRadius=6,q=17,autoThreshMethod='Mean dark'):
 
     # Return this final segmented image
     return regMergImg
+
+########################################################################
+########################### segmentation2ROIs ##########################
+########################################################################
+
+# Define a function to convert a segmentation image into a list of
+# separate ROIs for each segmented object
+def segmentation2ROIs(seg):
+    '''
+    Converts a segmentation, for instance of a nuclear stain, into a set
+    of ROIs
+
+    segmentation2ROIs(seg)
+
+        - seg (Fiji ImagePlus): Segmentation image you want to convert
+                                to ROIs
+
+    OUTPUT List of Fiji ROI objects with separate ROIs for each
+           segmented object
+
+    AR Nov 2021
+    '''
+
+    # Make a copy of this segmented image
+    seg_cp = duplicator.run(seg)
+
+    # Compute the pixel statistics for our segmentation image. This will
+    # help us set an appropriate threshold for the image.
+    seg_stats = seg_cp.getStatistics()
+
+    # Display the segmentation
+    seg_cp.show()
+
+    # Set a threshold for the segmentation making sure to label
+    # everything that was segmented, in case the wrong color was used
+    # when editing the segmentation.
+    IJ.setThreshold(seg_cp, seg_stats.min + 1, seg_stats.max)
+
+    # Convert the threshold to a mask
+    IJ.run('Convert to Mask')
+
+    # Clear ROIs from the ROI Manager
+    ROITools.clearROIs()
+
+    # Run the particle analyzer to separate the segmentation into
+    # distinct ROIs for each object in your image
+    IJ.run(seg_cp, "Analyze Particles...", "add")
+
+    # Close our copy of the segmentation
+    seg_cp.close()
+
+    # Store a list of all of the distinct ROIs drawn on this
+    # segmentation
+    segROIs = ROITools.getOpenROIs()
+
+    # Clear these ROIs from the ROI Manager
+    ROITools.clearROIs()
+
+    # Return the final list of ROIs
+    return segROIs 
