@@ -56,6 +56,11 @@ This module contains tools to work easily with Fiji ROIs
 
         - Function that will compute the area of an ROI in physical
           units (e.g., microns) instead of just pixel units
+
+    combineROIs(ROIs)
+
+        - Function that will combine a set of ROIs into a single
+          composite
 '''
 
 ########################################################################
@@ -65,8 +70,8 @@ This module contains tools to work easily with Fiji ROIs
 # Import floor and ceil so we can round down
 from math import floor
 
-# Import Fiji's Rois and specifically PointRoi
-from ij.gui import Roi, PointRoi
+# Import Fiji's Rois and specifically PointRoi and ShapeRoi
+from ij.gui import Roi, PointRoi, ShapeRoi
 
 # Import os so we can get the parent directory of a file, check to see
 # if directories exist, and create directories
@@ -490,3 +495,37 @@ def getROIArea(ROI,img):
 
     # Return the area and the units
     return [area, units]
+
+########################################################################
+############################## combineROIs #############################
+########################################################################
+
+# Define a function to combine ROIs
+def combineROIs(ROIs):
+    '''
+    Function that will combine a set of ROIs into a single composite
+
+    combineROIs(ROIs)
+
+        - ROIs (List of Fiji ROIs): ROIs that you want to combine
+
+    OUTPUT Fiji ROI that is the composite of the ROIs you inputted
+
+    AR Nov 2021
+    '''
+
+    # Initialize a shape ROI that will store the combined ROI using the
+    # first ROI in your list
+    combinedROI = ShapeRoi(ROIs[0])
+
+    # Loop across all other ROIs in the list
+    for ROI in ROIs[1:]:
+
+        # Convert this ROI into a shape ROI
+        shapeROI = ShapeRoi(ROI)
+
+        # Add the new shape ROI to our combined ROI
+        combinedROI = combinedROI.or(shapeROI)
+
+    # Return the final combined ROI
+    return combinedROI
