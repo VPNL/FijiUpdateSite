@@ -46,6 +46,11 @@ This module contains tools to work easily with Fiji ROIs
     clearROIs()
 
         - Function that clears all of the ROIs in the ROI Manager
+
+    ROIsInArea(ROIs2Check,AreaContainingROIs)
+
+        - Function that will check whether each ROI in a list of ROIs
+          is contained within a given area of an image
 '''
 
 ########################################################################
@@ -55,8 +60,8 @@ This module contains tools to work easily with Fiji ROIs
 # Import floor and ceil so we can round down
 from math import floor
 
-# Import Fiji's Rois
-from ij.gui import Roi
+# Import Fiji's Rois and specifically PointRoi
+from ij.gui import Roi, PointRoi
 
 # Import os so we can get the parent directory of a file, check to see
 # if directories exist, and create directories
@@ -400,3 +405,38 @@ def clearROIs():
 
     # Clear all ROIs from the ROI Manager
     rm.reset()
+
+########################################################################
+############################## ROIsInArea ##############################
+########################################################################
+
+# Define a function that will check which ROIs are within a given area
+# of an image
+def ROIsInArea(ROIs2Check,AreaContainingROIs):
+    '''
+    Function that will check whether each ROI in a list of ROIs is
+    contained within a given area of an image
+
+    ROIsInArea(ROIs2Check,AreaContainingROIs)
+
+        - ROIs2Check (List of Fiji ROIs): ROIs that you want to test to
+                                          if they are contained within
+                                          a given area of an image
+
+        - AreaContainingROIs (Fiji ROI): The area within which you want
+                                         ROIs to reside
+
+    OUTPUT List of all Fiji ROIs whose rotational center resides within
+           the area provided by the user
+
+    AR Nov 2021
+    '''
+
+    # Check to see whether each ROI's center is contained within the specified
+    # area
+    isContained = [AreaContainingROIs.contains(int(round(ROI.getRotationCenter().xpoints[0])),
+                                               int(round(ROI.getRotationCenter().ypoints[0]))) for ROI in ROIs2Check]
+
+    # Return a list of all ROIs whose centers were contained within the
+    # desired area
+    return [ROIs2Check[i] for i in range(len(ROIs2Check)) if isContained[i]]
