@@ -51,6 +51,11 @@ This module contains tools to work easily with Fiji ROIs
 
         - Function that will check whether each ROI in a list of ROIs
           is contained within a given area of an image
+
+    getROIArea(ROI,img)
+
+        - Function that will compute the area of an ROI in physical
+          units (e.g., microns) instead of just pixel units
 '''
 
 ########################################################################
@@ -440,3 +445,48 @@ def ROIsInArea(ROIs2Check,AreaContainingROIs):
     # Return a list of all ROIs whose centers were contained within the
     # desired area
     return [ROIs2Check[i] for i in range(len(ROIs2Check)) if isContained[i]]
+
+########################################################################
+############################## getROIArea ##############################
+########################################################################
+
+# Define a function that will get the area of an ROI in physical units
+def getROIArea(ROI,img):
+    '''
+    Function that will compute the area of an ROI in physical units
+    (e.g., microns) instead of just pixel units
+
+    getROIArea(ROI,img)
+
+        - ROI (Fiji ROI): ROI that you want the area of
+
+        - img (Fiji ImagePlus): Image on which the ROI would be
+                                superimposed
+
+    OUTPUT list of two outputs. The first a float containing the area of
+    the ROI. The second, the unit of the area (e.g. microns squared).
+
+    AR Nov 2021
+    '''
+
+    # Store the image calibration set for the image. This will contain
+    # information about the pixel to physical unit conversion.
+    imgCal = img.getCalibration()
+
+    # Use the image calibration as well as the size of our ROI to
+    # compute the area of the ROI.
+    area = imgCal.getX(ROI.getFloatWidth()) * imgCal.getY(ROI.getFloatHeight())
+
+    # Get the physical units of the area of the image. Needed to add a
+    # squared at the end of the string.
+    units = imgCal.getUnit() + '_Squared'
+
+    # Check to see if the micron symbol was used in the unit
+    # specification
+    if u'\xb5' in units:
+
+        # Convert the micron symbol to a u
+        units = units.replace(u'\xb5','u')
+
+    # Return the area and the units
+    return [area, units]
