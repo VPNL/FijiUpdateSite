@@ -29,6 +29,10 @@ This module contains tools to process images in Fiji.
         - Converts a segmentation, for instance of a nuclear stain, into
           a set of ROIs
 
+    ROIs2Segmentation(ROIs,refImg)
+
+        - Converts a list of ROIs into a segmentation mask
+
 '''
 
 ########################################################################
@@ -47,7 +51,7 @@ duplicator = Duplicator()
 from ij.plugin import ContrastEnhancer
 
 # Import IJ so we can run macros commands
-from ij import IJ
+from ij import IJ, ImagePlus
 
 # Import floor from math so we can round down
 from math import floor
@@ -572,4 +576,41 @@ def segmentation2ROIs(seg):
     ROITools.clearROIs()
 
     # Return the final list of ROIs
-    return segROIs 
+    return segROIs
+
+########################################################################
+########################### ROIs2Segmentation ##########################
+########################################################################
+
+# Define a functiont that will produce a segmentation mask from a list
+# of ROIs
+def ROIs2Segmentation(ROIs,refImg):
+    '''
+    Converts a list of ROIs into a segmentation mask
+
+    ROIs2Segmentation(ROIs,refImg)
+
+        - ROIs (List of Fiji ROIs): List of ROIs you want included in
+                                    your segmentation mask
+
+        - refImg (Fiji ImagePlus): Reference image that has the same
+                                   dimensions as your final segmentation
+                                   mask
+
+    OUTPUT Fiji ImagePlus containing your final segmentation mask
+
+    AR Nov 2021
+    '''
+
+    # Combine all of the ROIs into a composite ROI
+    combinedROI = ROITools.combineROIs(ROIs)
+
+    # Superimpose the ROI on top of the reference image
+    refImg.setRoi(combinedROI)
+
+    # Generate the segmentation mask
+    segImg = ImagePlus('Segmentation_' + refImg.getTitle(),
+                       refImg.createRoiMask())
+
+    # Return this segmentation mask
+    return segImg
