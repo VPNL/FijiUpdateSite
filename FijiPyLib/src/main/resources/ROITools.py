@@ -61,6 +61,11 @@ This module contains tools to work easily with Fiji ROIs
 
         - Function that will combine a set of ROIs into a single
           composite
+
+    getBackgroundROI(nucROIs,fieldROI)
+
+        - Function that will compute an ROI representing all pixels that
+          were not segmented as part of nuclei
 '''
 
 ########################################################################
@@ -529,3 +534,43 @@ def combineROIs(ROIs):
 
     # Return the final combined ROI
     return combinedROI
+
+########################################################################
+########################### getBackgroundROI ###########################
+########################################################################
+
+# Define a function to get an ROI labeling all pixels in background of
+# field of view
+def getBackgroundROI(nucROIs,fieldROI,refImg):
+    '''
+    Function that will compute an ROI representing all pixels that were
+    not segmented as part of nuclei
+
+    getBackgroundROI(nucROIs,fieldROI,refImg)
+
+        - nucROIs (List of Fiji ROIs): All ROIs labeling cells within a
+                                       field of view.
+
+        - fieldROI (Fiji ROI): ROI marking the true boundary of the
+                               field of view
+
+        - refImg (Fiji ImagePlus): Image with the same dimensions as the
+                                   full field of view (with overlap) to
+                                   serve as a reference
+
+    OUTPUT Fiji ROI that labels all pixels that were not contained
+    within cell nuclei in the field of view
+
+    AR Nov 2021
+    '''
+
+    # Combine all of the nuclear ROIs into a single composite ROI
+    nucROI = combineROIs(nucROIs)
+
+    # Invert this combined ROI so that it labels all pixels not
+    # associated with cell nuclei
+    notNucROI = ShapeRoi(nucROI.getInverse(refImg))
+
+    # Crop this ROI so that it only labels pixels that are within the
+    # true field of view boundaries. Return this final ROI.
+    return notNucROI.and(ShapeRoi(fieldROI))
