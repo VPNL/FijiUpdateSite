@@ -66,6 +66,12 @@ This module contains tools to work easily with Fiji ROIs
 
         - Function that will compute an ROI representing all pixels that
           were not segmented as part of nuclei
+
+    computeSNR(ROIs,backgroundROI,img)
+
+        - Function that will compute the signal to noise ratio (SNR) of
+          the gray level inside a set of ROIs compared to the
+          background
 '''
 
 ########################################################################
@@ -574,3 +580,52 @@ def getBackgroundROI(nucROIs,fieldROI,refImg):
     # Crop this ROI so that it only labels pixels that are within the
     # true field of view boundaries. Return this final ROI.
     return notNucROI.and(ShapeRoi(fieldROI))
+
+########################################################################
+############################## computeSNR ##############################
+########################################################################
+
+# Define a function to compute SNR
+def computeSNR(ROIs,backgroundROI,img):
+    '''
+    Function that will compute the signal to noise ratio (SNR) of the
+    gray level inside a set of ROIs compared to the background
+
+    computeSNR(ROIs,backgroundROI,img)
+
+        - ROIs (List of Fiji ROIs): Areas in the image where your signal
+                                    is located (e.g. a stained cell)
+
+        - backgroundROI (Fiji ROI): Area in image where there is
+                                    background (e.g. where there are no
+                                    cells)
+
+        - img (Fiji ImagePlus): Image from which to measure gray level
+
+    OUTPUT List of floats representing the SNR of each ROI in your
+    inputted list of ROIs
+
+    AR Nov 2021
+    '''
+
+    # Superimpose the background ROI on the image
+    img.setRoi(backgroundROI)
+
+    # Store the average gray level in the background of this image
+    avgNoise = img.getStatistics().mean
+
+    # Start a list that will store all of the SNR values for each ROI we
+    # want to measure
+    SNRs = []
+
+    # Loop across all ROIs denoting areas of signal (e.g. cell nuclei)
+    for ROI in ROIs:
+
+        # Superimpose this ROI on our image
+        img.setRoi(ROI)
+
+        # Compute the signal inside this ROI and divide it by the noise
+        SNRs.append(img.getStatistics().mean/avgNoise)
+
+    # Return the list of SNRs of each ROI
+    return SNRs
