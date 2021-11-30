@@ -72,6 +72,14 @@ This module contains tools to work easily with Fiji ROIs
         - Function that will compute the signal to noise ratio (SNR) of
           the gray level inside a set of ROIs compared to the
           background
+
+    grayLevelTTest(ROIs,ROI2Compare,img)
+
+        - Function that will compute the t-statistic comparing the gray
+          level inside each ROI (for instance, ROIs labeling cell
+          nuceli) versus a comparison ROI (for instance, pixels not
+          labeled as cells)
+
 '''
 
 ########################################################################
@@ -96,6 +104,12 @@ RM = RoiManager()
 
 # Activate RoiManager object
 rm = RM.getRoiManager()
+
+# Import izip so we can iterate across multiple lists
+from itertools import izip
+
+# Import our statistics tools
+import Stats
 
 ########################################################################
 ############################# gridOfFields #############################
@@ -629,3 +643,63 @@ def computeSNR(ROIs,backgroundROI,img):
 
     # Return the list of SNRs of each ROI
     return SNRs
+
+########################################################################
+############################ grayLevelTTest ############################
+########################################################################
+
+# Write a function to compute the t statistic and accompanying p value
+# comparing the gray level inside and outside of an ROI
+def grayLevelTTest(ROIs,ROI2Compare,img):
+    '''
+    Function that will compute the t-statistic comparing the gray level
+    inside each ROI (for instance, ROIs labeling cell nuceli) versus a
+    comparison ROI (for instance, pixels not labeled as cells)
+
+    grayLevelTTest(ROIs,ROI2Compare,img)
+
+        - ROIs (List of Fiji ROIs): Areas in the image you want to test
+                                    to see if they have a greater pixel
+                                    intensity
+
+        - ROI2Compare (Fiji ROI): Area in image you want to compare the
+                                  gray level of each of your ROIs to
+
+        - img (Fiji ImagePlus): Image from which to measure gray level
+
+    OUTPUT lists of floats representing the t value of each one-sided
+    t-test seeing if each ROI has a higher gray level than the
+    comparison ROI
+
+    AR Nov 2021
+    '''
+
+    # Superimpose the comparison ROI on top of the image
+    img.setRoi(ROI2Compare)
+
+    # Get the statistics on the gray levels within this comparison ROI
+    compareStats = img.getStatistics()
+
+    # Start a list with all the t-statistics we will return
+    testResults = []
+
+    # Loop across all ROIs
+    for ROI in ROIs:
+
+        # Superimpose this ROI on the image
+        img.setRoi(ROI)
+
+        # Get the statistics of the gray levels within this ROI
+        ROIStats = img.getStatistics()
+
+        # Get the t-statistic for the test with a null hypothesis that
+        # this ROI has a higher gray level than the comparison. Does not
+        # assume equal variance.
+        testResults.append(Stats.ttest(ROIStats.mean,compareStats.mean,
+                                       ROIStats.stdDev**2,
+                                       compareStats.stdDev**2,
+                                       ROIStats.pixelCount,
+                                       compareStats.pixelCount))
+
+    # Return all of our test results
+    return testResults
