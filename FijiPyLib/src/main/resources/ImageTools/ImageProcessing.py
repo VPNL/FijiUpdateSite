@@ -103,6 +103,7 @@ class zStack:
 
     AR Oct 2021
     AR Nov 2021, added setZLevels4Focus and cropZStack methods
+    AR Dec 2021, renamed images after they are cropped
     '''
 
     # Initialize object
