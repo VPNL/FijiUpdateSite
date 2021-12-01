@@ -3,7 +3,7 @@ ImageDisplay Module
 
 This module contains functions changing how images are displayed in Fiji
 
-    overlayImages(greenImg,magentaImg)
+    overlayImages(imgs2merge)
 
         - Merges images so that they overlap with different colors
 
@@ -22,80 +22,49 @@ duplicator = Duplicator()
 # Import IJ so we can run Fiji macros commands
 from ij import IJ
 
+# Import izip so we can iterate across multiple lists
+from itertools import izip
+
 ########################################################################
 ############################# overlayImages ############################
 ########################################################################
 
 # Define a function to overlay images as separate color channels
-def overlayImages(greenImg,magentaImg,blueImg=None,whiteImg=None):
+def overlayImages(imgs2merge):
     '''
     Merges images so that they overlap with different colors
 
-    overlayImages(greenImg,magentaImg)
+    overlayImages(imgs2merge)
 
-        - greenImg (Fiji ImagePlus): Image you want to appear as green
-                                     in overlay
+        - imgs2merge (List of Fiji ImagePlus): Images you want to merge
+                                               into separate color
+                                               channels
 
-        - magentaImg (Fiji ImagePlus): Image you want to appear as
-                                       magenta in overlay
-
-    OUTPUT Fiji ImagePlus object containing the merged image with two
-    channels
-
-    overlayImages(greenImg,magentaImg,blueImg,whiteImg)
-
-        - greenImg (Fiji ImagePlus): Image you want to appear as green
-                                     in overlay
-
-        - magentaImg (Fiji ImagePlus): Image you want to appear as
-                                       magenta in overlay
-
-        - blueImg (Fiji ImagePlus): OPTIONAL Image you want to appear as
-                                    blue in the overlay. If None
-                                    provided, the blue channel will not
-                                    be used
-
-        - whiteImg (Fiji ImagePlus): OPTIONAL image you want to appear
-                                     as white in the overlay. If None
-                                     provided, the white channel will
-                                     not be used
-
-    OUTPUT Fiji ImagePlus object containing the merged image with four
-    channels
+    OUTPUT Fiji ImagePlus object containing the merged image. The order
+    of the images in imgs2merge determines their final color according
+    to this order: green, magenta, blue, gray, yellow, cyan, red
 
     AR Nov 2021
     '''
 
     # Copy each image
-    greenImg_cp = duplicator.run(greenImg)
-    magentaImg_cp = duplicator.run(magentaImg)
+    imgs2merge_cp = [duplicator.run(img) for img in imgs2merge]
 
+    # Display each image
+    [img.show() for img in imgs2merge_cp]
 
-    # Display each of these images
-    greenImg_cp.show()
-    magentaImg_cp.show()
+    # Store a list of all of the image names
+    imgNames = [img.getTitle() for img in imgs2merge_cp]
 
-    # Check to see if blue and white images were provided as well
-    if blueImg is not None and whiteImg is not None:
+    # Store a list of all the channel numbers we want to use in
+    # descending order of preference (green, magenta, blue, gray,
+    # yellow, cyan, red)
+    channels = [2,6,3,4,7,5,1]
 
-        # Copy and display each image
-        blueImg_cp = duplicator.run(blueImg)
-        blueImg_cp.show()
-        whiteImg_cp = duplicator.run(whiteImg)
-        whiteImg_cp.show()
-
-        # Create a four channel overlay
-        IJ.run('Merge Channels...', 'c2=' + greenImg_cp.getTitle() + ' c3=' + blueImg_cp.getTitle() + ' c4=' + whiteImg_cp.getTitle() + ' c6=' + magentaImg_cp.getTitle() + ' create')
-
-        # Close the duplicated blue and white images
-        blueImg_cp.close()
-        whiteImg_cp.close()
-
-    # If no blue and white images were provided...
-    else:
-
-        # Create an overlay using these duplicated images
-        IJ.run('Merge Channels...', 'c2=' + greenImg_cp.getTitle() + ' c6=' + magentaImg_cp.getTitle() + ' create')
+    # Merge the images, assigning each image a color based on our
+    # ordering
+    IJ.run('Merge Channels...',
+           ' '.join('c%s=%s' % channel for channel in izip(channels[:len(imgNames)],imgNames)) + ' create')
 
     # The overlay will be the currently open ImageJ image. Store this
     # image as a variable.
@@ -106,8 +75,7 @@ def overlayImages(greenImg,magentaImg,blueImg=None,whiteImg=None):
     overlay.hide()
 
     # Close out the duplicated images
-    greenImg_cp.close()
-    magentaImg_cp.close()
+    [img.close() for img in imgs2merge_cp]
 
     # Return the overlaid image
     return overlay
