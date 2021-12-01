@@ -351,9 +351,18 @@ class zStack:
                 # the max projection
                 self.setZLevels4Focus(slices)
 
-            # Return a copy of the z-stack including only our desired
+            # Get a copy of the z-stack including only our desired
             # z-slices
-            return duplicator.run(self.orig_z_stack,self.starting_z_included,self.ending_z_included)
+            cropped_img = duplicator.run(self.orig_z_stack,
+                                        self.starting_z_included,
+                                        self.ending_z_included)
+
+            # Rename the cropped image so that it's the same as the
+            # original z stack
+            cropped_img.setTitle(self.orig_z_stack.getTitle())
+
+            # Return this cropped image
+            return cropped_img
 
 ########################################################################
 ############################ normalizeImg ##############################
