@@ -42,6 +42,44 @@ This module contains tools to work easily with Fiji ROIs
 
         - Function that will open and ROI File and return all ROIs that
           were saved
+
+    clearROIs()
+
+        - Function that clears all of the ROIs in the ROI Manager
+
+    ROIsInArea(ROIs2Check,AreaContainingROIs)
+
+        - Function that will check whether each ROI in a list of ROIs
+          is contained within a given area of an image
+
+    getROIArea(ROI,img)
+
+        - Function that will compute the area of an ROI in physical
+          units (e.g., microns) instead of just pixel units
+
+    combineROIs(ROIs)
+
+        - Function that will combine a set of ROIs into a single
+          composite
+
+    getBackgroundROI(nucROIs,fieldROI)
+
+        - Function that will compute an ROI representing all pixels that
+          were not segmented as part of nuclei
+
+    computeSNR(ROIs,backgroundROI,img)
+
+        - Function that will compute the signal to noise ratio (SNR) of
+          the gray level inside a set of ROIs compared to the
+          background
+
+    grayLevelTTest(ROIs,ROI2Compare,img)
+
+        - Function that will compute the t-statistic comparing the gray
+          level inside each ROI (for instance, ROIs labeling cell
+          nuceli) versus a comparison ROI (for instance, pixels not
+          labeled as cells)
+
 '''
 
 ########################################################################
@@ -51,8 +89,8 @@ This module contains tools to work easily with Fiji ROIs
 # Import floor and ceil so we can round down
 from math import floor
 
-# Import Fiji's Rois
-from ij.gui import Roi
+# Import Fiji's Rois and specifically PointRoi and ShapeRoi
+from ij.gui import Roi, PointRoi, ShapeRoi
 
 # Import os so we can get the parent directory of a file, check to see
 # if directories exist, and create directories
@@ -66,6 +104,12 @@ RM = RoiManager()
 
 # Activate RoiManager object
 rm = RM.getRoiManager()
+
+# Import izip so we can iterate across multiple lists
+from itertools import izip
+
+# Import our statistics tools
+import Stats
 
 ########################################################################
 ############################# gridOfFields #############################
@@ -317,7 +361,7 @@ def saveROIs(ROIs,outFilePath):
     openROIs = getOpenROIs()
 
     # Remove all ROIs from the ROI Manager
-    rm.reset()
+    clearROIs()
 
     # Add the ROI(s) to the ROI Manager
     addROIs2Manager(ROIs)
@@ -326,7 +370,7 @@ def saveROIs(ROIs,outFilePath):
     rm.runCommand('Save',outFilePath)
 
     # Clear the ROI manager
-    rm.reset()
+    clearROIs()
 
     # Check to see if there were ROIs in the ROI Manager before this
     # function was called
@@ -362,7 +406,7 @@ def openROIFile(ROIFile):
     openROIs = getOpenROIs()
 
     # Remove all ROIs from the ROI Manager
-    rm.reset()
+    clearROIs()
 
     # Read the ROI file and open all saved ROIs into the ROI Manager
     rm.runCommand('Open',ROIFile)
@@ -371,7 +415,7 @@ def openROIFile(ROIFile):
     ROIsFromFile = getOpenROIs()
 
     # Remove all ROIs from ROI Manager
-    rm.reset()
+    clearROIs()
 
     # Re-load all ROIs that were open before running the function
     if openROIs is not None:
@@ -379,3 +423,283 @@ def openROIFile(ROIFile):
 
     # Return the ROIs we opened from the file
     return ROIsFromFile
+
+########################################################################
+############################### clearROIs ##############################
+########################################################################
+
+# Define a function to clear ROIs from the ROI Manager
+def clearROIs():
+    '''
+    Function that clears all of the ROIs in the ROI Manager
+
+    clearROIs()
+
+    AR Nov 2021
+    '''
+
+    # Clear all ROIs from the ROI Manager
+    rm.reset()
+
+########################################################################
+############################## ROIsInArea ##############################
+########################################################################
+
+# Define a function that will check which ROIs are within a given area
+# of an image
+def ROIsInArea(ROIs2Check,AreaContainingROIs):
+    '''
+    Function that will check whether each ROI in a list of ROIs is
+    contained within a given area of an image
+
+    ROIsInArea(ROIs2Check,AreaContainingROIs)
+
+        - ROIs2Check (List of Fiji ROIs): ROIs that you want to test to
+                                          if they are contained within
+                                          a given area of an image
+
+        - AreaContainingROIs (Fiji ROI): The area within which you want
+                                         ROIs to reside
+
+    OUTPUT List of all Fiji ROIs whose rotational center resides within
+           the area provided by the user
+
+    AR Nov 2021
+    '''
+
+    # Check to see whether each ROI's center is contained within the specified
+    # area
+    isContained = [AreaContainingROIs.contains(int(round(ROI.getRotationCenter().xpoints[0])),
+                                               int(round(ROI.getRotationCenter().ypoints[0]))) for ROI in ROIs2Check]
+
+    # Return a list of all ROIs whose centers were contained within the
+    # desired area
+    return [ROIs2Check[i] for i in range(len(ROIs2Check)) if isContained[i]]
+
+########################################################################
+############################## getROIArea ##############################
+########################################################################
+
+# Define a function that will get the area of an ROI in physical units
+def getROIArea(ROI,img):
+    '''
+    Function that will compute the area of an ROI in physical units
+    (e.g., microns) instead of just pixel units
+
+    getROIArea(ROI,img)
+
+        - ROI (Fiji ROI): ROI that you want the area of
+
+        - img (Fiji ImagePlus): Image on which the ROI would be
+                                superimposed
+
+    OUTPUT list of two outputs. The first a float containing the area of
+    the ROI. The second, the unit of the area (e.g. microns squared).
+
+    AR Nov 2021
+    '''
+
+    # Store the image calibration set for the image. This will contain
+    # information about the pixel to physical unit conversion.
+    imgCal = img.getCalibration()
+
+    # Use the image calibration as well as the size of our ROI to
+    # compute the area of the ROI.
+    area = imgCal.getX(ROI.getFloatWidth()) * imgCal.getY(ROI.getFloatHeight())
+
+    # Get the physical units of the area of the image. Needed to add a
+    # squared at the end of the string.
+    units = imgCal.getUnit() + '_Squared'
+
+    # Check to see if the micron symbol was used in the unit
+    # specification
+    if u'\xb5' in units:
+
+        # Convert the micron symbol to a u
+        units = units.replace(u'\xb5','u')
+
+    # Return the area and the units
+    return [area, units]
+
+########################################################################
+############################## combineROIs #############################
+########################################################################
+
+# Define a function to combine ROIs
+def combineROIs(ROIs):
+    '''
+    Function that will combine a set of ROIs into a single composite
+
+    combineROIs(ROIs)
+
+        - ROIs (List of Fiji ROIs): ROIs that you want to combine
+
+    OUTPUT Fiji ROI that is the composite of the ROIs you inputted
+
+    AR Nov 2021
+    '''
+
+    # Initialize a shape ROI that will store the combined ROI using the
+    # first ROI in your list
+    combinedROI = ShapeRoi(ROIs[0])
+
+    # Loop across all other ROIs in the list
+    for ROI in ROIs[1:]:
+
+        # Convert this ROI into a shape ROI
+        shapeROI = ShapeRoi(ROI)
+
+        # Add the new shape ROI to our combined ROI
+        combinedROI = combinedROI.or(shapeROI)
+
+    # Return the final combined ROI
+    return combinedROI
+
+########################################################################
+########################### getBackgroundROI ###########################
+########################################################################
+
+# Define a function to get an ROI labeling all pixels in background of
+# field of view
+def getBackgroundROI(nucROIs,fieldROI,refImg):
+    '''
+    Function that will compute an ROI representing all pixels that were
+    not segmented as part of nuclei
+
+    getBackgroundROI(nucROIs,fieldROI,refImg)
+
+        - nucROIs (List of Fiji ROIs): All ROIs labeling cells within a
+                                       field of view.
+
+        - fieldROI (Fiji ROI): ROI marking the true boundary of the
+                               field of view
+
+        - refImg (Fiji ImagePlus): Image with the same dimensions as the
+                                   full field of view (with overlap) to
+                                   serve as a reference
+
+    OUTPUT Fiji ROI that labels all pixels that were not contained
+    within cell nuclei in the field of view
+
+    AR Nov 2021
+    '''
+
+    # Combine all of the nuclear ROIs into a single composite ROI
+    nucROI = combineROIs(nucROIs)
+
+    # Invert this combined ROI so that it labels all pixels not
+    # associated with cell nuclei
+    notNucROI = ShapeRoi(nucROI.getInverse(refImg))
+
+    # Crop this ROI so that it only labels pixels that are within the
+    # true field of view boundaries. Return this final ROI.
+    return notNucROI.and(ShapeRoi(fieldROI))
+
+########################################################################
+############################## computeSNR ##############################
+########################################################################
+
+# Define a function to compute SNR
+def computeSNR(ROIs,backgroundROI,img):
+    '''
+    Function that will compute the signal to noise ratio (SNR) of the
+    gray level inside a set of ROIs compared to the background
+
+    computeSNR(ROIs,backgroundROI,img)
+
+        - ROIs (List of Fiji ROIs): Areas in the image where your signal
+                                    is located (e.g. a stained cell)
+
+        - backgroundROI (Fiji ROI): Area in image where there is
+                                    background (e.g. where there are no
+                                    cells)
+
+        - img (Fiji ImagePlus): Image from which to measure gray level
+
+    OUTPUT List of floats representing the SNR of each ROI in your
+    inputted list of ROIs
+
+    AR Nov 2021
+    '''
+
+    # Superimpose the background ROI on the image
+    img.setRoi(backgroundROI)
+
+    # Store the average gray level in the background of this image
+    avgNoise = img.getStatistics().mean
+
+    # Start a list that will store all of the SNR values for each ROI we
+    # want to measure
+    SNRs = []
+
+    # Loop across all ROIs denoting areas of signal (e.g. cell nuclei)
+    for ROI in ROIs:
+
+        # Superimpose this ROI on our image
+        img.setRoi(ROI)
+
+        # Compute the signal inside this ROI and divide it by the noise
+        SNRs.append(img.getStatistics().mean/avgNoise)
+
+    # Return the list of SNRs of each ROI
+    return SNRs
+
+########################################################################
+############################ grayLevelTTest ############################
+########################################################################
+
+# Write a function to compute the t statistic and accompanying p value
+# comparing the gray level inside and outside of an ROI
+def grayLevelTTest(ROIs,ROI2Compare,img):
+    '''
+    Function that will compute the t-statistic comparing the gray level
+    inside each ROI (for instance, ROIs labeling cell nuceli) versus a
+    comparison ROI (for instance, pixels not labeled as cells)
+
+    grayLevelTTest(ROIs,ROI2Compare,img)
+
+        - ROIs (List of Fiji ROIs): Areas in the image you want to test
+                                    to see if they have a greater pixel
+                                    intensity
+
+        - ROI2Compare (Fiji ROI): Area in image you want to compare the
+                                  gray level of each of your ROIs to
+
+        - img (Fiji ImagePlus): Image from which to measure gray level
+
+    OUTPUT lists of floats representing the t value of each one-sided
+    t-test seeing if each ROI has a higher gray level than the
+    comparison ROI
+
+    AR Nov 2021
+    '''
+
+    # Superimpose the comparison ROI on top of the image
+    img.setRoi(ROI2Compare)
+
+    # Get the statistics on the gray levels within this comparison ROI
+    compareStats = img.getStatistics()
+
+    # Start a list with all the t-statistics we will return
+    testResults = []
+
+    # Loop across all ROIs
+    for ROI in ROIs:
+
+        # Superimpose this ROI on the image
+        img.setRoi(ROI)
+
+        # Get the statistics of the gray levels within this ROI
+        ROIStats = img.getStatistics()
+
+        # Get the t-statistic for the test with a null hypothesis that
+        # this ROI has a higher gray level than the comparison. Does not
+        # assume equal variance.
+        testResults.append(Stats.ttest(ROIStats.mean,compareStats.mean,
+                                       ROIStats.stdDev**2,
+                                       compareStats.stdDev**2,
+                                       ROIStats.pixelCount,
+                                       compareStats.pixelCount))
+
+    # Return all of our test results
+    return testResults

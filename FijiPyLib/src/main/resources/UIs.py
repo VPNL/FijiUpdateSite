@@ -12,6 +12,7 @@ Contains functions to generate UIs used by our plugins
 
         - Creates a UI that will ask the user to check off which choices
           they would like
+
 '''
 
 ########################################################################
@@ -20,6 +21,21 @@ Contains functions to generate UIs used by our plugins
 
 # Import generic dialog so we can make quick and dirty UI's
 from ij.gui import GenericDialog
+
+# Import packages from javax.swing so we can make UI elements like text
+# fields and buttons
+from javax.swing import JTextField,DefaultListModel,JList,ListSelectionModel,JScrollPane,DropMode,BorderFactory,JPanel,JLabel,JFrame,JButton
+
+# Import java packages to allow us to specify dimensions and make
+# borders and grids
+from java.awt import Dimension,BorderLayout,GridLayout
+
+# Import action listener so we can listen for actions like button
+# presses
+from java.awt.event import ActionListener
+
+# Import thread so that we can wait until a user presses a button
+from java.lang import Thread
 
 ########################################################################
 ############################ whichChoiceUI #############################
