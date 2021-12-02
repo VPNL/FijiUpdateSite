@@ -21,6 +21,10 @@ This module contains tools to work easily with image files.
 
         - Creates a softlink for a file
 
+    getRowCol(fieldName)
+
+        - Returns the row and column name of field of view
+
 '''
 
 ########################################################################
@@ -34,6 +38,10 @@ import glob
 # Import os so we can join file path elements, and check to see if
 # something is a file or directory
 import os
+
+# Import regular expressions so we can search strings for specific
+# information
+import re
 
 ########################################################################
 ############################ findImgsInDir #############################
@@ -264,3 +272,40 @@ def makeSoftLink(file2Link,linkPath):
 
     # Create the softlink
     os.symlink(linkRelPath,linkPath)
+
+########################################################################
+############################### getRowCol ##############################
+########################################################################
+
+# Define a function to get the row and column numbers of a field of view
+def getRowCol(fieldName):
+    '''
+    Returns the row and column name of field of view
+
+    getRowCol(fieldName)
+
+        - fieldName (String): File name of the field of view
+
+    OUTPUT dictionary with keys 'Field_of_View_Row' and
+    'Field_of_View_Column' that store the int row and col numbers of
+    this field of view, respectively
+
+    AR Dec 2021
+    '''
+
+    # Define a regular expression to identify the row and column numbers
+    regex = re.compile('.*Row(?P<Field_of_View_Row>\d+)-Col(?P<Field_of_View_Column>\d+)_.*')
+
+    # Match the string pattern with our field of view name
+    matches = regex.match(str(fieldName))
+
+    # Get a dictionary storing the row and column number for this field
+    # of view
+    RowCol = matches.groupdict()
+
+    # Make the row and column numbers integers rather than strings
+    RowCol['Field_of_View_Row'] = int(RowCol['Field_of_View_Row'])
+    RowCol['Field_of_View_Column'] = int(RowCol['Field_of_View_Column'])
+
+    # Return the final dictionary
+    return RowCol
