@@ -304,8 +304,8 @@ def getRowCol(fieldName):
     RowCol = matches.groupdict()
 
     # Make the row and column numbers integers rather than strings
-    RowCol['Field_of_View_Row'] = int(RowCol['Field_of_View_Row'])
-    RowCol['Field_of_View_Column'] = int(RowCol['Field_of_View_Column'])
+    RowCol['Field_of_View_Row'] = [int(RowCol['Field_of_View_Row'])]
+    RowCol['Field_of_View_Column'] = [int(RowCol['Field_of_View_Column'])]
 
     # Return the final dictionary
     return RowCol
