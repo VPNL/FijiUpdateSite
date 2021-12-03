@@ -13,6 +13,11 @@ Contains functions to generate UIs used by our plugins
         - Creates a UI that will ask the user to check off which choices
           they would like
 
+    textFieldsUI(title,textFieldNames,defaultEntries)
+
+        - Creates a UI that will ask the user to fill out some number of
+          text fields
+
 '''
 
 ########################################################################
@@ -36,6 +41,9 @@ from java.awt.event import ActionListener
 
 # Import thread so that we can wait until a user presses a button
 from java.lang import Thread
+
+# Import izip so we can loop across multiple lists
+from itertools import izip
 
 ########################################################################
 ############################ whichChoiceUI #############################
@@ -122,3 +130,40 @@ def checkBoxUI(title,choices):
 
     # Return all choices that were checked off by the user
     return [choice for choice in choices if UI.getNextBoolean()]
+
+########################################################################
+############################# textFieldsUI #############################
+########################################################################
+
+# Write a UI to ask a user to fill out text fields
+def textFieldsUI(title,textFieldNames,defaultEntries):
+    '''
+    Creates a UI that will ask the user to fill out some number of text
+    fields
+
+    textFieldsUI(title,textFieldNames,defaultEntries)
+
+        - title (String): The title you want to give for this UI
+
+        - textFieldNames (List of Strings): Labels you want to give for
+                                            each text field
+
+        - defaultEntries (List of Strings): Default text entries for
+                                            each text field
+
+    OUTPUT List of strings containing the text entries from the user
+
+    AR Dec 2021
+    '''
+
+    # Create the user interface, specifying the title
+    UI = GenericDialog(title)
+
+    # Add a text field for each text field name and default entry pair
+    [UI.addStringField(name,default,10) for name, default in izip(textFieldNames,defaultEntries)]
+
+    # Display the UI
+    UI.showDialog()
+
+    # Return a list of the text the user entered
+    return [UI.getNextString() for i in range(len(textFieldNames))]
