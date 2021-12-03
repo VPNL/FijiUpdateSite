@@ -1,5 +1,4 @@
 #@ File(label='Where is the folder containing the separate channels of the image you would like to divide into fields of view?',style='directory') input_dir
-#@ Short(label='Field of view size in pixels (we recommend 52.5x52.5 micron fields for human cortical regions):',value=581) field_size
 
 '''
 Separate Image Into Fields
@@ -13,15 +12,12 @@ INPUTS
 								channels of the image the user wanted to
 								separate into fields of view.
 
-	- field_size (Int): Size of the fields you would like, provided in
-						pixels. Default 581 works for images with
-						 90.2 nm pixels.
-
-	The script will also present two additional UIs to the user. In the
+	The script will also present three additional UIs to the user. In the
 	first UI, the user will specify which files represent the separate
 	channels of the image they would like to divide into fields of view.
 	In the second UI, the user will specify what marker (e.g. DAPI,
-	NeuN) was imaged in each channel.
+	NeuN) was imaged in each channel. The last UI will ask the user to
+	specify the field of view size.
 
 OUTPUTS
 
@@ -32,14 +28,16 @@ OUTPUTS
 	from each channel will be saved under separate folders added under
 	the input_dir in a folder called FieldsOfView. The ROIs
 	corresponding to the location of these fields of view on the source
-	image will be saved under a folder called ROIs. These fields of view
-	will be twice the size specified by the input field_size because
-	extra space will be added overlapping 50% into all 4 neighboring
-	fields. To get the true boundary of these fields that doesn't
-	overlap into neighboring fields, an ROI will be saved in a folder
-	called FieldsOfView.
+	image will be saved under a folder called ROIs. The size of the field
+	of view will be specified by the user, as well as how much the fields
+	should overlap into neighboring fields to help visualize cells along
+	the boarder of the field. To get the true boundary of these fields that
+	doesn't overlap into neighboring fields, an ROI will be saved in a
+	folder called FieldsOfView.
 
 AR Oct 2021
+AR Dec 2021 Determine calibration of image to ask user about field of
+			view size
 '''
 
 ########################################################################
@@ -99,28 +97,11 @@ del allFilesInDir
 ###### IDENTIFY WHICH MARKER (E.G. DAPI) WAS IMAGED IN EACH IMAGE ######
 ########################################################################
 
-# Create a interface so that the user can specify what marker is imaged
-# in each channel
-whichMarkerUI = GenericDialog('Specify the marker (e.g. DAPI, NeuN) imaged in each file.')
+markersImaged = UIs.textFieldsUI('Specify the marker (e.g. DAPI, NeuN) imaged in each file.',
+								 [os.path.basename(imgPath) for imgPath in imgs2separate],
+								 ['DAPI'] * len(imgs2separate))
 
-# Loop across all selected image files
-for imgPath in imgs2separate:
-
-	# Get just the image file name separate from the path
-	imgFile = os.path.basename(imgPath)
-
-	# Add a row to UI so that user can indicate which marker the image
-	# corresponds to
-	whichMarkerUI.addStringField(imgFile,'DAPI',10)
-
-# Display the UI
-whichMarkerUI.showDialog()
-
-# Store a list of all the markers corresponding to the images in
-# imgs2separate
-markersImaged = [whichMarkerUI.getNextString() for i in range(len(imgs2separate))]
-
-del whichMarkerUI, imgPath, imgFile
+del imgPath
 
 ########################################################################
 ###################### GENERATE FIELD OF VIEW ROIS #####################
@@ -137,6 +118,30 @@ frst_img = ImagePlus(imgs2separate[0])
 
 # Store the dimensions of this first image
 frst_img_dims = frst_img.getDimensions()
+
+# Store the image calibration for this first image. This will contain
+# information about the pixel to physical unit conversion.
+imgCal = frst_img.getCalibration()
+
+# Get the physical length units stored in this image
+lengthUnits = imgCal.getUnit()
+
+# Check to see if the micron symbol was used in the length units
+if u'\xb5' in lengthUnits:
+
+	# Convert the micron symbol to a u
+	lengthUnits = lengthUnits.replace(u'\xb5','u')
+
+# Ask the user to specify the size of the field of view and amount of
+# overlap in neighboring fields of view
+[field_size_physical,field_overlap_physical] = UIs.textFieldsUI('Specify your true field of view size and the amount you want to see overlaping into neighboring fields.',
+											  					['True Field of View Size in {}:'.format(lengthUnits),
+											   					 'Overlap into Neighboring Fields in {}:'.format(lengthUnits)],
+											  			 		['50','15'])
+
+# Convert field size and field overlap from physical units to pixels
+field_size = int(round(imgCal.getRawX(float(field_size_physical))))
+field_overlap = int(round(imgCal.getRawX(float(field_overlap_physical))))
 
 # Separate the image into a grid-like configuration of fields of view
 fovGrid = ROITools.gridOfFields(frst_img,field_size)
