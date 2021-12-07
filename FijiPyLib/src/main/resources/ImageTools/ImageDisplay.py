@@ -105,23 +105,23 @@ def getOpenImages():
     AR Dec 2021
     '''
 
-	# Check to see if any images are open
-	if WindowManager.getIDList() is None:
+    # Check to see if any images are open
+    if WindowManager.getIDList() is None:
 
-		# Return none if there are no images currently open
-		return None
+        # Return none if there are no images currently open
+        return None
 
-	# Get all images currently open
-	open_images = [WindowManager.getImage(id) for id in WindowManager.getIDList()]
+    # Get all images currently open
+    open_images = [WindowManager.getImage(id) for id in WindowManager.getIDList()]
 
-	# If there is only one open image
-	if len(open_images) == 1:
+    # If there is only one open image
+    if len(open_images) == 1:
 
-		# Just return the image, not in a list
-		return open_images[0]
+        # Just return the image, not in a list
+        return open_images[0]
 
-	# If there are multiple images open
-	else:
+    # If there are multiple images open
+    else:
 
-		# Return list of all open images
-		return open_images
+        # Return list of all open images
+        return open_images
