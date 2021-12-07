@@ -7,6 +7,10 @@ This module contains functions changing how images are displayed in Fiji
 
         - Merges images so that they overlap with different colors
 
+    getOpenImages()
+
+        - Returns a list of all currently open images in Fiji
+
 '''
 
 ########################################################################
@@ -24,6 +28,9 @@ from ij import IJ
 
 # Import izip so we can iterate across multiple lists
 from itertools import izip
+
+# Import window manager so we can find images currently open in Fiji
+from ij import WindowManager
 
 ########################################################################
 ############################# overlayImages ############################
@@ -79,3 +86,42 @@ def overlayImages(imgs2merge):
 
     # Return the overlaid image
     return overlay
+
+########################################################################
+############################# getOpenImages ############################
+########################################################################
+
+# Define a function to get all images currently open in Fiji
+def getOpenImages():
+    '''
+    Returns a list of all currently open images in Fiji
+
+    getOpenImages()
+
+    OUTPUT List of Fiji ImagePlus objects, one for each image currently
+           open in Fiji. If only one image is open, return just that
+           ImagePlus object rather than a list.
+
+    AR Dec 2021
+    '''
+
+	# Check to see if any images are open
+	if WindowManager.getIDList() is None:
+
+		# Return none if there are no images currently open
+		return None
+
+	# Get all images currently open
+	open_images = [WindowManager.getImage(id) for id in WindowManager.getIDList()]
+
+	# If there is only one open image
+	if len(open_images) == 1:
+
+		# Just return the image, not in a list
+		return open_images[0]
+
+	# If there are multiple images open
+	else:
+
+		# Return list of all open images
+		return open_images
