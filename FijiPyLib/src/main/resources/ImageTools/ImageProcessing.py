@@ -33,6 +33,11 @@ This module contains tools to process images in Fiji.
 
         - Converts a list of ROIs into a segmentation mask
 
+    manualRotation(img)
+
+        - Ask the user to rotate an image manually, returns angle of
+          rotation
+
 '''
 
 ########################################################################
@@ -56,8 +61,12 @@ from ij import IJ, ImagePlus
 # Import floor from math so we can round down
 from math import floor
 
-# Import GaussianBlur class so we can smooth images
-from ij.plugin.filter import GaussianBlur
+# Import GaussianBlur class so we can smooth images, and Rotator so we
+# can rotate images
+from ij.plugin.filter import GaussianBlur, Rotator, PlugInFilterRunner
+
+# Initialize a rotator object
+rotator = Rotator()
 
 # Import ROI Tools so we can work with Fiji ROIs
 import ROITools
@@ -624,3 +633,58 @@ def ROIs2Segmentation(ROIs,refImg):
 
     # Return this segmentation mask
     return segImg
+
+########################################################################
+############################ manualRotation ############################
+########################################################################
+
+# Define a function so that the user can adjust the rotation of an image
+def manualRotation(img):
+    '''
+    Ask the user to rotate an image manually, returns angle of rotation
+
+    manualRotation(img):
+
+        - img (ImagePlus): Image you want to rotate
+
+    OUTPUT list of two elements. The first element is the rotated image.
+    the second element is the angle that the image was rotated.
+
+    AR Dec 2021
+    '''
+
+    # Hide the image provided so that it doesn't get confused with the
+    # copy we will make of it
+    img.hide()
+
+    # Copy the image provided
+    img_cp = duplicator.run(img)
+
+    # Set the image name to the same as the original image file
+    img_cp.setTitle(img.getTitle())
+
+    # Display the copied image
+    img_cp.show()
+
+    # Instruct ImageJ to rotate the currently opened image 0 degrees. By
+    # doing this, we can set the default values for the angle, grid
+    # size, interpolation and make sure fill and enlarge are both
+    # checked off
+    IJ.run("Rotate... ","angle=0 grid=0 interpolation=Bilinear fill enlarge")
+
+    # Display a message to the user in the ImageJ log instructing them
+    # to use the "preview" functionality to find the best angle for the
+    # image, then press "OK"
+    IJ.log('Use the preview option to identify the best angle to\nrotate your image. Then, press OK.')
+
+    # Display the rotator object to the user
+    IJ.run("Rotate... ")
+
+    # Get the angle that the image was rotated in degrees
+    rotAngle = rotator.getAngle()
+
+    # Hide the copied image
+    img_cp.hide()
+
+    # Return the final rotated image and the angle of rotation
+    return [img_cp,rotAngle]
