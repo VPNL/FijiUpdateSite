@@ -86,7 +86,6 @@ def overlayImages(imgs2merge):
 
     # Return the overlaid image
     return overlay
-<<<<<<< HEAD
 
 ########################################################################
 ############################# getOpenImages ############################
