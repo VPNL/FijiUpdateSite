@@ -63,7 +63,7 @@ from math import floor
 
 # Import GaussianBlur class so we can smooth images, and Rotator so we
 # can rotate images
-from ij.plugin.filter import GaussianBlur, Rotator, PlugInFilterRunner
+from ij.plugin.filter import GaussianBlur, Rotator
 
 # Initialize a rotator object
 rotator = Rotator()
