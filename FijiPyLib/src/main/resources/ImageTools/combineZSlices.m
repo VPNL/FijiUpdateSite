@@ -42,6 +42,22 @@ if nargin < 3
 
 end
 
+% Check to see if needsRotation was provided as a character array
+if ischar(needsRotation)
+
+    % Convert needsRotation from a character array to a boolean
+    needsRotation = strcmpi(needsRotation,'true');
+
+end
+
+% Check to see if bestChannel was provided as a character array 
+if ischar(bestChannel)
+
+    % Convert bestChannel to a double 
+    bestChannel = str2double(bestChannel);
+
+end
+
 % Define a function that will get all of the files within a directory
 function files = filesInDir(directory)
 % FILESINDIR will list out all of the files within a directory
