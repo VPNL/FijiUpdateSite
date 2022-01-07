@@ -155,11 +155,16 @@ if needsRotation
     refImg = imread(fullfile(separateSliceChannelDir,refImgFileName));
     clear refImgFileName
 
+    % Store the width and height of the reference image 
+    refImgW = size(refImg,1);
+    refImgH = size(refImg,2);
+    
     % We will want to rotate the image such that the diagonal from the top
     % left corner to the bottom right corner of the image becomes vertical.
     % Compute the angle of rotation below using the image dimensions and
     % convert this angle from radians to degrees.
-    rotAngle = rad2deg(atan(size(refImg,2)/size(refImg,1)));
+    rotAngle = rad2deg(atan(min(refImgW/refImgH,refImgH/refImgW)));
+    clear refImgH refImgW
 
     % We'll want to save this rotation angle to a text file so we can keep
     % track. Get our base file name without the image type extension (e.g.
