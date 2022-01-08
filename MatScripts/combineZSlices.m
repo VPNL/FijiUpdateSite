@@ -25,6 +25,8 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %   reside.
 %
 %   AR Dec 2021
+%   AR Jan 2022: Changed angle saved to text file to negative to correspond
+%   with how the angle will be interpreted in Fiji/ImageJ
 
 % Check to see if needsRotation was provided
 if nargin < 2
@@ -177,8 +179,10 @@ if needsRotation
                                        baseTextFileName,'.txt')),'wt');
     clear baseTextFileName
 
-    % Print the rotation angle to the text file 
-    fprintf(rotTextFID,num2str(rotAngle));
+    % Print the rotation angle to the text file. Print as a negative number
+    % since Fiji/ImageJ interprets angles the opposite as imrotate in
+    % Matlab
+    fprintf(rotTextFID,num2str(-rotAngle));
 
     % Close the text file
     fclose(rotTextFID);
