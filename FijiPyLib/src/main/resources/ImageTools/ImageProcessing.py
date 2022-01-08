@@ -38,6 +38,10 @@ This module contains tools to process images in Fiji.
         - Ask the user to rotate an image manually, returns angle of
           rotation
 
+    autoRotation(img,angle)
+
+        - Automatically rotates an image by a set angle
+
 '''
 
 ########################################################################
@@ -694,3 +698,47 @@ def manualRotation(img):
 
     # Return the final rotated image and the angle of rotation
     return [img_cp,rotAngle]
+
+########################################################################
+############################# autoRotation #############################
+########################################################################
+
+# Define a function to automatically rotate images
+def autoRotation(img,angle):
+    '''
+    Automatically rotates an image by a set angle
+
+    autoRotation(img,angle)
+
+        - img (ImagePlus): Image you want to rotate
+
+        - angle (float): How much you want to rotate the image in
+                         degrees
+
+    OUTPUTS Rotated image as an ImagePlus object
+
+    AR Jan 2022
+    '''
+
+    # Hide the image provided so that it doesn't get confused with the
+    # copy we will make of it
+    img.hide()
+
+    # Copy the image provided
+    img_cp = duplicator.run(img)
+
+    # Set the image name to the same as the original image file
+    img_cp.setTitle(img.getTitle())
+
+    # Display the copied image
+    img_cp.show()
+
+    # Rotate the image
+    IJ.run("Rotate... ",
+           "angle={} grid=0 interpolation=Bilinear fill enlarge".format(angle))
+
+    # Hide the rotated image from view
+    img_cp.hide()
+
+    # Return the rotated image as an ImagePlus
+    return img_cp
