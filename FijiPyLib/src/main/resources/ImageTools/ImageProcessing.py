@@ -651,7 +651,15 @@ def manualRotation(img):
     the second element is the angle that the image was rotated.
 
     AR Dec 2021
+
+    AR Jan 2022: Switched order so that the log appears before the image
+                 Enhance contrast of the image to be rotated
     '''
+
+    # Display a message to the user in the ImageJ log instructing them
+    # to use the "preview" functionality to find the best angle for the
+    # image, then press "OK"
+    IJ.log('Use the preview option to identify the best angle to\nrotate your image. Then, press OK.')
 
     # Hide the image provided so that it doesn't get confused with the
     # copy we will make of it
@@ -666,16 +674,14 @@ def manualRotation(img):
     # Display the copied image
     img_cp.show()
 
+    # Enhance the contrast of the displayed image.
+    ContrastEnhancer().stretchHistogram(img_cp,.35)
+
     # Instruct ImageJ to rotate the currently opened image 0 degrees. By
     # doing this, we can set the default values for the angle, grid
     # size, interpolation and make sure fill and enlarge are both
     # checked off
     IJ.run("Rotate... ","angle=0 grid=0 interpolation=Bilinear fill enlarge")
-
-    # Display a message to the user in the ImageJ log instructing them
-    # to use the "preview" functionality to find the best angle for the
-    # image, then press "OK"
-    IJ.log('Use the preview option to identify the best angle to\nrotate your image. Then, press OK.')
 
     # Display the rotator object to the user
     IJ.run("Rotate... ")
