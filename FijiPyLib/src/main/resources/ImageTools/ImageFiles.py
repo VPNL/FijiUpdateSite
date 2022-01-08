@@ -61,9 +61,10 @@ def findImgsInDir(dirPath,fileType=None,searchPhrase=None):
         - fileType (String): File type for the files you are trying to
                              locate, optional (default = None)
 
-        - searchPhrase (String): Key phrase that is contained within the
-                                 file name of the files you are trying
-                                 to locate, optional (default = None)
+        - searchPhrase (String): Regular expression that is contained
+                                 within the file name of the files you
+                                 are trying to locate, optional
+                                 (default = None)
 
     OUTPUT
 
@@ -72,6 +73,7 @@ def findImgsInDir(dirPath,fileType=None,searchPhrase=None):
                                    search phrase
 
     AR Oct 2021
+    AR Jan 2022: Changed searchPhrase to a regular expression
     '''
 
     # If dirPath was provided in unicode, convert to String
@@ -133,12 +135,15 @@ def findImgsInDir(dirPath,fileType=None,searchPhrase=None):
 
         else:
 
+            # Make a regular expression out of the search phrase
+            regexp = re.compile(searchPhrase)
+
             # Check to see if the search phrase is present in the image
             # file name
-            if searchPhrase in file_path:
-                return True
-            else:
+            if regexp.search(file_path) is None:
                 return False
+            else:
+                return True
 
     # Initialize a list storing all of the files in our directory of the
     # correct file type and that contain our desired key phrase
