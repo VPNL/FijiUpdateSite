@@ -133,8 +133,8 @@ for imgFile2Rotate in imgFiles2Rotate:
 
     # Update the dimensions of the image stored in the meta data to
     # match our rotated image
-    imgMetaData.setPixelsSizeX(rotatedImg.getWidth(),0)
-    imgMetaData.setPixelsSizeY(rotatedImg.getHeight(),0)
+    imgMetaData.setPixelsSizeX(PositiveInteger(rotatedImg.getWidth()),0)
+    imgMetaData.setPixelsSizeY(PositiveInteger(rotatedImg.getHeight()),0)
 
     # Delete the current image file so we can re-write it
     os.remove(imgFile2Rotate)
