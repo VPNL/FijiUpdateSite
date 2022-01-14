@@ -691,7 +691,7 @@ def manualRotation(img):
     # Display a message to the user in the ImageJ log instructing them
     # to use the "preview" functionality to find the best angle for the
     # image, then press "OK"
-    gui.addMessage('Use the preview option to identify the best angle to\nrotate your image.')
+    gui.addMessage('In the next popup window, you will be able to manually rotate your image. Use the\npreview option to identify the best angle to rotate your image.')
 
     # Display the gui
     gui.showDialog()
