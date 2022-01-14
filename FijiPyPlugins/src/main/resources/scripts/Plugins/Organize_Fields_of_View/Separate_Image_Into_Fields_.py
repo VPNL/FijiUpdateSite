@@ -68,9 +68,11 @@ from ij.gui import GenericDialog
 # directories and join path elements
 import os
 
-# Import ImagePlus so we can read image files and IJ so we can run
-# macros commands
-from ij import ImagePlus, IJ
+# Import Fiji's bioformats reader so we can open image files
+from loci.plugins import BF
+
+# Import IJ so we can run macros commands
+from ij import IJ
 
 # Import our ROITools library
 import ROITools
@@ -107,14 +109,9 @@ del imgPath
 ###################### GENERATE FIELD OF VIEW ROIS #####################
 ########################################################################
 
-# Construct a dummy ImagePlus object. For some reason, you need to do
-# this before you can use the ImagePlus() construction to read image
-# files
-ImagePlus()
-
 # Open the first image in our list of images we want to separate into
 # fields of view
-frst_img = ImagePlus(imgs2separate[0])
+frst_img = BF.openImagePlus(imgs2separate[0])[0]
 
 # Store the dimensions of this first image
 frst_img_dims = frst_img.getDimensions()
@@ -228,7 +225,7 @@ del frst_img
 for imgPath, marker in zip(imgs2separate[1:],markersImaged[1:]):
 
 	# Read the image file into an ImagePlus object
-	img = ImagePlus(imgPath)
+	img = BF.openImagePlus(imgPath)[0]
 
 	# Breakup the image into separate fields of view
 	breakupIntoFields(img,marker)
