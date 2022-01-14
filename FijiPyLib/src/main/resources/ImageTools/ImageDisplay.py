@@ -7,6 +7,10 @@ This module contains functions changing how images are displayed in Fiji
 
         - Merges images so that they overlap with different colors
 
+    getOpenImages()
+
+        - Returns a list of all currently open images in Fiji
+
 '''
 
 ########################################################################
@@ -82,7 +86,6 @@ def overlayImages(imgs2merge):
 
     # Return the overlaid image
     return overlay
-<<<<<<< HEAD
 
 ########################################################################
 ############################# getOpenImages ############################
@@ -122,5 +125,3 @@ def getOpenImages():
 
         # Return list of all open images
         return open_images
-=======
->>>>>>> fc7d888 (removed function to get open images, no longer needed)
