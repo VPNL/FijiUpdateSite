@@ -25,6 +25,14 @@ This module contains tools to work easily with image files.
 
         - Returns the row and column name of field of view
 
+    getOMEXMLMetadata(filePath)
+
+        - Reads the metadata for an image file
+
+    saveCompressedImg(img,path)
+
+        - Saves an image with data compression
+
 '''
 
 ########################################################################
@@ -42,6 +50,17 @@ import os
 # Import regular expressions so we can search strings for specific
 # information
 import re
+
+# Import bio-formats image reader and MetadataTools so we can work with
+# image metadata
+from loci.formats import ImageReader, MetadataTools
+
+# Import bio-format's Tiff writer
+from loci.formats.out import TiffWriter
+
+# Import some image tools from bio-formats so we can convert ImagePlus
+# images into something readable by bio-formats
+from loci.formats.gui import AWTImageTools as tools
 
 ########################################################################
 ############################ findImgsInDir #############################
@@ -314,3 +333,93 @@ def getRowCol(fieldName):
 
     # Return the final dictionary
     return RowCol
+
+########################################################################
+########################### getOMEXMLMetadata ##########################
+########################################################################
+
+# Write a function that will get the bio-formats meta data for an image
+# file
+def getOMEXMLMetadata(filePath):
+    '''
+    Reads the metadata for an image file
+
+    getOMEXMLMetadata(filePath)
+
+        - filePath (String): Location of the image file you want to read
+
+    OUTPUT MetadataStore object from the bio-formats java library
+    containing the metadata for this image
+    '''
+
+    # Initialize a metadata object
+    omeMeta = MetadataTools.createOMEXMLMetadata()
+
+    # Create an instance of an ImageReader so we can read image files
+    reader = ImageReader()
+
+    # Instruct the reader to output to this metadata object
+    reader.setMetadataStore(omeMeta)
+
+    # Read the metadata at this file
+    reader.setId(filePath)
+
+    # Close the reader object
+    reader.close()
+
+    # Return the metadata
+    return omeMeta
+
+########################################################################
+########################### saveCompressedImg ##########################
+########################################################################
+
+# Write a function that will save an image with compression
+def saveCompressedImg(img,metaData,outFile):
+    '''
+    Saves an image with data compression
+
+    saveCompressedImg(img,path)
+
+        - img (ImagePlus): Image you want to saved
+
+        - metaData (Bio-Formats MetadataStore): Metadata for the image
+                                                you are saving
+
+        - outFile (String): File path to where you want to save the image
+
+    AR Jan 2022
+    '''
+
+    # Initialize a bio-formats image writer object
+    writer = TiffWriter()
+
+    # Add the metadata to this writer
+    writer.setMetadataRetrieve(metaData)
+
+    # Instruct the writer to save the image with compression
+    writer.setCompression("zlib")
+
+    # Set the file location to write to
+    writer.setId(outFile)
+
+    # loop across all planes of the image
+    for p in range(img.getNSlices()):
+
+        # Set the current z-slice of the image
+        img.setSliceWithoutUpdate(p+1)
+
+        # Crop the current z-slice of the image
+        curSlice = img.crop()
+
+        # Convert this plane into a java buffered image
+        bufrdimg = curSlice.getBufferedImage()
+
+        # Convert the buffered image into a bytes array
+        plane = tools.getBytes(bufrdimg)
+
+        # Save the bytes from this plane to the file
+        writer.saveBytes(p,plane[0])
+
+    # Close the writer object
+    writer.close()
