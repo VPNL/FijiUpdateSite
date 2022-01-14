@@ -72,14 +72,17 @@ img2RotateFile = ImageFiles.findImgsInDir(inputDir,'tif',
 
 # Open the image that we want to rotate
 img2Rotate = ImagePlus(img2RotateFile)
+del img2RotateFile
 
 # Create a z-stack object for this image
 img2RotateStack = ImageProcessing.zStack(img2Rotate)
+img2Rotate.close()
 del img2Rotate
 
 # Generate the maximum intensity projection of the image we want to
 # rotate
 maxProj2Rotate = img2RotateStack.maxProj()
+img2RotateStack.orig_z_stack.close()
 del img2RotateStack
 
 ########################################################################
@@ -87,7 +90,10 @@ del img2RotateStack
 ########################################################################
 
 # Ask the user to rotate this image, returning the angle of rotation
-[_,rotAngle] = ImageProcessing.manualRotation(maxProj2Rotate)
+[imgRotated,rotAngle] = ImageProcessing.manualRotation(maxProj2Rotate)
+maxProj2Rotate.close()
+imgRotated.close()
+del maxProj2Rotate, imgRotated
 
 # Search the directory specified by the user to identify the text file
 # containing the final angle of rotation of our images
@@ -118,24 +124,15 @@ del rotAngleTextFilePath, rotAngleTextFile, currRot
 # Get a list of all image files that we want to rotate
 imgFiles2Rotate = ImageFiles.findImgsInDir(inputDir,'tif','c\d_')
 
-# Store ImageJ's version number
-FijiVersion = IJ.getVersion()
-
-# The only part of the version number we care about comes after a '/'
-# character. Crop the string to include just these characters.
-FijiVersion = FijiVersion[FijiVersion.index('/')+1:]
-
 # Rotate across all image files
 for imgFile2Rotate in imgFiles2Rotate:
 
     # Read the image file
     img2Rotate = ImagePlus(imgFile2Rotate)
 
-    # Get the pixel units for this image
-    imgUnits = img2Rotate.getCalibration().getUnit()
-
     # Rotate the image file
     rotatedImg = ImageProcessing.autoRotation(img2Rotate,rotAngle)
+    img2Rotate.close()
     del img2Rotate
 
     # Get the meta data for this image
@@ -146,15 +143,10 @@ for imgFile2Rotate in imgFiles2Rotate:
     imgMetaData.setPixelsSizeX(PositiveInteger(rotatedImg.getWidth()),0)
     imgMetaData.setPixelsSizeY(PositiveInteger(rotatedImg.getHeight()),0)
 
-    # Add the image description to the meta data to make it easier to
-    # read into ImageJ
-    imgDescription = "ImageJ=%s\nunit=%s\n" % (FijiVersion, imgUnits)
-    imgMetaData.setImageDescription(imgDescription,0)
-
     # Delete the current image file so we can re-write it
     os.remove(imgFile2Rotate)
 
     # Save our rotated image with this meta data to the same image file
     ImageFiles.saveCompressedImg(rotatedImg,imgMetaData,imgFile2Rotate)
-    rotatedImg.hide()
+    rotatedImg.close()
     del rotatedImg, imgMetaData
