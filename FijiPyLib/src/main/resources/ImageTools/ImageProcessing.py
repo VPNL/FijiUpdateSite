@@ -72,6 +72,9 @@ from ij.plugin.filter import GaussianBlur, Rotator
 # Initialize a rotator object
 rotator = Rotator()
 
+# Import a generic dialog so we can display messages to the user
+from ij.gui import GenericDialog
+
 # Import ROI Tools so we can work with Fiji ROIs
 import ROITools
 
@@ -660,11 +663,6 @@ def manualRotation(img):
                  Enhance contrast of the image to be rotated
     '''
 
-    # Display a message to the user in the ImageJ log instructing them
-    # to use the "preview" functionality to find the best angle for the
-    # image, then press "OK"
-    IJ.log('Use the preview option to identify the best angle to\nrotate your image. Then, press OK.')
-
     # Hide the image provided so that it doesn't get confused with the
     # copy we will make of it
     img.hide()
@@ -686,6 +684,17 @@ def manualRotation(img):
     # size, interpolation and make sure fill and enlarge are both
     # checked off
     IJ.run("Rotate... ","angle=0 grid=0 interpolation=Bilinear fill enlarge")
+
+    # Initialize a GUI to give the user instructions
+    gui = GenericDialog('Instructions')
+
+    # Display a message to the user in the ImageJ log instructing them
+    # to use the "preview" functionality to find the best angle for the
+    # image, then press "OK"
+    gui.addMessage('Use the preview option to identify the best angle to\nrotate your image.')
+
+    # Display the gui
+    gui.showDialog()
 
     # Display the rotator object to the user
     IJ.run("Rotate... ")
@@ -735,10 +744,7 @@ def autoRotation(img,angle):
 
     # Rotate the image
     IJ.run("Rotate... ",
-           "angle={} grid=0 interpolation=Bilinear fill enlarge".format(angle))
-
-    # Hide the rotated image from view
-    img_cp.hide()
+           "angle={} grid=0 interpolation=Bilinear fill enlarge stack".format(angle))
 
     # Return the rotated image as an ImagePlus
     return img_cp
