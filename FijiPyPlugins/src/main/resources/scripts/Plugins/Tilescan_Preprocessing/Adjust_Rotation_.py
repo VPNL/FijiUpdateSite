@@ -60,7 +60,7 @@ import os
 # Import positive integer object from bio-formats so we can specify
 # image dimensions
 from ome.xml.model.primitives import PositiveInteger
-from sys import exit
+
 ########################################################################
 ############ OPEN THE IMAGE FILE WE WANT TO MANUALLY ROTATE ############
 ########################################################################
@@ -72,7 +72,7 @@ img2RotateFile = ImageFiles.findImgsInDir(inputDir,'tif',
 
 # Open the image that we want to rotate
 img2Rotate = ImagePlus(img2RotateFile)
-exit()
+
 # Create a z-stack object for this image
 img2RotateStack = ImageProcessing.zStack(img2Rotate)
 del img2Rotate
@@ -121,7 +121,7 @@ imgFiles2Rotate = ImageFiles.findImgsInDir(inputDir,'tif','c\d_')
 # Store ImageJ's version number
 FijiVersion = IJ.getVersion()
 
-# The only part of the version number we care about comes after a '/' 
+# The only part of the version number we care about comes after a '/'
 # character. Crop the string to include just these characters.
 FijiVersion = FijiVersion[FijiVersion.index('/')+1:]
 
@@ -131,7 +131,7 @@ for imgFile2Rotate in imgFiles2Rotate:
     # Read the image file
     img2Rotate = ImagePlus(imgFile2Rotate)
 
-    # Get the pixel units for this image 
+    # Get the pixel units for this image
     imgUnits = img2Rotate.getCalibration().getUnit()
 
     # Rotate the image file
@@ -146,7 +146,7 @@ for imgFile2Rotate in imgFiles2Rotate:
     imgMetaData.setPixelsSizeX(PositiveInteger(rotatedImg.getWidth()),0)
     imgMetaData.setPixelsSizeY(PositiveInteger(rotatedImg.getHeight()),0)
 
-    # Add the image description to the meta data to make it easier to 
+    # Add the image description to the meta data to make it easier to
     # read into ImageJ
     imgDescription = "ImageJ=%s\nunit=%s\n" % (FijiVersion, imgUnits)
     imgMetaData.setImageDescription(imgDescription,0)
