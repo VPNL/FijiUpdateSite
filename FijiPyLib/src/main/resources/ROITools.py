@@ -3,7 +3,7 @@ ROITools Module
 
 This module contains tools to work easily with Fiji ROIs
 
-    gridOfFields(img,field_size)
+    gridOfFields(img,field_size,field_overlap,isRotated)
 
         - Class of objects that will divide up an image into a grid-like
           set of fields of view, where each field overlaps 50% into its
@@ -86,8 +86,11 @@ This module contains tools to work easily with Fiji ROIs
 ########################### IMPORT PACKAGES ############################
 ########################################################################
 
-# Import floor and ceil so we can round down
-from math import floor
+# Import our ImageProcessing module so we can make max projections
+import ImageProcessing
+
+# Import IJ so we can run macros commands
+from ij import IJ
 
 # Import Fiji's Rois and specifically PointRoi and ShapeRoi
 from ij.gui import Roi, PointRoi, ShapeRoi
@@ -134,7 +137,7 @@ class gridOfFields:
           view. When any of these fields are isolated, you can use
           this ROI to denote the true boundary of the field of view.
 
-    gridOfFields(img,field_size)
+    gridOfFields(img,field_size,field_overlap,isRotated)
 
         - img (ImagePlus): Image that you want to divide into fields of
                            view
@@ -142,83 +145,92 @@ class gridOfFields:
         - field_size (int): Size of the fields of view you want to
                             divide up your image into
 
+        - field_overlap (int): Amount of overlap you want to exist
+                               between neighboring fields of view
+
+        - isRotated (boolean): Was the tilescan rotated during image
+                               preprocessing? True if it was rotated
+
     AR Oct 2021
+    AR Jan 2022: Rewrote to account for rotated tile scans
     '''
 
     # Define initialization function to create new instances of this
     # class of objects
-    def __init__(self,img,field_size):
+    def __init__(self,img,field_size,field_overlap,isRotated):
 
-        # Get the dimensions of this image
-        [w,h,_,_,_] = img.getDimensions()
+        # Check to see if the tile scan we're dividing up was rotated
+        if isRotated:
 
-        # Compute the number rows and columns of fields of view we can
-        # divide the image into. Each field of view will have the size
-        # field_size and then extend 50% into neighboring fields (total
-        # size of 2*field_size). For the first and last field in a
-        # given row or column, we need extra room for the field to
-        # extend towards the edge of the image. We account for this by
-        # calculating how many times the image width and height can be
-        # divided into fields of field size, plus an extra field.
-        nRows = int(floor(h/(field_size)) - 1)
-        nCols = int(floor(w/(field_size)) - 1)
+            # If the image was rotated, we'll need to draw an ROI just
+            # around the area that contains relevant data, avoiding
+            # blank spaces around the edges
+            imgROI = self.getRelevantRegion(img)
 
-        # The first pixel to be included in the first field along each
-        # row and column can be calculated by subtracting the middle of
-        # the image (half the length of each image dimension) from half
-        # the length of all fields of view spanning that dimension
-        frst_pxl_in_frst_row = int((float(h)/2.0) - (float((nRows + 1) * field_size)/2.0)) + 1
-        frst_pxl_in_frst_col = int((float(w)/2.0) - (float((nCols + 1) * field_size)/2.0)) + 1
+        # If the tile scan wasn't rotated...
+        else:
 
-        # Initialize a list that will store all of the field of view
-        # ROIs
-        fovs = []
-
-        # Initialize a variable that will store the column number of the
-        # field we are creating
-        iRow = 1
-
-        # Loop across all pixels defining the start of each row in the
-        # grid of fields of view
-        for start_pxl_in_row in range(frst_pxl_in_frst_row,h-(2*field_size),field_size):
-
-            # Initialize a variable to store the row number of the field
-            # we are creating
-            iCol = 1
-
-            # Loop across all pixels defining the start of each column
-            # in the grid of fields of view
-            for start_pxl_in_col in range(frst_pxl_in_frst_col,w-(2*field_size),field_size):
-
-                # Make a square field of view ROI at this location
-                fov = Roi(start_pxl_in_col,start_pxl_in_row,(2*field_size)-1,(2*field_size)-1)
-
-                # Set the name of this field of view to include the row
-                # and column number
-                fov.setName('Row' + str(iRow) + '-Col' + str(iCol))
-
-                # Add this field of view to our list of field of views
-                fovs.append(fov)
-
-                # Increase the column number
-                iCol = iCol + 1
-
-            # Increase the row number
-            iRow = iRow + 1
+            # We'll want to make sure the entire image is included
+            imgROI = Roi(0,0,img.getWidth(),img.getHeight())
 
         # Store our newly created list of fields of view as an object
         # attribute
         self.ROIs = fovs
 
-        # Create a final ROI that denotes the true boundaries of the
-        # field of view that doesn't overlap into neighboring fields
-        fieldBoundary = Roi(floor(field_size/2) + 1,floor(field_size/2) + 1,field_size-2,field_size-2)
-
-        # Give this final ROI a name
-        fieldBoundary.setName(str(field_size) + ' Pixel Field of View Boundary')
-
         # Store this ROI as an object attribute
         self.fieldBoundary = fieldBoundary
+
+    # Define a function that will produce an ROI just around the portion
+    # of the image we care about
+    def getRelevantRegion(self,img):
+
+        # Normalize the image so that the pixel intensities are brighter
+        normalizedImg = ImageProcessing.normalizeImg(img)
+
+        # Create a z-stack object for this image
+        imgStack = ImageProcessing.zStack(normalizedImg)
+        normalizedImg.close()
+        del normalizedImg
+
+        # Generate a maximum intensity projection of the image
+        maxProj = imgStack.maxProj()
+        maxProj.show()
+        imgStack.orig_z_stack.close()
+        del imgStack
+
+        # Get the dimensions of the image
+        height = maxProj.getHeight()
+        width = maxProj.getWidth()
+
+        # Store a list of the 4 corners of the image
+        corners = [(0,0),(0,height-1),(width-1,0),(width-1,height-1)]
+        del height, width
+
+        # Start a list that will store fuzzy select ROIs from the 4
+        # corners of the image
+        cornerROIs = []
+
+        # Loop across the four corners of the image
+        for (x,y) in corners:
+
+            # Use the wand tool to fuzzy select the empty area at this
+            # corner of the image
+            IJ.doWand(x,y)
+
+            # Grab the ROI resulting from the wand tool and add it to
+            # our list
+            cornerROIs.append(maxProj.getRoi())
+        del corners, x, y
+
+        # Combine the corner ROIs into a composite. This ROI will select
+        # the area of the image that is blank. When we invert this ROI,
+        # we'll get the area of the image we want to measure from.
+        relevantROI = combineROIs(cornerROIs).getInverse(maxProj)
+        maxProj.close()
+        del cornerROIs, maxProj
+
+        # Return the final ROI
+        return relevantROI
 
 ########################################################################
 ############################# getImgInROI #############################
