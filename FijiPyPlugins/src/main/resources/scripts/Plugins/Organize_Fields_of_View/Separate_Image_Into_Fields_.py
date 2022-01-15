@@ -79,7 +79,7 @@ import ROITools
 
 # Import our ImageProcessing library
 from ImageTools import ImageProcessing
-
+from sys import exit
 ########################################################################
 ## IDENTIFY WHICH IMAGE FILES SHOULD BE SEPARATED INTO FIELDS OF VIEW ##
 ########################################################################
@@ -139,9 +139,25 @@ if u'\xb5' in lengthUnits:
 # Convert field size and field overlap from physical units to pixels
 field_size = int(round(imgCal.getRawX(float(field_size_physical))))
 field_overlap = int(round(imgCal.getRawX(float(field_overlap_physical))))
+exit()
+# Check to see if the image was previously rotated using our scripts. If
+# the image was rotated, there will be a text file starting with
+# 'RotationInDegrees_'.
+if len(ImageFiles.findImgsInDir(inputDir,
+								'txt','RotationInDegrees_')) == 0:
+
+	# Store a variable so we know the image wasn't rotated
+	rotatedTileScan = False
+
+# If we found the text file...
+else:
+
+	# Store that we know the image was rotated 
+	rotatedTileScan = True
 
 # Separate the image into a grid-like configuration of fields of view
-fovGrid = ROITools.gridOfFields(frst_img,field_size)
+fovGrid = ROITools.gridOfFields(frst_img,field_size,field_overlap,
+								rotatedTileScan)
 
 ########################################################################
 ################## SEPARATE IMAGES INTO FIELDS OF VIEW #################
