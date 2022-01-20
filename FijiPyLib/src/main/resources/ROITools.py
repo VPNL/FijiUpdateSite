@@ -304,12 +304,12 @@ class gridOfFields:
 
         # Get the final ROI from the max projection
         smoothedRelevantROI = maxProj.getRoi()
-        maxProj.close()
-        del maxProj
 
         # Clear the ROI manager and restore it to its previous state
         clearROIs()
         addROIs2Manager(prevOpenROIs)
+        maxProj.close()
+        del maxProj
 
         # Return the final ROI
         return smoothedRelevantROI
