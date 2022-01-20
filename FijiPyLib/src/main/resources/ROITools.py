@@ -175,16 +175,16 @@ class gridOfFields:
         # Check to see if the tile scan we're dividing up was rotated
         if rotation == 0:
 
-            # If the image was rotated, we'll need to draw an ROI just
-            # around the area that contains relevant data, avoiding
-            # blank spaces around the edges
-            imgROI = self.getRelevantRegion(img)
+            # We'll want to make sure the entire image is included
+            imgROI = Roi(0,0,img.getWidth(),img.getHeight())
 
         # If the tile scan wasn't rotated...
         else:
 
-            # We'll want to make sure the entire image is included
-            imgROI = Roi(0,0,img.getWidth(),img.getHeight())
+            # If the image was rotated, we'll need to draw an ROI just
+            # around the area that contains relevant data, avoiding
+            # blank spaces around the edges
+            imgROI = self.getRelevantRegion(img)
 
         # Store the total width of a full field of view
         fullFieldWidth = field_size + (2 * field_overlap)
