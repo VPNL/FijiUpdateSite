@@ -20,6 +20,10 @@ This module contains tools to work easily with Fiji ROIs
               view. When any of these fields are isolated, you can use
               this ROI to denote the true boundary of the field of view.
 
+    isContained(containedROI,containingROI)
+
+        - Check to see if one region is contained within another
+
     subtractROI(TotalRegion,Region2Remove)
 
         - Function that will subtract one ROI from another
@@ -96,7 +100,7 @@ This module contains tools to work easily with Fiji ROIs
 
 # Store a constant variable with the amount of pixel wiggle room we're
 # controlling when we grow and shrink ROIs to ensure complete overlap
-wiggleRoom = 2
+wiggleRoom = 10
 
 # Import our ImageProcessing module so we can make max projections
 from ImageTools import ImageProcessing
@@ -218,7 +222,7 @@ class gridOfFields:
 
             # Check to see if this field of view is fully contained
             # within the image ROI
-            if self.containsField(imgROI,newField,img):
+            if isContained(newField,imgROI):
 
                 # Store this field of view in our list of fields
                 fovs.append(newField)
@@ -262,7 +266,10 @@ class gridOfFields:
         width = maxProj.getWidth()
 
         # Store a list of the 4 corners of the image
-        corners = [(10,10),(10,height-11),(width-11,10),(width-11,height-11)]
+        corners = [(wiggleRoom,wiggleRoom),
+                   (wiggleRoom,height-1-wiggleRoom),
+                   (width-1-wiggleRoom,wiggleRoom),
+                   (width-1-wiggleRoom,height-1-wiggleRoom)]
         del height, width
 
         # Start a list that will store fuzzy select ROIs from the 4
@@ -348,51 +355,41 @@ class gridOfFields:
         return roirotator.rotate(fieldROI,rotation,topLeftPoint[0],
                                  topLeftPoint[1])
 
-    # Define a function to assess whether the image contains a defined
-    # field of view
-    def containsField(self,imgROI,fieldROI,img):
+########################################################################
+############################## isContained #############################
+########################################################################
 
-        # Unfortunately, ImageJ doesn't have a very efficient mechanism
-        # to see if all points within an ROI belong to another ROI. As
-        # such, we're just going to check to see if the 4 corners of the
-        # field ROI are contained within the image ROI.
+# Define a function to check to see if one ROI is contained within
+# another
+def isContained(containedROI,containingROI):
+    '''
+    Check to see if one region is contained within another
 
-        # Another thing to consider is that the imgROI is generally made
-        # using a fuzzy selection, while the fieldROI is a rectangle.
-        # This can result in the edges of the fieldROI technically
-        # residing just outside the boundaries of the imgROI (within a
-        # pixel). Thus, we'll first want to shrink the field ROI by a
-        # few pixels.
-        smallerField = roienlarger.enlarge(fieldROI,-wiggleRoom)
+    isContained(containedROI,containingROI)
 
-        # This smaller field will be a fuzzy, traced ROI. Let's convert
-        # this back into a rectangle so we can get the 4 corners. First,
-        # add this new ROI to our image
-        img.setRoi(smallerField)
+        - containedROI (Fiji ROI): Region that might be contained within
+                                   the larger ROI
 
-        # Now, run the macros command to convert this ROI to a rectangle
-        # selection
-        IJ.run('Fit Rectangle')
+        - containingROI (Fiji ROI): Region that might contain the
+                                    smaller ROI
 
-        # Grab the new rectangular ROI from the image
-        smallerField = img.getRoi()
+    OUTPUT True if containedROI is inside containingROI, otherwise False
 
-        # Now store all the points in the smaller field ROI as a float
-        # polygon
-        fieldPoly = smallerField.getFloatPolygon()
-        del smallerField
+    AR Jan 2022
+    '''
 
-        # Store the number of points in this float polygon, should be 4
-        nPts2Check = fieldPoly.npoints
+    # Compute the intersection between the two ROIs
+    ROIUnion = getIntersectingROI([containedROI,containingROI])
 
-        # Store the separate x and y coordinates of this float polygon
-        fieldPolyX = fieldPoly.xpoints
-        fieldPolyY = fieldPoly.ypoints
-        del fieldPoly
+    # Estimate the area of both the union and the smaller region that
+    # might be contained
+    ROIUnionArea = ROIUnion.getFloatWidth() * ROIUnion.getFloatHeight()
+    containedROIArea = containedROI.getFloatWidth() * containedROI.getFloatHeight()
 
-        # Check to see if all points are contained within the image ROI
-        return all([imgROI.containsPoint(fieldPolyX[i],
-                                         fieldPolyY[i]) for i in range(nPts2Check)])
+    # If there is a 1% or less difference in the estimated areas, we'll
+    # predict that the region in question was contained in the larger
+    # area
+    return (abs(ROIUnionArea - containedROIArea) / containedROIArea) < 0.01
 
 ########################################################################
 ############################## subtractROI #############################
