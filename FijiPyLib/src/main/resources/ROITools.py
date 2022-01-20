@@ -104,7 +104,7 @@ from ImageTools import ImageProcessing
 # Import IJ so we can run macros commands
 from ij import IJ
 
-# Import Fiji's Rois and specifically PointRoi and ShapeRoi
+# Import Fiji's Rois
 from ij.gui import Roi, PointRoi, ShapeRoi
 
 # Import ImageJ's ROI rotator so we can rotate field of view ROIs, and
@@ -262,12 +262,17 @@ class gridOfFields:
         width = maxProj.getWidth()
 
         # Store a list of the 4 corners of the image
-        corners = [(0,0),(0,height-1),(width-1,0),(width-1,height-1)]
+        corners = [(10,10),(10,height-11),(width-11,10),(width-11,height-11)]
         del height, width
 
         # Start a list that will store fuzzy select ROIs from the 4
         # corners of the image
         cornerROIs = []
+
+        # Store all currently opened ROIs in the ROI Manager and then
+        # clear
+        prevOpenROIs = getOpenROIs()
+        clearROIs()
 
         # Loop across the four corners of the image
         for (x,y) in corners:
@@ -276,20 +281,31 @@ class gridOfFields:
             # corner of the image
             IJ.doWand(x,y)
 
-            # Grab the ROI resulting from the wand tool and add it to
-            # our list
-            cornerROIs.append(maxProj.getRoi())
+            # Add the newly drawn ROI to the ROI Manager
+            rm.runCommand('Add')
         del corners, x, y
 
-        # Combine the corner ROIs into a composite. This ROI will select
-        # the area of the image that is blank. When we invert this ROI,
-        # we'll get the area of the image we want to measure from.
-        relevantROI = combineROIs(cornerROIs).getInverse(maxProj)
+        # Combine all of the ROIs into a composite
+        _ = rm.runCommand('Combine')
+
+        # Invert the combined ROI so that it selects the area we want to
+        # sample from
+        IJ.run('Make Inverse')
+
+        # Smooth this ROI so that it's less fuzzy and more geometric
+        IJ.run('Fit Spline')
+
+        # Get the final ROI from the max projection
+        smoothedRelevantROI = maxProj.getRoi()
         maxProj.close()
-        del cornerROIs, maxProj
+        del maxProj
+
+        # Clear the ROI manager and restore it to its previous state
+        clearROIs()
+        addROIs2Manager(prevOpenROIs)
 
         # Return the final ROI
-        return relevantROI
+        return smoothedRelevantROI
 
     # Define a method that will identify the point with the lowest
     # x-pixel value within an ROI
