@@ -207,9 +207,6 @@ class gridOfFields:
         # Store the approximate area of the image ROI
         imgROIArea = imgROI.getFloatWidth() * imgROI.getFloatHeight()
 
-        # Display the image we're creating fields of view for
-        img.show()
-
         # We're going to gradually shrink the ROI overtime. Check to see
         # if the area of the ROI is larger than our field of view size
         while imgROIArea > fieldArea:
