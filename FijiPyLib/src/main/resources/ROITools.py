@@ -99,7 +99,7 @@ This module contains tools to work easily with Fiji ROIs
 wiggleRoom = 2
 
 # Import our ImageProcessing module so we can make max projections
-import ImageProcessing
+from ImageTools import ImageProcessing
 
 # Import IJ so we can run macros commands
 from ij import IJ
