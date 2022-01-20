@@ -68,11 +68,10 @@ from ij.gui import GenericDialog
 # directories and join path elements
 import os
 
-# Import Fiji's bioformats reader so we can open image files
-from loci.plugins import BF
-
-# Import IJ so we can run macros commands
-from ij import IJ
+# Import ImagePlus so we can read image files and IJ so we can run
+# macros commands
+from ij import ImagePlus, IJ
+ImagePlus()
 
 # Import our ROITools library
 import ROITools
@@ -111,7 +110,7 @@ del imgPath
 
 # Open the first image in our list of images we want to separate into
 # fields of view
-frst_img = BF.openImagePlus(imgs2separate[0])[0]
+frst_img = ImagePlus(imgs2separate[0])
 
 # Store the dimensions of this first image
 frst_img_dims = frst_img.getDimensions()
@@ -139,25 +138,32 @@ if u'\xb5' in lengthUnits:
 # Convert field size and field overlap from physical units to pixels
 field_size = int(round(imgCal.getRawX(float(field_size_physical))))
 field_overlap = int(round(imgCal.getRawX(float(field_overlap_physical))))
-exit()
-# Check to see if the image was previously rotated using our scripts. If
-# the image was rotated, there will be a text file starting with
-# 'RotationInDegrees_'.
-if len(ImageFiles.findImgsInDir(inputDir,
-								'txt','RotationInDegrees_')) == 0:
+
+# If the image was previously rotated, there will be a text file storing
+# the angle of rotation. Find this text file
+rotAngleTextFilePath = ImageFiles.findImgsInDir(inputDir,'txt',
+											    'RotationInDegrees_')
+
+# If the text file wasn't found, the output of the previous command will
+# be an empty list
+if len(rotAngleTextFilePath) == 0:
 
 	# Store a variable so we know the image wasn't rotated
-	rotatedTileScan = False
+	rotation = 0
 
 # If we found the text file...
 else:
 
-	# Store that we know the image was rotated 
-	rotatedTileScan = True
+	# Open the text file
+	with open(rotAngleTextFilePath,'r+') as rotAngleTextFile:
+
+		# Read the angle saved in the text file
+		rotation = float(rotAngleTextFile.read())
 
 # Separate the image into a grid-like configuration of fields of view
 fovGrid = ROITools.gridOfFields(frst_img,field_size,field_overlap,
-								rotatedTileScan)
+								rotation)
+exit()
 
 ########################################################################
 ################## SEPARATE IMAGES INTO FIELDS OF VIEW #################
@@ -241,7 +247,7 @@ del frst_img
 for imgPath, marker in zip(imgs2separate[1:],markersImaged[1:]):
 
 	# Read the image file into an ImagePlus object
-	img = BF.openImagePlus(imgPath)[0]
+	img = ImagePlus(imgPath)
 
 	# Breakup the image into separate fields of view
 	breakupIntoFields(img,marker)
