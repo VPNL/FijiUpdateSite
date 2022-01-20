@@ -202,7 +202,7 @@ class gridOfFields:
 
         # Start a list of all fields of view that we want to measure
         # from
-        fovs = []
+        self.ROIs = []
 
         # Store the approximate area of the image ROI
         imgROIArea = imgROI.getFloatWidth() * imgROI.getFloatHeight()
@@ -222,7 +222,7 @@ class gridOfFields:
             if isContained(newField,imgROI):
 
                 # Store this field of view in our list of fields
-                fovs.append(newField)
+                self.ROIs.append(newField)
 
             # Make a field of view that is missing one overlapping
             # region, this will be used to crop the area from the image
@@ -235,10 +235,6 @@ class gridOfFields:
             # Update the approximate area of the region remaining to be
             # divided up
             imgROIArea = imgROI.getFloatWidth() * imgROI.getFloatHeight()
-
-        # Store our newly created list of fields of view as an object
-        # attribute
-        self.ROIs = fovs
 
     # Define a method that will produce an ROI just around the portion
     # of the image we care about
