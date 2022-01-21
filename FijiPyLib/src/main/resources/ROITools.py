@@ -20,6 +20,14 @@ This module contains tools to work easily with Fiji ROIs
               view. When any of these fields are isolated, you can use
               this ROI to denote the true boundary of the field of view.
 
+    makeRotatedR0I(topLeftPoint,width,rotation)
+
+        - Makes rotated ROIs
+
+    getTopLeftPoint(ROI)
+
+        - Returns the top left point of an ROI
+
     isContained(containedROI,containingROI)
 
         - Check to see if one region is contained within another
@@ -27,6 +35,10 @@ This module contains tools to work easily with Fiji ROIs
     subtractROI(TotalRegion,Region2Remove)
 
         - Function that will subtract one ROI from another
+
+    cleanUpROI(ROI)
+
+        - Removes loose overhangs from ROIs
 
     getIntersectingROI(ROIs)
 
@@ -154,6 +166,14 @@ class gridOfFields:
           the size of field_size and overlap 50% into the
           neighboring fields of view.
 
+        * img (Fiji ImagePlus): The image that was divided up into
+                                fields
+
+        * maxProj (Fiji ImagePlus): The normalized maximum intensity
+                                    projection of our image. Used to
+                                    keep track of which portions of the
+                                    image have already been sampled.
+
     gridOfFields(img,field_size,field_overlap,isRotated)
 
         - img (ImagePlus): Image that you want to divide into fields of
@@ -176,6 +196,13 @@ class gridOfFields:
     # class of objects
     def __init__(self,img,field_size,field_overlap,rotation):
 
+        # Store the image, field size, field overlap and degree of
+        # rotation as attributes of the object
+        self.img = img
+        self.field_size = field_size
+        self.field_overlap = field_overlap
+        self.rotation = rotation
+
         # Check to see if the tile scan we're dividing up was rotated
         if rotation == 0:
 
@@ -188,14 +215,10 @@ class gridOfFields:
             # If the image was rotated, we'll need to draw an ROI just
             # around the area that contains relevant data, avoiding
             # blank spaces around the edges
-            imgROI = self.getRelevantRegion(img)
+            imgROI = self.getRelevantRegion()
 
         # Store the total width of a full field of view
         fullFieldWidth = field_size + (2 * field_overlap)
-
-        # Store the field width minus one degree of overlap and an
-        # amount of wiggle room
-        fieldWidth4Crop = field_size + field_overlap - wiggleRoom
 
         # Store the total area of the field of view
         fieldArea = (fullFieldWidth) ** 2
@@ -212,10 +235,10 @@ class gridOfFields:
         while imgROIArea > fieldArea:
 
             # Get the top left point of the current imgROI
-            topLPt = self.getTopLeftPoint(imgROI)
+            topLPt = getTopLeftPoint(imgROI)
 
             # Make a full sized field of view at this top left point
-            newField = self.getNextField(topLPt,rotation,fullFieldWidth)
+            newField = makeRotatedR0I(topLPt,fullFieldWidth,rotation)
 
             # Check to see if this field of view is fully contained
             # within the image ROI
@@ -224,46 +247,95 @@ class gridOfFields:
                 # Store this field of view in our list of fields
                 self.ROIs.append(newField)
 
-            # Make a field of view that is missing one overlapping
-            # region, this will be used to crop the area from the image
-            # ROI
-            field4Cropping = self.getNextField(topLPt,rotation,fieldWidth4Crop)
+            # Crop our new field of view from our max projection so that
+            # we can keep track of which areas of the image have already
+            # been sampled
+            self.cropNewField(topLPt)
 
-            # Crop this field of view from the image ROI
-            imgROI = subtractROI(imgROI,field4Cropping)
+            # Regenerate the ROI labeling the rest of the image that has
+            # yet to be sampled from
+            imgROI = self.getRelevantRegion()
 
             # Update the approximate area of the region remaining to be
             # divided up
             imgROIArea = imgROI.getFloatWidth() * imgROI.getFloatHeight()
 
+    # Define a method that will clear the non-overlapping portion of the
+    # field of view from the max projection to keep track of where we
+    # have already sampled from
+    def cropNewField(self,topLeftPoint):
+
+        # Make a field of view that is missing both overlapping
+        # regions, this will be used to crop the area from the max
+        # projection to keep track of what areas of the image have
+        # already been sampled
+        field4Cropping = makeRotatedR0I(topLeftPoint,self.field_size,
+                                        self.rotation)
+
+        # Sometimes the image ROI will have fuzzy edges, so it's hard to
+        # have ROIs fit perfectly within the area that was actually
+        # imaged at the microscope. Given this, we're going to enlarge
+        # the region to remove by the amount of overlap we want to see
+        # between the fields to give us more wiggle room.
+        enlargedField2Crop = roienlarger.enlarge(field4Cropping,
+                                                 self.field_overlap)
+
+        # Make sure the max projection is displayed and add our field to
+        # it
+        self.maxProj.show()
+        self.maxProj.setRoi(enlargedField2Crop)
+
+        # Enlarging the ROI will change its type, change it back to a
+        # rectangle
+        IJ.run('Fit Rectangle')
+
+        # Clear the image contained within the ROI we're using for
+        # cropping, this way we know that we already sampled from this
+        # region
+        self.maxProj.cut()
+
+        # Remove the ROI from the max projection and hide the image
+        self.maxProj.deleteRoi()
+        self.maxProj.hide()
+
     # Define a method that will produce an ROI just around the portion
     # of the image we care about
-    def getRelevantRegion(self,img):
+    def getRelevantRegion(self):
 
-        # Normalize the image so that the pixel intensities are brighter
-        normalizedImg = ImageProcessing.normalizeImg(img)
+        # Check to see if we already have made a max intensity
+        # projection of our image
+        if not hasattr(self,'maxProj'):
 
-        # Create a z-stack object for this image
-        imgStack = ImageProcessing.zStack(normalizedImg)
-        normalizedImg.close()
-        del normalizedImg
+            # Normalize the image so that the pixel intensities are brighter
+            normalizedImg = ImageProcessing.normalizeImg(self.img)
 
-        # Generate a maximum intensity projection of the image
-        maxProj = imgStack.maxProj()
-        maxProj.show()
-        imgStack.orig_z_stack.close()
-        del imgStack
+            # Create a z-stack object for this image
+            imgStack = ImageProcessing.zStack(normalizedImg)
+            normalizedImg.close()
+            del normalizedImg
 
-        # Get the dimensions of the image
-        height = maxProj.getHeight()
-        width = maxProj.getWidth()
+            # Generate a maximum intensity projection of the image
+            self.maxProj = imgStack.maxProj()
+            imgStack.orig_z_stack.close()
+            del imgStack
 
-        # Store a list of the 4 corners of the image
-        corners = [(wiggleRoom,wiggleRoom),
-                   (wiggleRoom,height-1-wiggleRoom),
-                   (width-1-wiggleRoom,wiggleRoom),
-                   (width-1-wiggleRoom,height-1-wiggleRoom)]
-        del height, width
+        # Display our maximum intensity projection
+        self.maxProj.show()
+
+        # Check to see if the dimensions of the image have already been
+        # stored
+        if not hasattr(self,'corners'):
+
+            # Get the dimensions of the image
+            height = self.maxProj.getHeight()
+            width = self.maxProj.getWidth()
+
+            # Store a list of the 4 corners of the image
+            self.corners = [(wiggleRoom,wiggleRoom),
+                            (wiggleRoom,height-1-wiggleRoom),
+                            (width-1-wiggleRoom,wiggleRoom),
+                            (width-1-wiggleRoom,height-1-wiggleRoom)]
+            del height, width
 
         # Start a list that will store fuzzy select ROIs from the 4
         # corners of the image
@@ -275,7 +347,7 @@ class gridOfFields:
         clearROIs()
 
         # Loop across the four corners of the image
-        for (x,y) in corners:
+        for (x,y) in self.corners:
 
             # Use the wand tool to fuzzy select the empty area at this
             # corner of the image
@@ -283,7 +355,7 @@ class gridOfFields:
 
             # Add the newly drawn ROI to the ROI Manager
             rm.runCommand('Add')
-        del corners, x, y
+        del x, y
 
         # Combine all of the ROIs into a composite
         _ = rm.runCommand('Combine')
@@ -296,57 +368,93 @@ class gridOfFields:
         IJ.run('Fit Spline')
 
         # Get the final ROI from the max projection
-        smoothedRelevantROI = maxProj.getRoi()
+        smoothedRelevantROI = self.maxProj.getRoi()
 
         # Clear the ROI manager and restore it to its previous state
         clearROIs()
         addROIs2Manager(prevOpenROIs)
-        maxProj.close()
-        del maxProj
+
+        # Hide the max projection
+        self.maxProj.hide()
 
         # Return the final ROI
         return smoothedRelevantROI
 
-    # Define a method that will identify the point with the lowest
-    # x-pixel value within an ROI
-    def getTopLeftPoint(self,ROI):
+########################################################################
+############################ makeRotatedR0I ############################
+########################################################################
 
-        # Convert the ROI into a float polygon
-        floatPoly = ROI.getFloatPolygon()
+# Define a function to make rotated ROIs
+def makeRotatedR0I(topLeftPoint,width,rotation):
+    '''
+    Makes rotated ROIs
 
-        # Store all of the x and y values of this float polygon
-        xPoints = floatPoly.xpoints
-        yPoints = floatPoly.ypoints
-        del floatPoly
+    makeRotatedR0I(topLeftPoint,width,rotation)
 
-        # Store the minimum x value in the float polygon
-        topLeftXVal = min(xPoints)
+        - topLeftPoint (Tuple of 2 Floats): x and y coordinates of the
+                                            top left point of your final
+                                            rotated ROI
 
-        # Get all point indicies with the smallest x value
-        smallXIndicies = [i for i, x in enumerate(xPoints) if x == topLeftXVal]
-        del xPoints
+        - width (float): The desired width of your ROI
 
-        # Identify the minimum y value of all indicies with the minimum
-        # x-value
-        topLeftYVal = min([yPoints[i] for i in smallXIndicies])
-        del yPoints, smallXIndicies
+        - rotation (float): The desired rotation of your ROI in degrees
 
-        # Return this top left point as a tuple, nudging it by a pixel
-        return (topLeftXVal,topLeftYVal)
+    OUTPUT Fiji ROI containing rotated square selection
 
-    # Define a function that will return the next field of view, given
-    # the top left point of the area we want to sample from, the size of
-    # our field of view, and the amount our image was rotated
-    def getNextField(self,topLeftPoint,rotation,fieldWidth):
+    AR Jan 2022
+    '''
 
-        # Create a field of view starting at the top left point with the
-        # correct width
-        fieldROI = Roi(topLeftPoint[0],topLeftPoint[1],fieldWidth,fieldWidth)
+    # Make a base ROI that's located at the correct x and y coordinates
+    # and has the correct width
+    baseROI = Roi(topLeftPoint[0],topLeftPoint[1],width,width)
 
-        # Reposition and rotate the field of view according to the angle
-        # of rotation and the new center point
-        return roirotator.rotate(fieldROI,rotation,topLeftPoint[0],
-                                 topLeftPoint[1])
+    # Rotate the field of view according to the angle of rotation and
+    # the top left point around which you want to rotate
+    return roirotator.rotate(baseROI,rotation,topLeftPoint[0],
+                             topLeftPoint[1])
+
+########################################################################
+############################ getTopLeftPoint ###########################
+########################################################################
+
+# Define a method that will identify the point with the lowest x-pixel
+# value within an ROI
+def getTopLeftPoint(ROI):
+    '''
+    Returns the top left point of an ROI
+
+    getTopLeftPoint(ROI)
+
+        - ROI (Fiji ROI): Region you want the top left point of
+
+    OUTPUTS Tuple of floats represent the x and y coordinate of the top
+            left point of the region
+
+    AR Jan 2022
+    '''
+
+    # Convert the ROI into a float polygon
+    floatPoly = ROI.getFloatPolygon()
+
+    # Store all of the x and y values of this float polygon
+    xPoints = floatPoly.xpoints
+    yPoints = floatPoly.ypoints
+    del floatPoly
+
+    # Store the minimum x value in the float polygon
+    topLeftXVal = min(xPoints)
+
+    # Get all point indicies with the smallest x value
+    smallXIndicies = [i for i, x in enumerate(xPoints) if x == topLeftXVal]
+    del xPoints
+
+    # Identify the minimum y value of all indicies with the minimum
+    # x-value
+    topLeftYVal = min([yPoints[i] for i in smallXIndicies])
+    del yPoints, smallXIndicies
+
+    # Return this top left point as a tuple, nudging it by a pixel
+    return (topLeftXVal,topLeftYVal)
 
 ########################################################################
 ############################## isContained #############################
@@ -389,7 +497,7 @@ def isContained(containedROI,containingROI):
 ########################################################################
 
 # Define a function to crop out a specified region from an ROI
-def subtractROI(TotalRegion,Region2Remove):
+def subtractROI(TotalRegion,Region2Remove,img,growth=0):
     '''
     Function that will subtract one ROI from another
 
@@ -400,19 +508,38 @@ def subtractROI(TotalRegion,Region2Remove):
         - Region2Remove (Fiji ROI): Portion of TotalRegion that you want
                                     to remove
 
+        - img (Fiji ImagePlus): An image containing your regions of
+                                interest
+
+        - growth (int): How much do you want to expand your
+                        Region2Remove before subtracting from Total
+                        Region (default = 0, no growth)
+
     OUTPUT Fiji ROI storing the cropped region of interest
 
     AR Jan 2022
     '''
 
+    # Make sure that the image is displayed
+    img.show()
+
     # Sometimes ROIs will have fuzzy edges, so it's hard to have ROIs
     # overlap exactly. Given this, we're going to enlarge the region
     # to remove by 2 pixels to give us wiggle room.
-    EnlargedRegion2Remove = roienlarger.enlarge(Region2Remove,wiggleRoom)
+    EnlargedRegion2Remove = roienlarger.enlarge(Region2Remove,growth)
+
+    # Add this enlarged region to remove to our displayed image
+    img.setRoi(EnlargedRegion2Remove)
+
+    # Fit this new ROI to a rectangle
+    IJ.run('Fit Rectangle')
+
+    # Grab the edited ROI
+    EnlargedRectangularRegion2Remove = img.getRoi()
 
     # Compute the area where the enlarged region and the total region
     # overlap
-    FinalRegion2Remove = getIntersectingROI([EnlargedRegion2Remove,
+    FinalRegion2Remove = getIntersectingROI([EnlargedRectangularRegion2Remove,
                                              TotalRegion])
     del EnlargedRegion2Remove
 
@@ -424,7 +551,75 @@ def subtractROI(TotalRegion,Region2Remove):
 
     # Perform a unary exclusive or operation to subtract the final
     # region to remove from the total region
-    return sTotalRegion.xor(sFinalRegion2Remove)
+    croppedROI = sTotalRegion.xor(sFinalRegion2Remove)
+
+    # Sometimes after cropping, a small stray piece will be left off.
+    # Let's clean up the ROI if necessary before returning the final ROI
+    croppedCleanedROI = cleanUpROI(croppedROI,img)
+
+    # Remove the ROI from the image and close it
+    img.deleteRoi()
+    img.hide()
+
+    # Return the final ROI
+    return croppedCleanedROI
+
+########################################################################
+############################## cleanUpROI ##############################
+########################################################################
+
+# Define a function that will clean up any loose edges of an ROI
+def cleanUpROI(ROI,img):
+    '''
+    Removes loose overhangs from ROIs
+
+    cleanUpROI(ROI)
+
+        - ROI (Fiji ROI): Selection you want to clean up
+
+        - img (Fiji ImagePlus): Image containing your selection
+
+    OUTPUT Fiji ROI with the cleaner version of the original ROI
+
+    AR Jan 2022
+    '''
+
+    # Store all currently open ROIs in the ROI manager before clearing
+    prevOpenROIs = getOpenROIs()
+    clearROIs()
+
+    # Add the ROI to the ROI Manager
+    addROIs2Manager(ROI)
+
+    # Make sure that the image is displayed with the ROI
+    img.show()
+    img.setRoi(ROI)
+
+    # Instruct the ROI Manager to split up the ROI into separate
+    # components. If there are areas to be cleaned up, these will be
+    # divided off the main region of interest
+    rm.runCommand('Split')
+
+    # Grab all of the ROIs from the ROI manager, aside from the ROI we
+    # added at the beginning, which would be the first one in the list
+    splitROIs = getOpenROIs()[1:]
+
+    # For each split up ROI, estimate the area of the ROI
+    splitROIAreas = [ROI.getFloatWidth() * ROI.getFloatHeight() for ROI in splitROIs]
+
+    # The cleaned up ROI will be the split ROI with the largest area
+    cleanedUpROI = splitROIs[splitROIAreas.index(max(splitROIAreas))]
+
+    # Restore the ROI Manager back to the original state
+    clearROIs()
+    addROIs2Manager(prevOpenROIs)
+
+    # Remove the ROI from the image and close it
+    img.deleteRoi()
+    img.hide()
+
+    # Return the final cleaned up ROI
+    return cleanedUpROI
 
 ########################################################################
 ########################## getIntersectingROI ##########################
