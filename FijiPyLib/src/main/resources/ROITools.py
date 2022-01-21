@@ -36,10 +36,6 @@ This module contains tools to work easily with Fiji ROIs
 
         - Function that will subtract one ROI from another
 
-    cleanUpROI(ROI)
-
-        - Removes loose overhangs from ROIs
-
     getIntersectingROI(ROIs)
 
         - Function that will return the intersection of a list of ROIs
@@ -563,63 +559,6 @@ def subtractROI(TotalRegion,Region2Remove,img,growth=0):
 
     # Return the final ROI
     return croppedCleanedROI
-
-########################################################################
-############################## cleanUpROI ##############################
-########################################################################
-
-# Define a function that will clean up any loose edges of an ROI
-def cleanUpROI(ROI,img):
-    '''
-    Removes loose overhangs from ROIs
-
-    cleanUpROI(ROI)
-
-        - ROI (Fiji ROI): Selection you want to clean up
-
-        - img (Fiji ImagePlus): Image containing your selection
-
-    OUTPUT Fiji ROI with the cleaner version of the original ROI
-
-    AR Jan 2022
-    '''
-
-    # Store all currently open ROIs in the ROI manager before clearing
-    prevOpenROIs = getOpenROIs()
-    clearROIs()
-
-    # Add the ROI to the ROI Manager
-    addROIs2Manager(ROI)
-
-    # Make sure that the image is displayed with the ROI
-    img.show()
-    img.setRoi(ROI)
-
-    # Instruct the ROI Manager to split up the ROI into separate
-    # components. If there are areas to be cleaned up, these will be
-    # divided off the main region of interest
-    rm.runCommand('Split')
-
-    # Grab all of the ROIs from the ROI manager, aside from the ROI we
-    # added at the beginning, which would be the first one in the list
-    splitROIs = getOpenROIs()[1:]
-
-    # For each split up ROI, estimate the area of the ROI
-    splitROIAreas = [ROI.getFloatWidth() * ROI.getFloatHeight() for ROI in splitROIs]
-
-    # The cleaned up ROI will be the split ROI with the largest area
-    cleanedUpROI = splitROIs[splitROIAreas.index(max(splitROIAreas))]
-
-    # Restore the ROI Manager back to the original state
-    clearROIs()
-    addROIs2Manager(prevOpenROIs)
-
-    # Remove the ROI from the image and close it
-    img.deleteRoi()
-    img.hide()
-
-    # Return the final cleaned up ROI
-    return cleanedUpROI
 
 ########################################################################
 ########################## getIntersectingROI ##########################
