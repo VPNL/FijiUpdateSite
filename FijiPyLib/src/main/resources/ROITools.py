@@ -256,6 +256,9 @@ class gridOfFields:
             # divided up
             imgROIArea = imgROI.getFloatWidth() * imgROI.getFloatHeight()
 
+        # Hide the max projection
+        self.maxProj.hide()
+
     # Define a method that will clear the non-overlapping portion of the
     # field of view from the max projection to keep track of where we
     # have already sampled from
@@ -290,9 +293,8 @@ class gridOfFields:
         # region
         self.maxProj.cut()
 
-        # Remove the ROI from the max projection and hide the image
+        # Remove the ROI from the max projection
         self.maxProj.deleteRoi()
-        self.maxProj.hide()
 
     # Define a method that will produce an ROI just around the portion
     # of the image we care about
@@ -369,9 +371,6 @@ class gridOfFields:
         # Clear the ROI manager and restore it to its previous state
         clearROIs()
         addROIs2Manager(prevOpenROIs)
-
-        # Hide the max projection
-        self.maxProj.hide()
 
         # Return the final ROI
         return smoothedRelevantROI
