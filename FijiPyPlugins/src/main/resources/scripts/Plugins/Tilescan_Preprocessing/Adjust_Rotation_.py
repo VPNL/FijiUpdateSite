@@ -124,6 +124,12 @@ del rotAngleTextFilePath, rotAngleTextFile, currRot
 # Get a list of all image files that we want to rotate
 imgFiles2Rotate = ImageFiles.findImgsInDir(inputDir,'tif','c\d_')
 
+# If only one image file was found...
+if isinstance(imgFiles2Rotate,(unicode,str)):
+
+    # Convert to a list of one element
+    imgFiles2Rotate = [imgFiles2Rotate]
+
 # Rotate across all image files
 for imgFile2Rotate in imgFiles2Rotate:
 
