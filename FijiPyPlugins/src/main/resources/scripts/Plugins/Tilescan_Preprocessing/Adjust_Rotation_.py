@@ -124,29 +124,18 @@ del rotAngleTextFilePath, rotAngleTextFile, currRot
 # Get a list of all image files that we want to rotate
 imgFiles2Rotate = ImageFiles.findImgsInDir(inputDir,'tif','c\d_')
 
+# If only one image file was found...
+if isinstance(imgFiles2Rotate,(unicode,str)):
+
+    # Convert to a list of one element
+    imgFiles2Rotate = [imgFiles2Rotate]
+
+# Locate the location of the Paredes & Grill-Spector Labs' Matlab
+# scripts
+matScriptsPath = os.path.join(os.getcwd(),'scripts')
+
 # Rotate across all image files
 for imgFile2Rotate in imgFiles2Rotate:
 
-    # Read the image file
-    img2Rotate = ImagePlus(imgFile2Rotate)
-
-    # Rotate the image file
-    rotatedImg = ImageProcessing.autoRotation(img2Rotate,rotAngle)
-    img2Rotate.close()
-    del img2Rotate
-
-    # Get the meta data for this image
-    imgMetaData = ImageFiles.getOMEXMLMetadata(imgFile2Rotate)
-
-    # Update the dimensions of the image stored in the meta data to
-    # match our rotated image
-    imgMetaData.setPixelsSizeX(PositiveInteger(rotatedImg.getWidth()),0)
-    imgMetaData.setPixelsSizeY(PositiveInteger(rotatedImg.getHeight()),0)
-
-    # Delete the current image file so we can re-write it
-    os.remove(imgFile2Rotate)
-
-    # Save our rotated image with this meta data to the same image file
-    ImageFiles.saveCompressedImg(rotatedImg,imgMetaData,imgFile2Rotate)
-    rotatedImg.close()
-    del rotatedImg, imgMetaData
+    # Write out a command to rotate and save the image file
+    command = 'matlab -nosplash -nodesktop -nojvm -r "addpath(genpath(\'' + scriptLocation + '\'));rotateAndSaveStack(\'' + imgFile2Rotate  + '\',\'' + str(rotAngle) + '\',\'' + str(xLowBound) + '\',\'' + str(xHighBound) + '\',\'' + str(yLowBound) + '\',\'' + str(yHighBound) + '\');"'
