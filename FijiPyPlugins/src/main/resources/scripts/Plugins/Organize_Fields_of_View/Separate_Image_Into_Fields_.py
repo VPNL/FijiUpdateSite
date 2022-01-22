@@ -71,13 +71,14 @@ import os
 # Import ImagePlus so we can read image files and IJ so we can run
 # macros commands
 from ij import ImagePlus, IJ
+ImagePlus()
 
 # Import our ROITools library
 import ROITools
 
 # Import our ImageProcessing library
 from ImageTools import ImageProcessing
-
+from sys import exit
 ########################################################################
 ## IDENTIFY WHICH IMAGE FILES SHOULD BE SEPARATED INTO FIELDS OF VIEW ##
 ########################################################################
@@ -106,11 +107,6 @@ del imgPath
 ########################################################################
 ###################### GENERATE FIELD OF VIEW ROIS #####################
 ########################################################################
-
-# Construct a dummy ImagePlus object. For some reason, you need to do
-# this before you can use the ImagePlus() construction to read image
-# files
-ImagePlus()
 
 # Open the first image in our list of images we want to separate into
 # fields of view
@@ -143,8 +139,31 @@ if u'\xb5' in lengthUnits:
 field_size = int(round(imgCal.getRawX(float(field_size_physical))))
 field_overlap = int(round(imgCal.getRawX(float(field_overlap_physical))))
 
+# If the image was previously rotated, there will be a text file storing
+# the angle of rotation. Find this text file
+rotAngleTextFilePath = ImageFiles.findImgsInDir(inputDir,'txt',
+											    'RotationInDegrees_')
+
+# If the text file wasn't found, the output of the previous command will
+# be an empty list
+if len(rotAngleTextFilePath) == 0:
+
+	# Store a variable so we know the image wasn't rotated
+	rotation = 0
+
+# If we found the text file...
+else:
+
+	# Open the text file
+	with open(rotAngleTextFilePath,'r+') as rotAngleTextFile:
+
+		# Read the angle saved in the text file
+		rotation = float(rotAngleTextFile.read())
+
 # Separate the image into a grid-like configuration of fields of view
-fovGrid = ROITools.gridOfFields(frst_img,field_size)
+fovGrid = ROITools.gridOfFields(frst_img,field_size,field_overlap,
+								rotation)
+exit()
 
 ########################################################################
 ################## SEPARATE IMAGES INTO FIELDS OF VIEW #################
