@@ -23,19 +23,35 @@ end
 % Get the information of the current image file
 imgInfo = imfinfo(imgFile2Rotate);
 
-% Copy the image description as well as the x and y resolution
-imgDescription = imgInfo.ImageDescription;
-imgResolution = [imgInfo.XResolution,imgInfo.YResolution];
+% Copy the image description, the x and y resolution, and the number of
+% z-planes
+imgDescription = imgInfo(1).ImageDescription;
+imgResolution = [imgInfo(1).XResolution,imgInfo(1).YResolution];
+imgNSlices = numel(imgInfo);
 clear imgInfo
 
-% Read the image we want to rotate 
-img = imread(imgFile2Rotate);
+% Break up the input file name into separate parts 
+[imgFileDir,imgFileName,imgFileExt] = fileparts(imgFile2Rotate);
 
-% Rotate our image 
-rotatedImg = imrotate(img,-rotAngle);
+% Store the name of the file we want to save the rotated image to 
+rotatedImgFile = fullfile(imgFileDir,strcat('Rotated_',imgFileName, ...
+                                            imgFileExt));
+clear imgFileDir imgFileName imgFileExt
 
-% Save the final rotated image, overwriting the existing image file 
-imwrite(rotatedImg,imgFile2Rotate,'Compression','deflate','Description', ...
-        imgDescription,'Resolution',imgResolution)
+% Loop across all z-levels of the image 
+for z = 1:imgNSlices
+
+    % Read the current slice of the image 
+    imgSlice = imread(imgFile2Rotate,z);
+    
+    % Rotate this image slice
+    rotatedImgSlice = imrotate(imgSlice,-rotAngle);
+
+    % Save the final rotated image, overwriting the existing image file 
+    imwrite(rotatedImgSlice,rotatedImgFile,'Compression','deflate', ...
+            'Description', imgDescription,'Resolution',imgResolution, ...
+            'WriteMode','append');
+
+end
 
 end
