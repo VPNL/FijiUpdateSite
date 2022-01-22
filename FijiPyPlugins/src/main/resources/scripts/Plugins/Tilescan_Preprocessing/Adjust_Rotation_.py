@@ -142,7 +142,7 @@ for imgFile2Rotate in imgFiles2Rotate:
     del img2Rotate
 
     # Get the meta data for this image
-    imgMetaData = ImageFiles.getOMEXMLMetadata(imgFile2Rotate)
+    imgMetaData = ImageFiles.getMetadata(rotatedImg)
 
     # Update the dimensions of the image stored in the meta data to
     # match our rotated image

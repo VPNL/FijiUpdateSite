@@ -25,7 +25,7 @@ This module contains tools to work easily with image files.
 
         - Returns the row and column name of field of view
 
-    getOMEXMLMetadata(filePath)
+    getMetadata(imp)
 
         - Reads the metadata for an image file
 
@@ -53,7 +53,22 @@ import re
 
 # Import bio-formats image reader and MetadataTools so we can work with
 # image metadata
-from loci.formats import ImageReader, MetadataTools
+from loci.formats import CoreMetadata, MetadataTools
+
+# Import Hashtable from java so we can create metadata maps
+from java.util import Hashtable
+
+# Import IJ so we can figure out the ImageJ version
+from ij import IJ
+
+# Import length from bio formats
+from ome.units.quantity import Length
+
+# Import bio formats' units class
+from ome.units import UNITS
+
+# Import bio formats' positive float class
+from ome.xml.model.primitives import PositiveFloat
 
 # Import bio-format's Tiff writer
 from loci.formats.out import TiffWriter
@@ -335,40 +350,85 @@ def getRowCol(fieldName):
     return RowCol
 
 ########################################################################
-########################### getOMEXMLMetadata ##########################
+############################## getMetadata #############################
 ########################################################################
 
 # Write a function that will get the bio-formats meta data for an image
-# file
-def getOMEXMLMetadata(filePath):
+def getMetadata(imp):
     '''
     Reads the metadata for an image file
 
-    getOMEXMLMetadata(filePath)
+    getMetadata(imp)
 
-        - filePath (String): Location of the image file you want to read
+        - imp (Fiji ImagePlus): Image you want to create metadata for
 
     OUTPUT MetadataStore object from the bio-formats java library
     containing the metadata for this image
+
+    AR Jan 2022
     '''
 
-    # Initialize a metadata object
-    omeMeta = MetadataTools.createOMEXMLMetadata()
+    # Initialize an object to store core metadata
+    core = CoreMetadata()
 
-    # Create an instance of an ImageReader so we can read image files
-    reader = ImageReader()
+    # Store the file info from the ImagePlus
+    impFileInfo = imp.getFileInfo()
 
-    # Instruct the reader to output to this metadata object
-    reader.setMetadataStore(omeMeta)
+    # Use the image plus object to extract the image properties to add
+    # to the metadata
+    core.bitsPerPixel = imp.getBytesPerPixel() * 8 # A byte is a group
+                                                   # of 8 bits
+    core.dimensionOrder = 'XYZTC'
+    core.imageCount = impFileInfo.nImages
+    core.littleEndian = impFileInfo.intelByteOrder
+    core.pixelType = imp.getBytesPerPixel()
+    core.rgb = imp.getBitDepth() == 24 # 24 bit depth for ImagePlus is
+                                       # for RGB images
+    core.sizeC = imp.getNChannels()
+    core.sizeT = imp.getNFrames()
+    core.sizeX = imp.getWidth()
+    core.sizeY = imp.getHeight()
+    core.sizeZ = imp.getNSlices()
 
-    # Read the metadata at this file
-    reader.setId(filePath)
+    # Create a metadata map for this image
+    metaMap = Hashtable()
 
-    # Close the reader object
-    reader.close()
+    # Grab the calibration for this image
+    impCalibration = imp.getCalibration()
+
+    # Store the current ImageJ version
+    ImageJVersion = IJ.getVersion()
+
+    # Add in metadata for our image into our metadata map
+    metaMap.put('ImageLength',imp.getHeight())
+    metaMap.put('XResolution',impCalibration.getX(1))
+    metaMap.put('ImageJ',ImageJVersion[ImageJVersion.index('/')+1:])
+    metaMap.put('YResolution',impCalibration.getY(1))
+    metaMap.put('ResolutionUnit',impCalibration.getUnit())
+    metaMap.put('Unit',impCalibration.getUnit())
+    metaMap.put('NumberOfChannels',imp.getNChannels())
+    metaMap.put('BitsPerSample',imp.getBytesPerPixel() * 8)
+    metaMap.put('ImageWidth',imp.getWidth())
+    metaMap.put('SamplesPerPixel',impFileInfo.samplesPerPixel)
+
+    # Add the metadata map to the core metadata
+    core.seriesMetadata = metaMap
+
+    # Initialize an OME-XML metadata storage object
+    meta = MetadataTools.createOMEXMLMetadata()
+
+    # Populate this OME-XML metadata storage using our core metadata
+    MetadataTools.populateMetadata(meta,0,imp.getTitle(),core)
+
+    # Add the resolution to the image metadata
+    # TODO: Don't hard code image resolution
+    meta.setPixelsPhysicalSizeX(Length(impCalibration.getX(1),UNITS.MICROMETER),0)
+    meta.setPixelsPhysicalSizeY(Length(impCalibration.getY(1),UNITS.MICROMETER),0)
+    meta.setPixelsPhysicalSizeZ(Length(impCalibration.getZ(1),UNITS.MICROMETER),0)
+
 
     # Return the metadata
-    return omeMeta
+    return meta
 
 ########################################################################
 ########################### saveCompressedImg ##########################
