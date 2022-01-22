@@ -138,4 +138,7 @@ matScriptsPath = os.path.join(os.getcwd(),'scripts')
 for imgFile2Rotate in imgFiles2Rotate:
 
     # Write out a command to rotate and save the image file
-    command = 'matlab -nosplash -nodesktop -nojvm -r "addpath(genpath(\'' + scriptLocation + '\'));rotateAndSaveStack(\'' + imgFile2Rotate  + '\',\'' + str(rotAngle) + '\',\'' + str(xLowBound) + '\',\'' + str(xHighBound) + '\',\'' + str(yLowBound) + '\',\'' + str(yHighBound) + '\');"'
+    command = 'matlab -nosplash -nodesktop -nojvm -r "addpath(genpath(\'' + matScriptsPath + '\'));rotateAndSaveStack(\'' + imgFile2Rotate  + '\',\'' + str(rotAngle) + '\');"'
+
+    # Run the command
+    _ = os.system(command)

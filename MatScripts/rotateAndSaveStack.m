@@ -1,5 +1,4 @@
-function rotateAndSaveStack(imgFile2Rotate,rotAngle,xLowBound,xHighBound, ...
-                            yLowBound,yHighBound)
+function rotateAndSaveStack(imgFile2Rotate,rotAngle)
 % ROTATEANDSAVESTACK Rotates an image stack, crops it, and then saves it
 % using a deflation compression
 %
@@ -11,20 +10,6 @@ function rotateAndSaveStack(imgFile2Rotate,rotAngle,xLowBound,xHighBound, ...
 %       - rotAngle (Double): Angle that you want to rotate your image in
 %                            degrees in a clockwise direction
 %
-%   rotateAndSaveStack(__,xLowBound,xHighBound,yLowBound,yHeighBound)
-%
-%       - xLowBound (Int): Lowest x coordinate you want to include in the
-%                          final image after rotation
-%
-%       - xHighBound (Int): Highest x coordinate you want to include in the
-%                           final image after rotation
-%
-%       - yLowBound (Int): Lowest y coordinate you want to include in the
-%                          final image after rotation
-%
-%       - yHighBound (Int): Highest y coordinate you want to include in the
-%                           final image after rotation
-%
 %   Function will save the final, rotated image stack, overwriting the
 %   original image file.
 %
@@ -34,45 +19,39 @@ function rotateAndSaveStack(imgFile2Rotate,rotAngle,xLowBound,xHighBound, ...
 if ischar(rotAngle)
     rotAngle = str2double(rotAngle);
 end
-if nargin > 2
-    if ischar(xLowBound)
-        xLowBound = uint8(str2double(xLowBound));
-    end
-    if ischar(xHighBound)
-        xHighBound = uint8(str2double(xHighBound));
-    end
-    if ischar(yLowBound)
-        yLowBound = uint8(str2double(yLowBound));
-    end
-    if ischar(yHighBound)
-        yHighBound = uint8(str2double(yHighBound));
-    end
-end
 
 % Get the information of the current image file
 imgInfo = imfinfo(imgFile2Rotate);
 
-% Copy the image description as well as the x and y resolution
-imgDescription = imgInfo.ImageDescription;
-imgResolution = [imgInfo.XResolution,imgInfo.YResolution];
+% Copy the image description, the x and y resolution, and the number of
+% z-planes
+imgDescription = imgInfo(1).ImageDescription;
+imgResolution = [imgInfo(1).XResolution,imgInfo(1).YResolution];
+imgNSlices = numel(imgInfo);
 clear imgInfo
 
-% Read the image we want to rotate 
-img = imread(imgFile2Rotate);
+% Break up the input file name into separate parts 
+[imgFileDir,imgFileName,imgFileExt] = fileparts(imgFile2Rotate);
 
-% Rotate our image 
-rotatedImg = imrotate(img,-rotAngle);
+% Store the name of the file we want to save the rotated image to 
+rotatedImgFile = fullfile(imgFileDir,strcat('Rotated_',imgFileName, ...
+                                            imgFileExt));
+clear imgFileDir imgFileName imgFileExt
 
-% If we defined bounds to crop our image... 
-if nargin > 2
+% Loop across all z-levels of the image 
+for z = 1:imgNSlices
 
-    % ... crop the rotated image 
-    rotatedImg = rotatedImg(xLowBound:xHighBound,yLowBound:yHighBound);
+    % Read the current slice of the image 
+    imgSlice = imread(imgFile2Rotate,z);
+    
+    % Rotate this image slice
+    rotatedImgSlice = imrotate(imgSlice,-rotAngle);
+
+    % Save the final rotated image, overwriting the existing image file 
+    imwrite(rotatedImgSlice,rotatedImgFile,'Compression','deflate', ...
+            'Description', imgDescription,'Resolution',imgResolution, ...
+            'WriteMode','append');
 
 end
-
-% Save the final rotated image, overwriting the existing image file 
-imwrite(rotatedImg,imgFile2Rotate,'Compression','deflate','Description', ...
-        imgDescription,'Resolution',imgResolution)
 
 end
