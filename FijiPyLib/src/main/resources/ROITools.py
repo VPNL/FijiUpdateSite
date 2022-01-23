@@ -213,6 +213,14 @@ class gridOfFields:
             # blank spaces around the edges
             imgROI = self.getRelevantRegion()
 
+        # Use the image ROI and the size of the original image to create
+        # an image segmentation mask, labeling the full area we need to
+        # sample from. We'll use this segmentation mask to keep track of
+        # what has already been sampled, and what hasn't.
+        img.setRoi(imgROI)
+        self.imgSegMask = img.createRoiMask()
+        self.imgSegMask.show()
+
         # Store the total width of a full field of view
         fullFieldWidth = field_size + (2 * field_overlap)
 
@@ -256,8 +264,8 @@ class gridOfFields:
             # divided up
             imgROIArea = imgROI.getFloatWidth() * imgROI.getFloatHeight()
 
-        # Hide the max projection
-        self.maxProj.hide()
+        # Hide the segmentation mask
+        self.imgSegMask.hide()
 
     # Define a method that will clear the non-overlapping portion of the
     # field of view from the max projection to keep track of where we
@@ -279,10 +287,10 @@ class gridOfFields:
         enlargedField2Crop = roienlarger.enlarge(field4Cropping,
                                                  self.field_overlap)
 
-        # Make sure the max projection is displayed and add our field to
+        # Make sure the segmentation is displayed and add our field to
         # it
-        self.maxProj.show()
-        self.maxProj.setRoi(enlargedField2Crop)
+        self.imgSegMask.show()
+        self.imgSegMask.setRoi(enlargedField2Crop)
 
         # Enlarging the ROI will change its type, change it back to a
         # rectangle
@@ -291,10 +299,10 @@ class gridOfFields:
         # Clear the image contained within the ROI we're using for
         # cropping, this way we know that we already sampled from this
         # region
-        self.maxProj.cut()
+        self.imgSegMask.cut()
 
         # Remove the ROI from the max projection
-        self.maxProj.deleteRoi()
+        self.imgSegMask.deleteRoi()
 
     # Define a method that will produce an ROI just around the portion
     # of the image we care about
@@ -317,8 +325,18 @@ class gridOfFields:
             imgStack.orig_z_stack.close()
             del imgStack
 
-        # Display our maximum intensity projection
-        self.maxProj.show()
+        # Check to see if we already have the segmentation mask for our
+        # image
+        if not hasattr(self,'imgSegMask'):
+
+            # Display our maximum intensity projection
+            self.maxProj.show()
+
+        # Otherwise...
+        else:
+
+            # Just display and use the segmenation
+            self.imgSegMask.show()
 
         # Check to see if the dimensions of the image have already been
         # stored
@@ -365,12 +383,19 @@ class gridOfFields:
         # Smooth this ROI so that it's less fuzzy and more geometric
         IJ.run('Fit Spline')
 
-        # Get the final ROI from the max projection
-        smoothedRelevantROI = self.maxProj.getRoi()
+        # Add the final ROI to the ROI Manager
+        clearROIs()
+        rm.runCommand('Add')
+
+        # Get the final ROI from the ROI Manager
+        smoothedRelevantROI = getOpenROIs()
 
         # Clear the ROI manager and restore it to its previous state
         clearROIs()
         addROIs2Manager(prevOpenROIs)
+
+        # Make sure the max projection is hidden
+        self.maxProj.hide()
 
         # Return the final ROI
         return smoothedRelevantROI
