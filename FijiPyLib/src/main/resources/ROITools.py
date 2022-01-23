@@ -20,6 +20,14 @@ This module contains tools to work easily with Fiji ROIs
               view. When any of these fields are isolated, you can use
               this ROI to denote the true boundary of the field of view.
 
+    selectNonBlackRegion(img)
+
+        - Makes an ROI just around the non-black region of the image
+
+    cleanUpROI(ROI)
+
+        - Removes loose overhangs from ROIs
+
     makeRotatedR0I(topLeftPoint,width,rotation)
 
         - Makes rotated ROIs
@@ -124,6 +132,10 @@ from ij.gui import Roi, PointRoi, ShapeRoi
 from ij.plugin import RoiRotator, RoiEnlarger
 roirotator = RoiRotator()
 roienlarger = RoiEnlarger()
+
+# Import ImageJ's threshold to selection filter
+from ij.plugin.filter import ThresholdToSelection
+thresholdtoselection = ThresholdToSelection()
 
 # Import os so we can get the parent directory of a file, check to see
 # if directories exist, and create directories
@@ -399,6 +411,104 @@ class gridOfFields:
 
         # Return the final ROI
         return smoothedRelevantROI
+
+########################################################################
+######################### selectNonBlackRegion #########################
+########################################################################
+
+# Define a function to select just the relevant portion of the image
+# that isn't all black
+def selectNonBlackRegion(img):
+    '''
+    Makes an ROI just around the non-black region of the image
+
+    selectNonBlackRegion(img)
+
+        - img (Fiji ImagePlus): Image you want to process
+
+    OUTPUT Fiji ROI selecting the non-black region of the image
+
+    AR Jan 2022
+    '''
+
+    # Get the statistics for the image so we can know the min and max
+    # pixel value
+    imgStats = img.getStatistics()
+
+    # Set a threshold selecting all pixels that are greater than the
+    # smallest possible pixel value
+    IJ.setRawThreshold(img,imgStats.min+1,imgStats.max,None)
+    del imgStats
+
+    # Convert the threshold to an ROI
+    nonBlackROI = thresholdtoselection.convert(img.getProcessor())
+
+    # Display the ROI on the image
+    img.show()
+    img.setRoi(nonBlackROI)
+
+    # Fill any holes in the ROI
+    IJ.run("Fill ROI holes", "")
+
+    # Clean up the ROI and return
+    return cleanUpROI(nonBlackROI,img)
+
+########################################################################
+############################## cleanUpROI ##############################
+########################################################################
+
+# Define a function that will clean up any loose edges of an ROI
+def cleanUpROI(ROI,img):
+    '''
+    Removes loose overhangs from ROIs
+
+    cleanUpROI(ROI)
+
+        - ROI (Fiji ROI): Selection you want to clean up
+
+        - img (Fiji ImagePlus): Image containing your selection
+
+    OUTPUT Fiji ROI with the cleaner version of the original ROI
+
+    AR Jan 2022
+    '''
+
+    # Store all currently open ROIs in the ROI manager before clearing
+    prevOpenROIs = getOpenROIs()
+    clearROIs()
+
+    # Add the ROI to the ROI Manager
+    addROIs2Manager(ROI)
+
+    # Make sure that the image is displayed with the ROI
+    img.show()
+    img.setRoi(ROI)
+
+    # Instruct the ROI Manager to split up the ROI into separate
+    # components. If there are areas to be cleaned up, these will be
+    # divided off the main region of interest
+    rm.runCommand('Split')
+
+    # Grab all of the ROIs from the ROI manager, aside from the ROI we
+    # added at the beginning, which would be the first one in the list
+    splitROIs = getOpenROIs()[1:]
+
+    # For each split up ROI, estimate the area of the ROI
+    splitROIAreas = [ROI.getFloatWidth() * ROI.getFloatHeight() for ROI in splitROIs]
+
+    # The cleaned up ROI will be the split ROI with the largest area
+    cleanedUpROI = splitROIs[splitROIAreas.index(max(splitROIAreas))]
+
+    # Restore the ROI Manager back to the original state
+    clearROIs()
+    addROIs2Manager(prevOpenROIs)
+
+    # Remove the ROI from the image and close it
+    img.deleteRoi()
+    img.hide()
+
+    # Return the final cleaned up ROI
+    return cleanedUpROI
 
 ########################################################################
 ############################ makeRotatedR0I ############################
