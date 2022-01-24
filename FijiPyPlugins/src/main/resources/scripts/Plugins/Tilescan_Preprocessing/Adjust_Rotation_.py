@@ -57,10 +57,6 @@ from ImageTools import ImageFiles, ImageProcessing
 # this computer
 import os
 
-# Import positive integer object from bio-formats so we can specify
-# image dimensions
-from ome.xml.model.primitives import PositiveInteger
-
 ########################################################################
 ############ OPEN THE IMAGE FILE WE WANT TO MANUALLY ROTATE ############
 ########################################################################
