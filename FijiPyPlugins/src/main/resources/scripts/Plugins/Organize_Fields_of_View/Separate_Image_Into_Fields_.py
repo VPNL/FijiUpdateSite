@@ -133,7 +133,7 @@ if u'\xb5' in lengthUnits:
 [field_size_physical,field_overlap_physical] = UIs.textFieldsUI('Specify your true field of view size and the amount you want to see overlaping into neighboring fields.',
 											  					['True Field of View Size in {}:'.format(lengthUnits),
 											   					 'Overlap into Neighboring Fields in {}:'.format(lengthUnits)],
-											  			 		['50','15'])
+											  			 		['60','15'])
 
 # Convert field size and field overlap from physical units to pixels
 field_size = int(round(imgCal.getRawX(float(field_size_physical))))
