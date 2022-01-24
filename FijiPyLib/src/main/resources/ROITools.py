@@ -211,19 +211,22 @@ class gridOfFields:
         self.field_overlap = field_overlap
         self.rotation = rotation
 
-        # Check to see if the tile scan we're dividing up was rotated
-        if rotation == 0:
+        # Normalize the image so that the pixel intensities are brighter
+        normalizedImg = ImageProcessing.normalizeImg(self.img)
 
-            # We'll want to make sure the entire image is included
-            imgROI = Roi(0,0,img.getWidth(),img.getHeight())
+        # Create a z-stack object for this image
+        imgStack = ImageProcessing.zStack(normalizedImg)
+        normalizedImg.close()
+        del normalizedImg
 
-        # If the tile scan wasn't rotated...
-        else:
+        # Generate a maximum intensity projection of the image
+        self.maxProj = imgStack.maxProj()
+        imgStack.orig_z_stack.close()
+        del imgStack
 
-            # If the image was rotated, we'll need to draw an ROI just
-            # around the area that contains relevant data, avoiding
-            # blank spaces around the edges
-            imgROI = self.getRelevantRegion()
+        # Create an ROI surrounding just the area of the tile scan that
+        # we want to sample from, using the max projection
+        imgROI = selectNonBlackRegion(self.maxProj)
 
         # Use the image ROI and the size of the original image to create
         # an image segmentation mask, labeling the full area we need to
@@ -270,7 +273,7 @@ class gridOfFields:
 
             # Regenerate the ROI labeling the rest of the image that has
             # yet to be sampled from
-            imgROI = self.getRelevantRegion()
+            imgROI = selectNonBlackRegion(self.imgSegMask)
 
             # Update the approximate area of the region remaining to be
             # divided up
@@ -315,102 +318,6 @@ class gridOfFields:
 
         # Remove the ROI from the max projection
         self.imgSegMask.deleteRoi()
-
-    # Define a method that will produce an ROI just around the portion
-    # of the image we care about
-    def getRelevantRegion(self):
-
-        # Check to see if we already have made a max intensity
-        # projection of our image
-        if not hasattr(self,'maxProj'):
-
-            # Normalize the image so that the pixel intensities are brighter
-            normalizedImg = ImageProcessing.normalizeImg(self.img)
-
-            # Create a z-stack object for this image
-            imgStack = ImageProcessing.zStack(normalizedImg)
-            normalizedImg.close()
-            del normalizedImg
-
-            # Generate a maximum intensity projection of the image
-            self.maxProj = imgStack.maxProj()
-            imgStack.orig_z_stack.close()
-            del imgStack
-
-        # Check to see if we already have the segmentation mask for our
-        # image
-        if not hasattr(self,'imgSegMask'):
-
-            # Display our maximum intensity projection
-            self.maxProj.show()
-
-        # Otherwise...
-        else:
-
-            # Just display and use the segmenation
-            self.imgSegMask.show()
-
-        # Check to see if the dimensions of the image have already been
-        # stored
-        if not hasattr(self,'corners'):
-
-            # Get the dimensions of the image
-            height = self.maxProj.getHeight()
-            width = self.maxProj.getWidth()
-
-            # Store a list of the 4 corners of the image
-            self.corners = [(wiggleRoom,wiggleRoom),
-                            (wiggleRoom,height-1-wiggleRoom),
-                            (width-1-wiggleRoom,wiggleRoom),
-                            (width-1-wiggleRoom,height-1-wiggleRoom)]
-            del height, width
-
-        # Start a list that will store fuzzy select ROIs from the 4
-        # corners of the image
-        cornerROIs = []
-
-        # Store all currently opened ROIs in the ROI Manager and then
-        # clear
-        prevOpenROIs = getOpenROIs()
-        clearROIs()
-
-        # Loop across the four corners of the image
-        for (x,y) in self.corners:
-
-            # Use the wand tool to fuzzy select the empty area at this
-            # corner of the image
-            IJ.doWand(x,y)
-
-            # Add the newly drawn ROI to the ROI Manager
-            rm.runCommand('Add')
-        del x, y
-
-        # Combine all of the ROIs into a composite
-        _ = rm.runCommand('Combine')
-
-        # Invert the combined ROI so that it selects the area we want to
-        # sample from
-        IJ.run('Make Inverse')
-
-        # Smooth this ROI so that it's less fuzzy and more geometric
-        IJ.run('Fit Spline')
-
-        # Add the final ROI to the ROI Manager
-        clearROIs()
-        rm.runCommand('Add')
-
-        # Get the final ROI from the ROI Manager
-        smoothedRelevantROI = getOpenROIs()
-
-        # Clear the ROI manager and restore it to its previous state
-        clearROIs()
-        addROIs2Manager(prevOpenROIs)
-
-        # Make sure the max projection is hidden
-        self.maxProj.hide()
-
-        # Return the final ROI
-        return smoothedRelevantROI
 
 ########################################################################
 ######################### selectNonBlackRegion #########################
