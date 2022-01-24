@@ -121,8 +121,9 @@ wiggleRoom = 10
 # Import our ImageProcessing module so we can make max projections
 from ImageTools import ImageProcessing
 
-# Import IJ so we can run macros commands
-from ij import IJ
+# Import IJ so we can run macros commands and ImagePlus so we can make
+# ImagePlus objects
+from ij import IJ, ImagePlus
 
 # Import Fiji's Rois
 from ij.gui import Roi, PointRoi, ShapeRoi
