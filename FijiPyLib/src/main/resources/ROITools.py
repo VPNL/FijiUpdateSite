@@ -133,6 +133,9 @@ from ij.plugin import RoiRotator, RoiEnlarger
 roirotator = RoiRotator()
 roienlarger = RoiEnlarger()
 
+# Import floor and ceil from math so we can round up and down
+from math import floor, ceil
+
 # Import ImageJ's threshold to selection filter
 from ij.plugin.filter import ThresholdToSelection
 thresholdtoselection = ThresholdToSelection()
@@ -207,8 +210,6 @@ class gridOfFields:
         # Store the image, field size, field overlap and degree of
         # rotation as attributes of the object
         self.img = img
-        self.field_size = field_size
-        self.field_overlap = field_overlap
         self.rotation = rotation
 
         # Normalize the image so that the pixel intensities are brighter
@@ -226,18 +227,21 @@ class gridOfFields:
 
         # Create an ROI surrounding just the area of the tile scan that
         # we want to sample from, using the max projection
-        imgROI = selectNonBlackRegion(self.maxProj)
+        self.imgROI = selectNonBlackRegion(self.maxProj)
 
         # Use the image ROI and the size of the original image to create
         # an image segmentation mask, labeling the full area we need to
         # sample from. We'll use this segmentation mask to keep track of
         # what has already been sampled, and what hasn't.
-        img.setRoi(imgROI)
-        self.imgSegMask = img.createRoiMask()
+        self.img.setRoi(self.imgROI)
+        self.imgSegMask = ImagePlus('Area2Sample',self.img.createRoiMask())
         self.imgSegMask.show()
 
         # Store the total width of a full field of view
         fullFieldWidth = field_size + (2 * field_overlap)
+
+        # Store the width of a field and one overlap region
+        fieldPlusOverlap = field_size + field_overlap
 
         # Store the total area of the field of view
         fieldArea = (fullFieldWidth) ** 2
@@ -247,37 +251,38 @@ class gridOfFields:
         self.ROIs = []
 
         # Store the approximate area of the image ROI
-        imgROIArea = imgROI.getFloatWidth() * imgROI.getFloatHeight()
+        imgROIArea = self.imgROI.getFloatWidth() * self.imgROI.getFloatHeight()
 
         # We're going to gradually shrink the ROI overtime. Check to see
         # if the area of the ROI is larger than our field of view size
         while imgROIArea > fieldArea:
 
             # Get the top left point of the current imgROI
-            topLPt = getTopLeftPoint(imgROI)
+            topLPt = getTopLeftPoint(self.imgROI)
 
             # Make a full sized field of view at this top left point
-            newField = makeRotatedR0I(topLPt,fullFieldWidth,rotation)
+            newField = makeRotatedR0I(topLPt,fullFieldWidth,rotation - 180) # TODO: Need to figure out how to transform rotation to make it work
 
             # Check to see if this field of view is fully contained
             # within the image ROI
-            if isContained(newField,imgROI):
+            if isContained(newField,self.imgROI):
 
                 # Store this field of view in our list of fields
                 self.ROIs.append(newField)
 
-            # Crop our new field of view from our max projection so that
-            # we can keep track of which areas of the image have already
-            # been sampled
-            self.cropNewField(topLPt)
+                # Crop the full field from the image
+                self.cropNewField(topLPt,fieldPlusOverlap)
 
-            # Regenerate the ROI labeling the rest of the image that has
-            # yet to be sampled from
-            imgROI = selectNonBlackRegion(self.imgSegMask)
+            # If the field was not contained ...
+            else:
+
+                # Only crop out a square area with a width of two field
+                # overlaps
+                self.cropNewField(topLPt,field_overlap)
 
             # Update the approximate area of the region remaining to be
             # divided up
-            imgROIArea = imgROI.getFloatWidth() * imgROI.getFloatHeight()
+            imgROIArea = self.imgROI.getFloatWidth() * self.imgROI.getFloatHeight()
 
         # Hide the segmentation mask
         self.imgSegMask.hide()
@@ -285,14 +290,14 @@ class gridOfFields:
     # Define a method that will clear the non-overlapping portion of the
     # field of view from the max projection to keep track of where we
     # have already sampled from
-    def cropNewField(self,topLeftPoint):
+    def cropNewField(self,topLeftPoint,cropWidth):
 
         # Make a field of view that is missing both overlapping
         # regions, this will be used to crop the area from the max
         # projection to keep track of what areas of the image have
         # already been sampled
-        field4Cropping = makeRotatedR0I(topLeftPoint,self.field_size,
-                                        self.rotation)
+        field4Cropping = makeRotatedR0I(topLeftPoint,ceil(cropWidth/2.0),
+                                        self.rotation - 180) # TODO: Need to figure out how to transform rotation to make it work
 
         # Sometimes the image ROI will have fuzzy edges, so it's hard to
         # have ROIs fit perfectly within the area that was actually
@@ -300,7 +305,7 @@ class gridOfFields:
         # the region to remove by the amount of overlap we want to see
         # between the fields to give us more wiggle room.
         enlargedField2Crop = roienlarger.enlarge(field4Cropping,
-                                                 self.field_overlap)
+                                                 floor(cropWidth/2.0))
 
         # Make sure the segmentation is displayed and add our field to
         # it
@@ -318,6 +323,17 @@ class gridOfFields:
 
         # Remove the ROI from the max projection
         self.imgSegMask.deleteRoi()
+
+        # Convert the image segmentation to an roi to update our image
+        # selection
+        self.imgROI = ImageProcessing.segmentation2ROIs(self.imgSegMask)
+
+        # Check to see if a list of ROIs was returned by the previous
+        # command
+        if isinstance(self.imgROI,(list,tuple)):
+
+            # Combine all of the ROIs in img ROI
+            self.imgROI = combineROIs(self.imgROI)
 
 ########################################################################
 ######################### selectNonBlackRegion #########################
