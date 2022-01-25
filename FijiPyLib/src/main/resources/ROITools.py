@@ -299,8 +299,8 @@ class gridOfFields:
 
         # Each of these fields of view will later be cropped. Find the
         # central coordinate of this crop
-        fovCenter = (fovGrid.ROIs[0].getFloatWidth() / 2.0,
-                     fovGrid.ROIs[0].getFloatHeight() / 2.0)
+        fovCenter = (self.ROIs[0].getFloatWidth() / 2.0,
+                     self.ROIs[0].getFloatHeight() / 2.0)
 
         # Create an ROI centered at the center of the field of view with
         # the true field of view size (no overlap)
