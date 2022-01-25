@@ -114,12 +114,12 @@ fieldsROIs = ROITools.openROIFile(os.path.join(fieldsDir,'..','ROIs',fieldSize +
 # Get all of the names of these ROIs. The list of these names will be
 # equivalent to the list of all fields of view in the grid layed out
 # previously in Separate Image Into Fields
-fieldRowsCols = [fieldROI.getName() for fieldROI in fieldsROIs]
+fieldNames = [fieldROI.getName() for fieldROI in fieldsROIs]
 
 del fieldsROIs
 
 # Randomly shuffle this list of fields of view
-random.shuffle(fieldRowsCols)
+random.shuffle(fieldNames)
 
 ########################################################################
 ############# DISTRIBUTE FIELDS OF VIEW AMONGST RESEARCHERS ############
@@ -127,9 +127,9 @@ random.shuffle(fieldRowsCols)
 
 # Divide up the fields of view so they are roughly equally distributed
 # amongst the researchers
-fieldsByResearcher = [fieldRowsCols[i::NResearchers] for i in xrange(NResearchers)]
+fieldsByResearcher = [fieldNames[i::NResearchers] for i in xrange(NResearchers)]
 
-del fieldRowsCols
+del fieldNames
 
 # Loop across researchers that will be assigned fields of view
 researcherNum = 1
@@ -162,14 +162,14 @@ for setOfFields in fieldsByResearcher:
 
         # Loop across all fields of view to assign to this researcher
         fieldNum = 1
-        for fieldRowCol in setOfFields:
+        for fieldName in setOfFields:
 
             # Find the field where this marker is imaged that has the
-            # correct row and column number
-            iField2Assign = [iField for iField in range(len(fieldsByMarker[imarker])) if fieldRowCol + '_' in fieldsByMarker[imarker][iField]][0]
+            # correct field of view name
+            iField2Assign = [iField for iField in range(len(fieldsByMarker[imarker])) if fieldName + '_' in fieldsByMarker[imarker][iField]][0]
 
             # Store the path to the field with the correct marker and
-            # row and column, deleting it from our list
+            # name, deleting it from our list
             field2Assign = fieldsByMarker[imarker].pop(iField2Assign)
 
             # Make a softlink for the field of view saved under
