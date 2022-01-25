@@ -297,6 +297,28 @@ class gridOfFields:
         # Hide the segmentation mask
         self.imgSegMask.hide()
 
+        # Each of these fields of view will later be cropped. Find the
+        # central coordinate of this crop
+        fovCenter = (fovGrid.ROIs[0].getFloatWidth() / 2.0,
+                     fovGrid.ROIs[0].getFloatHeight() / 2.0)
+
+        # Create an ROI centered at the center of the field of view with
+        # the true field of view size (no overlap)
+        halfFieldSize = float(field_size) / 2.0
+        baseFovBoundsROI = Roi(fovCenter[0] - halfFieldSize,
+                               fovCenter[1] - halfFieldSize,
+                               field_size,field_size)
+
+        # Rotate this field of view to generate our final true field
+        # boundary
+        self.fieldBoundary = roirotator.rotate(baseFovBoundsROI,
+                                               rotation - 180,
+                                               fovCenter[0],
+                                               fovCenter[1])
+
+        # Name this true field boundary ROI
+        self.fieldBoundary.setName(str(field_size) + ' Pixel Field of View Boundary')
+
     # Define a method that will clear the non-overlapping portion of the
     # field of view from the max projection to keep track of where we
     # have already sampled from
