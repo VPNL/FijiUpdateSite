@@ -133,7 +133,7 @@ if u'\xb5' in lengthUnits:
 [field_size_physical,field_overlap_physical] = UIs.textFieldsUI('Specify your true field of view size and the amount you want to see overlaping into neighboring fields.',
 											  					['True Field of View Size in {}:'.format(lengthUnits),
 											   					 'Overlap into Neighboring Fields in {}:'.format(lengthUnits)],
-											  			 		['50','15'])
+											  			 		['60','15'])
 
 # Convert field size and field overlap from physical units to pixels
 field_size = int(round(imgCal.getRawX(float(field_size_physical))))
@@ -163,7 +163,6 @@ else:
 # Separate the image into a grid-like configuration of fields of view
 fovGrid = ROITools.gridOfFields(frst_img,field_size,field_overlap,
 								rotation)
-exit()
 
 ########################################################################
 ################## SEPARATE IMAGES INTO FIELDS OF VIEW #################
@@ -240,6 +239,7 @@ def breakupIntoFields(img2separate,markerInImg):
 breakupIntoFields(frst_img,markersImaged[0])
 
 # Delete the first image from memory
+frst_img.close()
 del frst_img
 
 # Loop across all images whose fields of view need to be separated as
@@ -253,6 +253,7 @@ for imgPath, marker in zip(imgs2separate[1:],markersImaged[1:]):
 	breakupIntoFields(img,marker)
 
 	# Clear the current image from memory
+	img.close()
 	del img
 
 del imgs2separate, markersImaged, frst_img_dims, imgPath, marker
