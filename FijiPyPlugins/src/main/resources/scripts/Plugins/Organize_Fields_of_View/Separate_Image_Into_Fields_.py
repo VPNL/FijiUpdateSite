@@ -163,7 +163,6 @@ else:
 # Separate the image into a grid-like configuration of fields of view
 fovGrid = ROITools.gridOfFields(frst_img,field_size,field_overlap,
 								rotation)
-exit()
 
 ########################################################################
 ################## SEPARATE IMAGES INTO FIELDS OF VIEW #################
