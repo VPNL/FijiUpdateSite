@@ -239,6 +239,7 @@ def breakupIntoFields(img2separate,markerInImg):
 breakupIntoFields(frst_img,markersImaged[0])
 
 # Delete the first image from memory
+frst_img.close()
 del frst_img
 
 # Loop across all images whose fields of view need to be separated as
@@ -252,6 +253,7 @@ for imgPath, marker in zip(imgs2separate[1:],markersImaged[1:]):
 	breakupIntoFields(img,marker)
 
 	# Clear the current image from memory
+	img.close()
 	del img
 
 del imgs2separate, markersImaged, frst_img_dims, imgPath, marker
