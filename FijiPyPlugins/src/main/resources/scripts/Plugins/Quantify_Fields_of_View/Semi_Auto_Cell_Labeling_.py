@@ -160,18 +160,13 @@ marker2focus = UIs.whichChoiceUI('Which marker would you like to use to set the 
 marker2focusPath = ImageFiles.findImgsInDir(os.path.join(dataDir,
                                                         '{}_Unlabeled_Fields'.format(marker2focus)),
                                             None,
-                                            '{}{}Row'.format(os.path.sep,
-                                                             n_fov))
+                                            '{}{}Field-'.format(os.path.sep,
+                                                                n_fov))
 del marker2focus
 
 # Read the image of the marker we want to focus on
 marker2focusImp = ImagePlus(marker2focusPath)
 del marker2focusPath
-
-# Grab the row and column number for this field of view and use it to
-# start a dictionary that will store all of the quantifications for this
-# field of view
-fieldQuants = ImageFiles.getRowCol(marker2focusImp.getTitle())
 
 # Create a zStack object using this image so that we can see across what
 # z-slices we want to quantify
@@ -186,7 +181,7 @@ del marker2focusZStack, z_height
 # Start a python dictionary that will store various aspects about this
 # field of view we are quantifying. Add in the bottom and top z-slice
 # used for quantification
-fieldQuants['Bottom_Z_Slice_Quantified'] = [zBounds4Quants[0]]
+fieldQuants = {'Bottom_Z_Slice_Quantified': [zBounds4Quants[0]]}
 fieldQuants['Top_Z_Slice_Quantified'] = [zBounds4Quants[-1]]
 
 ########################################################################
@@ -197,8 +192,8 @@ fieldQuants['Top_Z_Slice_Quantified'] = [zBounds4Quants[-1]]
 nucPath = ImageFiles.findImgsInDir(os.path.join(dataDir,
                                                 '{}_Unlabeled_Fields'.format(marker2seg)),
                                    None,
-                                   '{}{}Row'.format(os.path.sep,
-                                                    n_fov))
+                                   '{}{}Field-'.format(os.path.sep,
+                                                       n_fov))
 
 # Read the nuclear marker image
 nucImp = ImagePlus(nucPath)
@@ -347,8 +342,8 @@ del nucMaxProj
 markers2LabelPaths = [ImageFiles.findImgsInDir(os.path.join(dataDir,
                                                             '{}_Unlabeled_Fields'.format(marker)),
                                                None,
-                                               '{}{}Row'.format(os.path.sep,
-                                                                n_fov)) for marker in markers2label]
+                                               '{}{}Field-'.format(os.path.sep,
+                                                                   n_fov)) for marker in markers2label]
 del marker
 
 # Read each of these images of the markers we want to label
