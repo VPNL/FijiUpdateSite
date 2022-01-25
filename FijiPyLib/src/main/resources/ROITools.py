@@ -254,6 +254,9 @@ class gridOfFields:
         # Store the approximate area of the image ROI
         imgROIArea = self.imgROI.getFloatWidth() * self.imgROI.getFloatHeight()
 
+        # Store a counter for all fields of view
+        iFov = 1
+
         # We're going to gradually shrink the ROI overtime. Check to see
         # if the area of the ROI is larger than our field of view size
         while imgROIArea > fieldArea:
@@ -267,6 +270,12 @@ class gridOfFields:
             # Check to see if this field of view is fully contained
             # within the image ROI
             if isContained(newField,self.imgROI):
+
+                # Rename the field of view, keeping track of its number
+                newField.setName('Field-{}'.format(iFov))
+
+                # Increase the field number
+                iFov += 1
 
                 # Store this field of view in our list of fields
                 self.ROIs.append(newField)
