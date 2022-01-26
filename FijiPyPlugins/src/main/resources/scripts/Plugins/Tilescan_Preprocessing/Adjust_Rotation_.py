@@ -22,7 +22,9 @@ INPUTS
 OUTPUTS
 
     After the user specifies the final desired rotation of the image,
-    all channels of the image will be rotated accordingly and resaved.
+    all channels of the image will be rotated accordingly and saved
+    under the same image file name with the prefix 'Rotated_' at the
+    beginning.
 
 AR Jan 2022
 '''

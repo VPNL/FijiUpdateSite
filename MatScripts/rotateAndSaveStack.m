@@ -10,8 +10,9 @@ function rotateAndSaveStack(imgFile2Rotate,rotAngle)
 %       - rotAngle (Double): Angle that you want to rotate your image in
 %                            degrees in a clockwise direction
 %
-%   Function will save the final, rotated image stack, overwriting the
-%   original image file.
+%   Function will save the final, rotated image stack, creating a new
+%   image file with the same file name as our input string, but with the
+%   prefix 'Rotated_' added to the beginning
 %
 %   AR Jan 2022
 
@@ -30,24 +31,24 @@ imgResolution = [imgInfo(1).XResolution,imgInfo(1).YResolution];
 imgNSlices = numel(imgInfo);
 clear imgInfo
 
-% Break up the input file name into separate parts 
+% Break up the input file name into separate parts
 [imgFileDir,imgFileName,imgFileExt] = fileparts(imgFile2Rotate);
 
-% Store the name of the file we want to save the rotated image to 
+% Store the name of the file we want to save the rotated image to
 rotatedImgFile = fullfile(imgFileDir,strcat('Rotated_',imgFileName, ...
                                             imgFileExt));
 clear imgFileDir imgFileName imgFileExt
 
-% Loop across all z-levels of the image 
+% Loop across all z-levels of the image
 for z = 1:imgNSlices
 
-    % Read the current slice of the image 
+    % Read the current slice of the image
     imgSlice = imread(imgFile2Rotate,z);
-    
+
     % Rotate this image slice
     rotatedImgSlice = imrotate(imgSlice,-rotAngle);
 
-    % Save the final rotated image, overwriting the existing image file 
+    % Save the final rotated image, overwriting the existing image file
     imwrite(rotatedImgSlice,rotatedImgFile,'Compression','deflate', ...
             'Description', imgDescription,'Resolution',imgResolution, ...
             'WriteMode','append');
