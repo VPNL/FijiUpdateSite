@@ -301,18 +301,6 @@ allNucROIs = ImageProcessing.segmentation2ROIs(editedNucSeg)
 nucROIs = ROITools.ROIsInArea(allNucROIs,fieldBoundROI)
 del allNucROIs
 
-# Convert this list of nuclear ROIs into a final segmentation mask where
-# nuclei outside of the field of view boundary are not included
-finalNucSeg = ImageProcessing.ROIs2Segmentation(nucROIs,editedNucSeg)
-
-# Make a directory where we will save this final nuclear segmentation
-segDir = os.path.join(dataDir,'{}_Segmentations'.format(marker2seg))
-ImageFiles.makedir(segDir)
-
-# Save the final nuclear segmentation
-IJ.save(finalNucSeg,os.path.join(segDir,'Segmented_{}'.format(nucImp.getTitle())))
-del segDir,nucImp,finalNucSeg
-
 # Invert all of the ROIs labeling the cell nuclei so that they label
 # all pixels outside of the cell nuclei (aka, the background of the
 # image)
@@ -323,7 +311,7 @@ fieldQuants['N_{}'.format(marker2seg)] = [len(nucROIs)]
 
 # Compute the area of the field of view we quantified from
 [field_area,field_length_units] = ROITools.getROIArea(fieldBoundROI,editedNucSeg)
-del editedNucSeg, fieldBoundROI
+del fieldBoundROI
 
 # Add the nuclear density to our quantifications
 fieldQuants['N_{}_Per_{}'.format(marker2seg,field_length_units)] = [fieldQuants['N_{}'.format(marker2seg)][0] / field_area]
@@ -461,6 +449,18 @@ labeledNuclei = ROITools.getOpenROIs()
 
 # Clear the ROI Manager
 ROITools.clearROIs()
+
+# Convert this list of labeled nuclei into a final segmentation mask
+finalNucSeg = ImageProcessing.ROIs2Segmentation(labeledNuclei,
+                                                editedNucSeg)
+
+# Make a directory where we will save this final nuclear segmentation
+segDir = os.path.join(dataDir,'{}_Segmentations'.format(marker2seg))
+ImageFiles.makedir(segDir)
+
+# Save the final nuclear segmentation
+IJ.save(finalNucSeg,os.path.join(segDir,'Segmented_{}'.format(nucImp.getTitle())))
+del segDir,nucImp,finalNucSeg
 
 # Make a directory where we will save these final nuclear ROIs labeled
 # by cell type
