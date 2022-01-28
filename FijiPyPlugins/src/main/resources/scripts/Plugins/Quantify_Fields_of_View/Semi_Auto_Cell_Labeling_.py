@@ -307,19 +307,19 @@ del allNucROIs
 notNucROI = ROITools.getBackgroundROI(nucROIs,fieldBoundROI,editedNucSeg)
 
 # Store the number of nuclei counted in our quantification dictionary
-fieldQuants['N_{}'.format(marker2seg)] = [len(nucROIs)]
+fieldQuants['Total_N_Cells'] = [len(nucROIs)]
 
 # Compute the area of the field of view we quantified from
 [field_area,field_length_units] = ROITools.getROIArea(fieldBoundROI,editedNucSeg)
 del fieldBoundROI
 
 # Add the nuclear density to our quantifications
-fieldQuants['N_{}_Per_{}'.format(marker2seg,field_length_units)] = [fieldQuants['N_{}'.format(marker2seg)][0] / field_area]
+fieldQuants['Total_N_Cells_Per_{}'.format(field_length_units)] = [fieldQuants['Total_N_Cells'][0] / field_area]
 
 # Store the average SNR of the nuclear stain
 fieldQuants['Average_{}_SNR'.format(marker2seg)] = [sum(ROITools.computeSNR(nucROIs,
                                                                             notNucROI,
-                                                                            nucMaxProj)) / fieldQuants['N_{}'.format(marker2seg)][0]]
+                                                                            nucMaxProj)) / fieldQuants['Total_N_Cells'][0]]
 del nucMaxProj
 
 ########################################################################
@@ -340,7 +340,7 @@ del markers2LabelPaths, path
 
 # Store a list of our predictions of the cell type for each nuclear ROI.
 # Set default label to the same as our nuclear label.
-predictedNucLabels = [marker2seg] * fieldQuants['N_{}'.format(marker2seg)][0]
+predictedNucLabels = [marker2seg] * fieldQuants['Total_N_Cells'][0]
 
 # Initialize a list that will store the cropped image stacks for all
 # markers so that the z levels line up with what was used for the
@@ -366,7 +366,7 @@ for m in range(len(markers2label)):
                                           labelMaxProj)
 
     # Loop across all nuclei
-    for nuc in range(fieldQuants['N_{}'.format(marker2seg)][0]):
+    for nuc in range(fieldQuants['Total_N_Cells'][0]):
 
         # Check to see if the t statistic for this nuclei and label was
         # high
@@ -399,7 +399,7 @@ while outFileName.endswith(('_','-')):
     outFileName = outFileName[:-1]
 
 # Rename all of the nuclear ROIs to match their predicted cell type
-[nucROIs[nuc].setName(predictedNucLabels[nuc]) for nuc in range(fieldQuants['N_{}'.format(marker2seg)][0])]
+[nucROIs[nuc].setName(predictedNucLabels[nuc]) for nuc in range(fieldQuants['Total_N_Cells'][0])]
 del predictedNucLabels, nuc
 
 # Merge all of the shortened z-stacks for all markers in this image
@@ -481,10 +481,6 @@ del labeledNuclei, labeledNucleus
 cellTypes = list(set(labelsByNuclei + [marker2seg + '-' + marker2label for marker2label in markers2label]))
 del marker2label, markers2label
 
-# Remove any cells that were only labeled as our nuclear marker from the
-# of unique cell types
-cellTypes = filter(lambda a: a != marker2seg, cellTypes)
-
 # Loop across all cell types
 for cellType in cellTypes:
 
@@ -498,7 +494,7 @@ for cellType in cellTypes:
     fieldQuants['N_{}_Per_{}'.format(cellType,field_length_units)] = [nCellType / field_area]
 
     # Store the percent of all cells that are this cell type
-    fieldQuants['Percent_of_cells_that_are_{}'.format(cellType)] = [(float(nCellType) / fieldQuants['N_{}'.format(marker2seg)][0]) * 100.0]
+    fieldQuants['Percent_of_cells_that_are_{}'.format(cellType)] = [(float(nCellType) / fieldQuants['Total_N_Cells'][0]) * 100.0]
 del labelsByNuclei, cellTypes, cellType, nCellType, marker2seg
 
 # Make the directory where we want to store all of our quantifications
