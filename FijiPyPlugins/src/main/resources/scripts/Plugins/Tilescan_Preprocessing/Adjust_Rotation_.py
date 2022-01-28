@@ -12,8 +12,8 @@ adjust the rotation of the image.
 
 INPUTS
      - input_dir (java.io.File): Directory containing the separate
-								channels of the image the user wanted to
-                                adjust the rotation.
+								 channels of the image the user wanted
+                                 to adjust the rotation.
 
     - channel4ManualRotation (Int): Channel number that the user would
                                     like to use to adjust the rotation
@@ -22,7 +22,9 @@ INPUTS
 OUTPUTS
 
     After the user specifies the final desired rotation of the image,
-    all channels of the image will be rotated accordingly and resaved.
+    all channels of the image will be rotated accordingly and saved
+    under the same image file name with the prefix 'Rotated_' at the
+    beginning.
 
 AR Jan 2022
 '''
