@@ -415,7 +415,7 @@ del nucROIs
 
 # Store all of the color channels in the merged image in the order
 # matching our list of markers to label
-channelColors = ['Green','Magenta','Blue','Gray','Yellow','Cyan','Red']
+channelColors = ['Cyan', 'Magenta', 'Yellow', 'Gray', 'Green', 'Blue', 'Red']
 
 # Open the channels tool so the user can turn channels on and off
 IJ.run("Channels Tool...")

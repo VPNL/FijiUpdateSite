@@ -64,9 +64,9 @@ def overlayImages(imgs2merge):
     imgNames = [img.getTitle() for img in imgs2merge_cp]
 
     # Store a list of all the channel numbers we want to use in
-    # descending order of preference (green, magenta, blue, gray,
-    # yellow, cyan, red)
-    channels = [2,6,3,4,7,5,1]
+    # descending order of preference (cyan, magenta, yellow, gray,
+    # green, blue, red)
+    channels = [5,6,7,4,2,3,1]
 
     # Merge the images, assigning each image a color based on our
     # ordering
