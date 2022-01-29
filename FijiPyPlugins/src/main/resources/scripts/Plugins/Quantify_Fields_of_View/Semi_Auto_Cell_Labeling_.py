@@ -171,11 +171,13 @@ del marker2focusPath
 # Create a zStack object using this image so that we can see across what
 # z-slices we want to quantify
 marker2focusZStack = ImageProcessing.zStack(marker2focusImp)
+marker2focusImp.close()
 del marker2focusImp
 
 # Identify the starting and ending z-levels to be included in our
 # quantifications
 zBounds4Quants = marker2focusZStack.setZLevels4Focus(z_height)
+marker2focusZStack.orig_z_stack.close()
 del marker2focusZStack, z_height
 
 # Start a python dictionary that will store various aspects about this
@@ -209,6 +211,7 @@ nucMaxProj = nucStack.maxProj(zBounds4Quants)
 # Shorten the z-stack so that only the z-levels within zBounds4Quants
 # is included
 nucShortZStack = nucStack.cropZStack()
+nucStack.orig_z_stack.close()
 del nucStack
 
 # Segment the nuclear maximum intensity projection
@@ -216,6 +219,7 @@ nucSeg = ImageProcessing.segmentImg(nucMaxProj)
 
 # Overlay the segmentation on top of the maximum intensity projection
 nucSegOverlay = ImageDisplay.overlayImages([nucMaxProj,nucSeg])
+nucSeg.close()
 del nucSeg
 
 # Get a blurred image of the nuclear maximum intensity projection that
@@ -301,38 +305,17 @@ allNucROIs = ImageProcessing.segmentation2ROIs(editedNucSeg)
 nucROIs = ROITools.ROIsInArea(allNucROIs,fieldBoundROI)
 del allNucROIs
 
-# Convert this list of nuclear ROIs into a final segmentation mask where
-# nuclei outside of the field of view boundary are not included
-finalNucSeg = ImageProcessing.ROIs2Segmentation(nucROIs,editedNucSeg)
-
-# Make a directory where we will save this final nuclear segmentation
-segDir = os.path.join(dataDir,'{}_Segmentations'.format(marker2seg))
-ImageFiles.makedir(segDir)
-
-# Save the final nuclear segmentation
-IJ.save(finalNucSeg,os.path.join(segDir,'Segmented_{}'.format(nucImp.getTitle())))
-del segDir,nucImp,finalNucSeg
+# Store the total number of cell ROIs that need to be labeled by cell
+# type
+nCells2Lable = len(nucROIs)
 
 # Invert all of the ROIs labeling the cell nuclei so that they label
 # all pixels outside of the cell nuclei (aka, the background of the
 # image)
 notNucROI = ROITools.getBackgroundROI(nucROIs,fieldBoundROI,editedNucSeg)
 
-# Store the number of nuclei counted in our quantification dictionary
-fieldQuants['N_{}'.format(marker2seg)] = [len(nucROIs)]
-
 # Compute the area of the field of view we quantified from
 [field_area,field_length_units] = ROITools.getROIArea(fieldBoundROI,editedNucSeg)
-del editedNucSeg, fieldBoundROI
-
-# Add the nuclear density to our quantifications
-fieldQuants['N_{}_Per_{}'.format(marker2seg,field_length_units)] = [fieldQuants['N_{}'.format(marker2seg)][0] / field_area]
-
-# Store the average SNR of the nuclear stain
-fieldQuants['Average_{}_SNR'.format(marker2seg)] = [sum(ROITools.computeSNR(nucROIs,
-                                                                            notNucROI,
-                                                                            nucMaxProj)) / fieldQuants['N_{}'.format(marker2seg)][0]]
-del nucMaxProj
 
 ########################################################################
 ####################### LABEL CELLS BY CELL TYPE #######################
@@ -352,7 +335,7 @@ del markers2LabelPaths, path
 
 # Store a list of our predictions of the cell type for each nuclear ROI.
 # Set default label to the same as our nuclear label.
-predictedNucLabels = [marker2seg] * fieldQuants['N_{}'.format(marker2seg)][0]
+predictedNucLabels = [marker2seg] * nCells2Lable
 
 # Initialize a list that will store the cropped image stacks for all
 # markers so that the z levels line up with what was used for the
@@ -378,7 +361,7 @@ for m in range(len(markers2label)):
                                           labelMaxProj)
 
     # Loop across all nuclei
-    for nuc in range(fieldQuants['N_{}'.format(marker2seg)][0]):
+    for nuc in range(nCells2Lable):
 
         # Check to see if the t statistic for this nuclei and label was
         # high
@@ -389,6 +372,9 @@ for m in range(len(markers2label)):
 
     # Store the shortened image stack in our list of short image stacks
     markers2LabelShortStacks.append(labelStack.cropZStack())
+[markers2LabelImgs[m].close() for m in range(len(markers2LabelImgs))]
+labelStack.orig_z_stack.close()
+labelMaxProj.close()
 del m, nuc, labelStack, labelMaxProj, tStatsByNuc, zBounds4Quants
 del markers2LabelImgs, notNucROI
 
@@ -411,11 +397,13 @@ while outFileName.endswith(('_','-')):
     outFileName = outFileName[:-1]
 
 # Rename all of the nuclear ROIs to match their predicted cell type
-[nucROIs[nuc].setName(predictedNucLabels[nuc]) for nuc in range(fieldQuants['N_{}'.format(marker2seg)][0])]
+[nucROIs[nuc].setName(predictedNucLabels[nuc]) for nuc in range(nCells2Lable)]
 del predictedNucLabels, nuc
 
 # Merge all of the shortened z-stacks for all markers in this image
 mergedShortZStack = ImageDisplay.overlayImages(markers2LabelShortStacks + [nucShortZStack])
+[markers2LabelShortStacks[m].close() for m in range(len(markers2LabelShortStacks))]
+nucShortZStack.close()
 del markers2LabelShortStacks, nucShortZStack
 
 # Display the merged short stack
@@ -427,7 +415,7 @@ del nucROIs
 
 # Store all of the color channels in the merged image in the order
 # matching our list of markers to label
-channelColors = ['Green','Magenta','Blue','Gray','Yellow','Cyan','Red']
+channelColors = ['Cyan', 'Magenta', 'Yellow', 'Gray', 'Green', 'Blue', 'Red']
 
 # Open the channels tool so the user can turn channels on and off
 IJ.run("Channels Tool...")
@@ -462,6 +450,20 @@ labeledNuclei = ROITools.getOpenROIs()
 # Clear the ROI Manager
 ROITools.clearROIs()
 
+# Convert this list of labeled nuclei into a final segmentation mask
+finalNucSeg = ImageProcessing.ROIs2Segmentation(labeledNuclei,
+                                                editedNucSeg)
+
+# Make a directory where we will save this final nuclear segmentation
+segDir = os.path.join(dataDir,'{}_Segmentations'.format(marker2seg))
+ImageFiles.makedir(segDir)
+
+# Save the final nuclear segmentation
+IJ.save(finalNucSeg,os.path.join(segDir,'Segmented_{}'.format(nucImp.getTitle())))
+nucImp.close()
+finalNucSeg.close()
+del segDir,nucImp,finalNucSeg
+
 # Make a directory where we will save these final nuclear ROIs labeled
 # by cell type
 roiDir = os.path.join(dataDir,'Cell_Labeling_By_Field')
@@ -470,6 +472,25 @@ ImageFiles.makedir(roiDir)
 # Save all of the ROIs that were labeled by cell type
 ROITools.saveROIs(labeledNuclei,os.path.join(roiDir,'Cell_Labeling_' + outFileName + '.zip'))
 del roiDir
+
+# Store the number of nuclei labeled in our quantification dictionary
+fieldQuants['Total_N_Cells'] = [len(labeledNuclei)]
+
+# Add the nuclear density to our quantifications
+fieldQuants['Total_N_Cells_Per_{}'.format(field_length_units)] = [fieldQuants['Total_N_Cells'][0] / field_area]
+
+# Remake our notNucROI using only the ROIs that were labeled, in case
+# any were deleted by the user
+notNucROI = ROITools.getBackgroundROI(labeledNuclei,fieldBoundROI,editedNucSeg)
+editedNucSeg.close()
+del fieldBoundROI, editedNucSeg
+
+# Store the average SNR of the nuclear stain
+fieldQuants['Average_{}_SNR'.format(marker2seg)] = [sum(ROITools.computeSNR(labeledNuclei,
+                                                                            notNucROI,
+                                                                            nucMaxProj)) / fieldQuants['Total_N_Cells'][0]]
+nucMaxProj.close()
+del nucMaxProj, notNucROI
 
 # Get all of the labels that were assigned to each nuclei
 labelsByNuclei = [labeledNucleus.getName() for labeledNucleus in labeledNuclei]
@@ -480,10 +501,6 @@ del labeledNuclei, labeledNucleus
 # expecting (i.e., cells expressing each marker)
 cellTypes = list(set(labelsByNuclei + [marker2seg + '-' + marker2label for marker2label in markers2label]))
 del marker2label, markers2label
-
-# Remove any cells that were only labeled as our nuclear marker from the
-# of unique cell types
-cellTypes = filter(lambda a: a != marker2seg, cellTypes)
 
 # Loop across all cell types
 for cellType in cellTypes:
@@ -498,8 +515,9 @@ for cellType in cellTypes:
     fieldQuants['N_{}_Per_{}'.format(cellType,field_length_units)] = [nCellType / field_area]
 
     # Store the percent of all cells that are this cell type
-    fieldQuants['Percent_of_cells_that_are_{}'.format(cellType)] = [(float(nCellType) / fieldQuants['N_{}'.format(marker2seg)][0]) * 100.0]
+    fieldQuants['Percent_of_cells_that_are_{}'.format(cellType)] = [(float(nCellType) / fieldQuants['Total_N_Cells'][0]) * 100.0]
 del labelsByNuclei, cellTypes, cellType, nCellType, marker2seg
+del field_area, field_length_units
 
 # Make the directory where we want to store all of our quantifications
 quantsDir = os.path.join(dataDir,'Quantifications_By_Field')
