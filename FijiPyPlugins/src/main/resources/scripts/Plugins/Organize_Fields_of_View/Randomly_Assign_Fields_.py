@@ -28,6 +28,8 @@ OUTPUTS
     This way, we can conserve hard drive space.
 
 AR Oct 2021
+AR Jan 2022 Added UI so that the user can specify the initials of the
+            RAs
 '''
 
 ########################################################################
@@ -64,6 +66,26 @@ import random
 
 # Import copyfile from shutil so we can copy files
 from shutil import copyfile
+
+########################################################################
+############ ASK THE USER TO SPECIFY THE INITIALS OF ALL RAs ###########
+########################################################################
+
+# Store a list of strings that label each text field in the UI we will
+# present to the user. Each string will take on the format 'Researcher
+# X Initials' where X is replaced by the researcher number
+initialsTextFieldLabels = ['Researcher {} Initials'.format(r) for r in range(NResearchers)]
+del r
+
+# The default initialis will just be the researcher number
+defaultInitials = ['{}'.format(r) for r in range(NResearchers)]
+del r
+
+# Present the interface to the user so that we can get the initials of
+# all the researchers
+RAInitials = textFieldsUI('Specify the initials of all researchers who will quantify these fields of view.',
+                          initialsTextFieldLabels,defaultInitials)
+del initialsTextFieldLabels, defaultInitials
 
 ########################################################################
 ##################### IDENTIFY FIELD SIZE DESIRED ######################
@@ -132,7 +154,7 @@ fieldsByResearcher = [fieldNames[i::NResearchers] for i in xrange(NResearchers)]
 del fieldNames
 
 # Loop across researchers that will be assigned fields of view
-researcherNum = 1
+r = 0
 for setOfFields in fieldsByResearcher:
 
     # Store the path to our new directory where this researcher's
@@ -140,7 +162,7 @@ for setOfFields in fieldsByResearcher:
     researcherOutDir = os.path.join(fieldsDir,'..','Quantifications',
                                     fieldSize,'-'.join(markers2Assign),
                                     'SemiautoCellLabels',
-                                    'Researcher-' + str(researcherNum))
+                                    'Researcher-' + RAInitials[r])
 
     # Make this folder if necessary
     ImageFiles.makedir(researcherOutDir)
@@ -179,7 +201,7 @@ for setOfFields in fieldsByResearcher:
                                     os.path.join(markerOutDir,str(fieldNum) + os.path.basename(field2Assign)))
 
             # Increase the field of view number
-            fieldNum = fieldNum + 1
+            fieldNum += 1
 
     # Increase the researcher number
-    researcherNum = researcherNum + 1
+    r += 1
