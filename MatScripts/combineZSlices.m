@@ -230,6 +230,15 @@ for c = channels
 
         end
 
+        % Check to see if the image is tall or wide 
+        if size(currImg,1) > size(currImg,2)
+
+            % If the image is taller than it is wide, we'll need to rotate
+            % it by 90 degrees so that it's wider than it is tall 
+            currImg = rot90(currImg);
+
+        end
+        
         % Append the image at this z-level to our composite z-stack file 
         imwrite(currImg,filePath4Channel,'WriteMode','append', ...
                 'Compression','deflate','Description',imgDescription, ...
