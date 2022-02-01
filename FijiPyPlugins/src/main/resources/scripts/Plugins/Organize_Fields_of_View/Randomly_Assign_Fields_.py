@@ -47,6 +47,9 @@ fieldsDir = fields_dir.getAbsolutePath()
 
 del fields_dir
 
+# Import our UI module
+import UI
+
 # Import os so we can find subdirectories, make new directories and join
 # path elements
 import os
@@ -83,7 +86,7 @@ del r
 
 # Present the interface to the user so that we can get the initials of
 # all the researchers
-RAInitials = textFieldsUI('Specify the initials of all researchers who will quantify these fields of view.',
+RAInitials = UIs.textFieldsUI('Specify the initials of all researchers who will quantify these fields of view.',
                           initialsTextFieldLabels,defaultInitials)
 del initialsTextFieldLabels, defaultInitials
 
