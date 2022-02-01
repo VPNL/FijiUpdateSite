@@ -74,7 +74,7 @@ from shutil import copyfile
 # Store a list of strings that label each text field in the UI we will
 # present to the user. Each string will take on the format 'Researcher
 # X Initials' where X is replaced by the researcher number
-initialsTextFieldLabels = ['Researcher {} Initials'.format(r) for r in range(NResearchers)]
+initialsTextFieldLabels = ['Researcher {} Initials'.format(r+1) for r in range(NResearchers)]
 del r
 
 # The default initialis will just be the researcher number
