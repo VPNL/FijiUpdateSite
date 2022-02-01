@@ -38,6 +38,7 @@ OUTPUTS
 AR Oct 2021
 AR Dec 2021 Determine calibration of image to ask user about field of
 			view size
+AR Jan 2022 Account for rotated tile scans
 '''
 
 ########################################################################
@@ -78,7 +79,7 @@ import ROITools
 
 # Import our ImageProcessing library
 from ImageTools import ImageProcessing
-from sys import exit
+
 ########################################################################
 ## IDENTIFY WHICH IMAGE FILES SHOULD BE SEPARATED INTO FIELDS OF VIEW ##
 ########################################################################

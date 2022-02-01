@@ -265,7 +265,7 @@ class gridOfFields:
             topLPt = getTopLeftPoint(self.imgROI)
 
             # Make a full sized field of view at this top left point
-            newField = makeRotatedR0I(topLPt,fullFieldWidth,rotation - 180) # TODO: Need to figure out how to transform rotation to make it work
+            newField = makeRotatedR0I(topLPt,fullFieldWidth,rotation - 180)
 
             # Check to see if this field of view is fully contained
             # within the image ROI
@@ -329,7 +329,7 @@ class gridOfFields:
         # projection to keep track of what areas of the image have
         # already been sampled
         field4Cropping = makeRotatedR0I(topLeftPoint,ceil(cropWidth/2.0),
-                                        self.rotation - 180) # TODO: Need to figure out how to transform rotation to make it work
+                                        self.rotation - 180)
 
         # Sometimes the image ROI will have fuzzy edges, so it's hard to
         # have ROIs fit perfectly within the area that was actually
