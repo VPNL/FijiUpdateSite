@@ -48,7 +48,7 @@ fieldsDir = fields_dir.getAbsolutePath()
 del fields_dir
 
 # Import our UI module
-import UI
+import UIs
 
 # Import os so we can find subdirectories, make new directories and join
 # path elements
@@ -56,9 +56,6 @@ import os
 
 # Import tools that will allow us to work easily with files
 from ImageTools import ImageFiles
-
-# Import our user interface library
-import UIs
 
 # Import our ROI tools
 import ROITools
@@ -87,7 +84,7 @@ del r
 # Present the interface to the user so that we can get the initials of
 # all the researchers
 RAInitials = UIs.textFieldsUI('Specify the initials of all researchers who will quantify these fields of view.',
-                          initialsTextFieldLabels,defaultInitials)
+                              initialsTextFieldLabels,defaultInitials)
 del initialsTextFieldLabels, defaultInitials
 
 ########################################################################
