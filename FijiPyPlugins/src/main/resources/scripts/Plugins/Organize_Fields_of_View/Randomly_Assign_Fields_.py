@@ -78,7 +78,7 @@ initialsTextFieldLabels = ['Researcher {} Initials'.format(r) for r in range(NRe
 del r
 
 # The default initialis will just be the researcher number
-defaultInitials = ['{}'.format(r) for r in range(NResearchers)]
+defaultInitials = ['{}'.format(r+1) for r in range(NResearchers)]
 del r
 
 # Present the interface to the user so that we can get the initials of
