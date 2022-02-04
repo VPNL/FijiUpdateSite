@@ -21,9 +21,9 @@ This module contains tools to work easily with image files.
 
         - Creates a softlink for a file
 
-    getRowCol(fieldName)
+    getFieldNumber(fieldName)
 
-        - Returns the row and column name of field of view
+        - Returns the number of this field of view
 
     getMetadata(imp)
 
@@ -313,41 +313,33 @@ def makeSoftLink(file2Link,linkPath):
     os.symlink(linkRelPath,linkPath)
 
 ########################################################################
-############################### getRowCol ##############################
+############################ getFieldNumber ############################
 ########################################################################
 
-# Define a function to get the row and column numbers of a field of view
-def getRowCol(fieldName):
+# Define a function to get the field of view number
+def getFieldNumber(fieldName):
     '''
-    Returns the row and column name of field of view
+    Returns the number of this field of view
 
-    getRowCol(fieldName)
+    getFieldNumber(fieldName)
 
         - fieldName (String): File name of the field of view
 
-    OUTPUT dictionary with keys 'Field_of_View_Row' and
-    'Field_of_View_Column' that store the int row and col numbers of
-    this field of view, respectively
+    OUTPUT the number of this field of view as an integer
 
     AR Dec 2021
+    AR Feb 2022: Updated since we're no longer numbering fields by row
+                 or column
     '''
 
     # Define a regular expression to identify the row and column numbers
-    regex = re.compile('.*Row(?P<Field_of_View_Row>\d+)-Col(?P<Field_of_View_Column>\d+)_.*')
+    regex = re.compile('.*Field-(?P<Field_of_View_Number>\d+)_.*')
 
     # Match the string pattern with our field of view name
     matches = regex.match(str(fieldName))
 
-    # Get a dictionary storing the row and column number for this field
-    # of view
-    RowCol = matches.groupdict()
-
-    # Make the row and column numbers integers rather than strings
-    RowCol['Field_of_View_Row'] = [int(RowCol['Field_of_View_Row'])]
-    RowCol['Field_of_View_Column'] = [int(RowCol['Field_of_View_Column'])]
-
-    # Return the final dictionary
-    return RowCol
+    # Return the field of view number as an integer
+    return int(matches.groupdict()['Field_of_View_Number'])
 
 ########################################################################
 ############################## getMetadata #############################
