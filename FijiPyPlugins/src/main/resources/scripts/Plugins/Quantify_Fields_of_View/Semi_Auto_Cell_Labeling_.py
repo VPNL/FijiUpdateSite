@@ -113,7 +113,6 @@ from difflib import SequenceMatcher
 # Import our data files module so we can write data files
 import DataFiles
 
-from sys import exit
 ########################################################################
 ######### IDENTIFY THE MARKERS IMAGED IN THE DIFFERENT CHANNELS ########
 ########################################################################
@@ -142,8 +141,8 @@ marker2seg = UIs.whichChoiceUI('Specify the nuclear marker (e.g. DAPI) you would
                                'Marker: ',markers)
 
 # Store a list of markers that will be labeled according to the nuclear
-# marker segmentation
-markers2label = [marker for marker in markers if marker != marker2seg]
+# marker segmentation, sort by alphabetical order
+markers2label = sorted([marker for marker in markers if marker != marker2seg])
 del markers, marker
 
 # Ask the user which marker would they like to use to identify the
@@ -365,7 +364,7 @@ for m in range(len(markers2label)):
 
         # Check to see if the t statistic for this nuclei and label was
         # high
-        if tStatsByNuc[nuc] > 1:
+        if tStatsByNuc[nuc] > 2.5:
 
             # Add this marker to our predicted cell type
             predictedNucLabels[nuc] += '-' + markers2label[m]
@@ -378,6 +377,12 @@ labelMaxProj.close()
 del m, nuc, labelStack, labelMaxProj, tStatsByNuc, zBounds4Quants
 del markers2LabelImgs, notNucROI
 
+# Identify the number of this field of view
+iFov = ImageFiles.getFieldNumber(nucShortZStack.getTitle())
+
+# Add the field of view number to our data dictionary
+fieldQuants['Field_of_View_Number'] = [iFov]
+
 # Identify the longest string common between the file names for the
 # nuclear short z stack and the first marker's short stack. This will
 # serve as a template for our output file name.
@@ -387,7 +392,7 @@ match = sequence_matcher.find_longest_match(0,
                                             len(nucShortZStack.getTitle()),
                                             0,
                                             len(markers2LabelShortStacks[0].getTitle()))
-outFileName = nucShortZStack.getTitle()[match.a:match.a + match.size]
+[outFileName,fileExt] = os.path.splitext('Field-{}'.format(iFov) + nucShortZStack.getTitle()[match.a:match.a + match.size])
 del sequence_matcher, match
 
 # If the outFileName ends with an underscore or a hyphen...
@@ -450,6 +455,10 @@ labeledNuclei = ROITools.getOpenROIs()
 # Clear the ROI Manager
 ROITools.clearROIs()
 
+# Check to make sure that all of these final ROIs are still contained
+# within the true field of view boundary
+labeledNuclei = ROITools.ROIsInArea(labeledNuclei,fieldBoundROI)
+
 # Convert this list of labeled nuclei into a final segmentation mask
 finalNucSeg = ImageProcessing.ROIs2Segmentation(labeledNuclei,
                                                 editedNucSeg)
@@ -458,8 +467,11 @@ finalNucSeg = ImageProcessing.ROIs2Segmentation(labeledNuclei,
 segDir = os.path.join(dataDir,'{}_Segmentations'.format(marker2seg))
 ImageFiles.makedir(segDir)
 
-# Save the final nuclear segmentation
-IJ.save(finalNucSeg,os.path.join(segDir,'Segmented_{}'.format(nucImp.getTitle())))
+# Save the final nuclear segmentation as a tif file
+IJ.save(finalNucSeg,os.path.join(segDir,
+                                 '{}-Segmentation_{}{}'.format(marker2seg,
+                                                             outFileName,
+                                                             fileExt)))
 nucImp.close()
 finalNucSeg.close()
 del segDir,nucImp,finalNucSeg
