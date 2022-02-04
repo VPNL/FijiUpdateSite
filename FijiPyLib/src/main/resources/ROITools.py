@@ -108,6 +108,11 @@ This module contains tools to work easily with Fiji ROIs
           nuceli) versus a comparison ROI (for instance, pixels not
           labeled as cells)
 
+    getLabelsAndLocations(ROIs,img)
+
+        - Organize ROI names and x/y coordinates into a python
+          dictionary
+
 '''
 
 ########################################################################
@@ -1167,3 +1172,37 @@ def grayLevelTTest(ROIs,ROI2Compare,img):
 
     # Return all of our test results
     return testResults
+
+########################################################################
+######################### getLabelsAndLocations ########################
+########################################################################
+
+# Write a function to get the names and locations of a set of ROIs
+def getLabelsAndLocations(ROIs,img):
+    '''
+    Organize ROI names and x/y coordinates into a python dictionary
+
+    getLabelsAndLocations(ROIs,img)
+
+        - ROIs (List of ImageJ ROIs): ROIs you want the labels and
+                                      coordinates of
+
+        - img (ImagePlus): Image containing your ROIs
+
+    OUTPUT dictionary with keys a python dictionary with keys
+    'Cell_Type','X_Coordinate_In_{}' and 'Y_Coordinate_In_{}' where {}
+    is replaced with the length unit in the image (e.g. microns). Each
+    of these keys stores lists of the same length as your list of ROIs
+    with the names of the ROIs and the x and y coordinates of the ROIs,
+    respectively.
+
+    AR Feb 2022
+    '''
+
+    # Iterate across list of ROIs and get the rotational centers of each
+    ROICenters = [ROI.getRotationCenter() for ROI in ROIs]
+
+    # Iterate across list of ROI centers and get the x and y coordinates
+    # in pixels
+    ROIXPixelCoords = [ROICenter.xpoints[0] for ROICenter in ROICenters]
+    ROIYPixelCoords = [ROICenter.ypoints[0] for ROICenter in ROICenters]
