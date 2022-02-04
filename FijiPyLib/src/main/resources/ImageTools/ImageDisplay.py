@@ -63,10 +63,20 @@ def overlayImages(imgs2merge):
     # Store a list of all of the image names
     imgNames = [img.getTitle() for img in imgs2merge_cp]
 
-    # Store a list of all the channel numbers we want to use in
-    # descending order of preference (cyan, magenta, yellow, gray,
-    # green, blue, red)
-    channels = [5,6,7,4,2,3,1]
+    # Check to see if only two images are being overlaid
+    if len(imgNames) < 3:
+
+        # Indicate that we want the first image to be green and the
+        # second magenta
+        channels = [2,6]
+
+    # If there are more images getting overlaid...
+    else:
+
+        # Store a list of all the channel numbers we want to use in
+        # descending order of preference (cyan, magenta, yellow, gray,
+        # green, blue, red)
+        channels = [5,6,7,4,2,3,1]
 
     # Merge the images, assigning each image a color based on our
     # ordering
