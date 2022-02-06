@@ -626,6 +626,8 @@ def ROIs2Segmentation(ROIs,refImg):
     OUTPUT Fiji ImagePlus containing your final segmentation mask
 
     AR Nov 2021
+    AR Feb 2022: Make sure final image's calibration matches the
+                 reference image
     '''
 
     # Combine all of the ROIs into a composite ROI
@@ -637,6 +639,10 @@ def ROIs2Segmentation(ROIs,refImg):
     # Generate the segmentation mask
     segImg = ImagePlus('Segmentation_' + refImg.getTitle(),
                        refImg.createRoiMask())
+
+    # Set the calibration of the segmentation mask to be the same as the
+    # reference image
+    segImg.setCalibration(refImg.getCalibration())
 
     # Return this segmentation mask
     return segImg

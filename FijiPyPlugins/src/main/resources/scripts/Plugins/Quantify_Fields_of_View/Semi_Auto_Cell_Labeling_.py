@@ -341,6 +341,10 @@ predictedNucLabels = [marker2seg] * nCells2Lable
 # nuclear segmentation
 markers2LabelShortStacks = []
 
+# Initialize a list that will store all of the max projections of each
+# non-nuclear channel
+labelMaxProjs = []
+
 # Loop across all markers that need to be labeled
 for m in range(len(markers2label)):
 
@@ -349,7 +353,7 @@ for m in range(len(markers2label)):
 
     # Create a maximum intensity projection for this label, using only
     # the z levels we're focusing on
-    labelMaxProj = labelStack.maxProj(zBounds4Quants)
+    labelMaxProjs.append(labelStack.maxProj(zBounds4Quants))
 
     # Compute a t-statistic comparing the gray level inside each nuclear
     # ROI with the gray level outside all of the nuclear ROIs using the
@@ -357,7 +361,7 @@ for m in range(len(markers2label)):
     # average intensity of the label within each nucleus is relatively
     # high, suggesting that the label is expressed by this cell.
     tStatsByNuc = ROITools.grayLevelTTest(nucROIs,notNucROI,
-                                          labelMaxProj)
+                                          labelMaxProjs[-1])
 
     # Loop across all nuclei
     for nuc in range(nCells2Lable):
@@ -373,8 +377,7 @@ for m in range(len(markers2label)):
     markers2LabelShortStacks.append(labelStack.cropZStack())
 [markers2LabelImgs[m].close() for m in range(len(markers2LabelImgs))]
 labelStack.orig_z_stack.close()
-labelMaxProj.close()
-del m, nuc, labelStack, labelMaxProj, tStatsByNuc, zBounds4Quants
+del m, nuc, labelStack, tStatsByNuc, zBounds4Quants
 del markers2LabelImgs, notNucROI
 
 # Identify the number of this field of view
@@ -463,6 +466,10 @@ labeledNuclei = ROITools.ROIsInArea(labeledNuclei,fieldBoundROI)
 finalNucSeg = ImageProcessing.ROIs2Segmentation(labeledNuclei,
                                                 editedNucSeg)
 
+# Create a new data dictionary that will store the cell types of each
+# segmented nucleus with their x and y coordinates in physical units
+cellQuants = ROITools.getLabelsAndLocations(labeledNuclei,editedNucSeg)
+
 # Make a directory where we will save this final nuclear segmentation
 segDir = os.path.join(dataDir,'{}_Segmentations'.format(marker2seg))
 ImageFiles.makedir(segDir)
@@ -502,7 +509,30 @@ fieldQuants['Average_{}_SNR'.format(marker2seg)] = [sum(ROITools.computeSNR(labe
                                                                             notNucROI,
                                                                             nucMaxProj)) / fieldQuants['Total_N_Cells'][0]]
 nucMaxProj.close()
-del nucMaxProj, notNucROI
+del nucMaxProj
+
+# Loop across all markers to label
+for m in range(len(markers2label)):
+
+    # Compute a t-statistic comparing the gray level inside each final
+    # ROI with the gray level outside all of the nuclear ROIs using the
+    # image of this marker.
+    cellQuants['{}_Expression_T-Statistic'.format(markers2label[m])] = ROITools.grayLevelTTest(labeledNuclei,
+                                                                                               notNucROI,
+                                                                                               labelMaxProjs[m])
+    labelMaxProjs[m].close()
+
+del notNucROI, labelMaxProjs
+
+# Make the directory where we want to store all of our cell
+# quantifications
+cellQuantsDir = os.path.join(dataDir,'Quantifications_By_Cell')
+ImageFiles.makedir(cellQuantsDir)
+
+# Save the field of view quantifications to a csv file
+DataFiles.dict2csv(cellQuants,os.path.join(cellQuantsDir,
+                                           'Cell-Quantifications_' + outFileName + '.csv'))
+del cellQuantsDir, cellQuants
 
 # Get all of the labels that were assigned to each nuclei
 labelsByNuclei = [labeledNucleus.getName() for labeledNucleus in labeledNuclei]
@@ -531,10 +561,12 @@ for cellType in cellTypes:
 del labelsByNuclei, cellTypes, cellType, nCellType, marker2seg
 del field_area, field_length_units
 
-# Make the directory where we want to store all of our quantifications
-quantsDir = os.path.join(dataDir,'Quantifications_By_Field')
-ImageFiles.makedir(quantsDir)
+# Make the directory where we want to store all of our field
+# quantifications
+fieldQuantsDir = os.path.join(dataDir,'Quantifications_By_Field')
+ImageFiles.makedir(fieldQuantsDir)
 
 # Save the field of view quantifications to a csv file
-DataFiles.dict2csv(fieldQuants,os.path.join(quantsDir,'Quantifications_' + outFileName + '.csv'))
-del quantsDir, dataDir, fieldQuants
+DataFiles.dict2csv(fieldQuants,os.path.join(fieldQuantsDir,
+                                            'Field-Quantifications_' + outFileName + '.csv'))
+del fieldQuantsDir, dataDir, fieldQuants
