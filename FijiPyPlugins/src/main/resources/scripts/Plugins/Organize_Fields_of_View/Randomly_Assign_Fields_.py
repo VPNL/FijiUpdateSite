@@ -30,6 +30,8 @@ OUTPUTS
 AR Oct 2021
 AR Jan 2022 Added UI so that the user can specify the initials of the
             RAs
+AR Feb 2022 Made sure the folder name with the list of markers is in 
+			alphabetical order
 '''
 
 ########################################################################
@@ -160,7 +162,7 @@ for setOfFields in fieldsByResearcher:
     # Store the path to our new directory where this researcher's
     # assigned fields of view will be stored
     researcherOutDir = os.path.join(fieldsDir,'..','Quantifications',
-                                    fieldSize,'-'.join(markers2Assign),
+                                    fieldSize,'-'.join(sorted(markers2Assign)),
                                     'SemiautoCellLabels',
                                     'Researcher-' + RAInitials[r])
 
