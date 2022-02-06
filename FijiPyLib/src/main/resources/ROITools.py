@@ -1199,10 +1199,32 @@ def getLabelsAndLocations(ROIs,img):
     AR Feb 2022
     '''
 
-    # Iterate across list of ROIs and get the rotational centers of each
-    ROICenters = [ROI.getRotationCenter() for ROI in ROIs]
+    # Get the calibration for this image
+    imgCal = img.getCalibration()
 
-    # Iterate across list of ROI centers and get the x and y coordinates
-    # in pixels
-    ROIXPixelCoords = [ROICenter.xpoints[0] for ROICenter in ROICenters]
-    ROIYPixelCoords = [ROICenter.ypoints[0] for ROICenter in ROICenters]
+    # Store the units used in the image
+    imgUnits = imgCal.getUnits()
+
+    # Initialize python dictionary that will store the cell types and
+    # locations based on these ROIs
+    ROIInfo = {'Cell_Type': [],
+               'X_Coordinate_In_{}'.format(imgUnits): [],
+               'Y_Coordinate_In_{}'.format(imgUnits): []}
+
+    # Iterate across our list of ROIs
+    for ROI in ROIs:
+
+        # Get the rotational center of this ROI
+        ROICenter = ROI.getRotationCenter()
+
+        # Get the x and y coordinate of the center of this ROI in
+        # physical units and add to our dictionary
+        ROIInfo['X_Coordinate_In_{}'.format(imgUnits)].append(imgCal.getX(ROICenter.xpoints[0]))
+        ROIInfo['Y_Coordinate_In_{}'.format(imgUnits)].append(imgCal.getY(ROICenter.ypoints[0]))
+
+        # Add the name of the ROI, which should store the cell type of
+        # this selection
+        ROIInfo['Cell_Type'].append(ROI.getName())
+
+    # Return the final python dictionary
+    return ROIInfo
