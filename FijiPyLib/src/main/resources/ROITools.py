@@ -108,6 +108,11 @@ This module contains tools to work easily with Fiji ROIs
           nuceli) versus a comparison ROI (for instance, pixels not
           labeled as cells)
 
+    getLabelsAndLocations(ROIs,img)
+
+        - Organize ROI names and x/y coordinates into a python
+          dictionary
+
 '''
 
 ########################################################################
@@ -1167,3 +1172,59 @@ def grayLevelTTest(ROIs,ROI2Compare,img):
 
     # Return all of our test results
     return testResults
+
+########################################################################
+######################### getLabelsAndLocations ########################
+########################################################################
+
+# Write a function to get the names and locations of a set of ROIs
+def getLabelsAndLocations(ROIs,img):
+    '''
+    Organize ROI names and x/y coordinates into a python dictionary
+
+    getLabelsAndLocations(ROIs,img)
+
+        - ROIs (List of ImageJ ROIs): ROIs you want the labels and
+                                      coordinates of
+
+        - img (ImagePlus): Image containing your ROIs
+
+    OUTPUT dictionary with keys a python dictionary with keys
+    'Cell_Type','X_Coordinate_In_{}' and 'Y_Coordinate_In_{}' where {}
+    is replaced with the length unit in the image (e.g. microns). Each
+    of these keys stores lists of the same length as your list of ROIs
+    with the names of the ROIs and the x and y coordinates of the ROIs,
+    respectively.
+
+    AR Feb 2022
+    '''
+
+    # Get the calibration for this image
+    imgCal = img.getCalibration()
+
+    # Store the units used in the image
+    imgUnits = imgCal.getUnits()
+
+    # Initialize python dictionary that will store the cell types and
+    # locations based on these ROIs
+    ROIInfo = {'Cell_Type': [],
+               'X_Coordinate_In_{}'.format(imgUnits): [],
+               'Y_Coordinate_In_{}'.format(imgUnits): []}
+
+    # Iterate across our list of ROIs
+    for ROI in ROIs:
+
+        # Get the rotational center of this ROI
+        ROICenter = ROI.getRotationCenter()
+
+        # Get the x and y coordinate of the center of this ROI in
+        # physical units and add to our dictionary
+        ROIInfo['X_Coordinate_In_{}'.format(imgUnits)].append(imgCal.getX(ROICenter.xpoints[0]))
+        ROIInfo['Y_Coordinate_In_{}'.format(imgUnits)].append(imgCal.getY(ROICenter.ypoints[0]))
+
+        # Add the name of the ROI, which should store the cell type of
+        # this selection
+        ROIInfo['Cell_Type'].append(ROI.getName())
+
+    # Return the final python dictionary
+    return ROIInfo
