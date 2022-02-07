@@ -39,6 +39,7 @@ AR Oct 2021
 AR Dec 2021 Determine calibration of image to ask user about field of
 			view size
 AR Jan 2022 Account for rotated tile scans
+AR Feb 2022 Save locations of the fields to a csv file
 '''
 
 ########################################################################
