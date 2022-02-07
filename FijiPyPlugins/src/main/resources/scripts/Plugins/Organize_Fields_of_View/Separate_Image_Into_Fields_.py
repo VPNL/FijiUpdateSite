@@ -59,8 +59,8 @@ del input_dir
 # Import tools that will allow us to work easily with files
 from ImageTools import ImageFiles
 
-# Import our user interface library
-import UIs
+# Import our user interface and data files libraries
+import UIs, DataFiles
 
 # Import generic dialog so we can make quick and dirty UI's
 from ij.gui import GenericDialog
@@ -164,6 +164,16 @@ else:
 # Separate the image into a grid-like configuration of fields of view
 fovGrid = ROITools.gridOfFields(frst_img,field_size,field_overlap,
 								rotation)
+
+# Create a dictionary that will store the names of all of these fields
+# of view as well as their x,y coordinates in physical units
+fovNamesLocs = ROITools.getLabelsAndLocations(fovGrid.ROIs,frst_img)
+
+# From all of the names of the fields of view, extract just the number,
+# which will come after 'Field-' string (see gridOfFields class
+# definition)
+fovNamesLocs['Field_Number'] = [int(fieldName[6:]) for fieldName in fovNamesLocs['Cell_Type']]
+del fovNamesLocs['Cell_Type']
 
 ########################################################################
 ################## SEPARATE IMAGES INTO FIELDS OF VIEW #################
@@ -271,6 +281,15 @@ fieldROIsPath = os.path.join(inputDir,'ROIs',str(field_size) + 'pxlFields.zip')
 ROITools.saveROIs(fovGrid.ROIs,fieldROIsPath)
 
 del fieldROIsPath
+
+# Write a file path to where we want to save a csv file with all of the
+# field of view numbers and x,y coordinates in physical units
+fieldCoordsPath = os.path.join(inputDir,'FieldsOfView',str(field_size) + 'pxlFields',str(field_size) + 'pxlFieldLocations.csv')
+
+# Save the field x and y coordinates to a csv file
+DataFiles.dict2csv(fovNamesLocs,fieldCoordsPath)
+
+del fovNamesLocs, fieldCoordsPath
 
 # Write a file path to where we want to save our Field boundary ROI
 fieldBoundaryROIPath = os.path.join(inputDir,'FieldsOfView',str(field_size) + 'pxlFields',str(field_size) + 'pxlFieldBoundary.roi')
