@@ -1211,6 +1211,10 @@ def getLabelsAndLocations(ROIs,img):
                'X_Coordinate_In_{}'.format(imgUnits): [],
                'Y_Coordinate_In_{}'.format(imgUnits): []}
 
+    # Identify the center of the image in pixels. We will set 0 as this
+    # coordinate
+    imgCenter = (float(img.getWidth())/2.0,float(img.getHeight())/2.0)
+
     # Iterate across our list of ROIs
     for ROI in ROIs:
 
@@ -1219,8 +1223,8 @@ def getLabelsAndLocations(ROIs,img):
 
         # Get the x and y coordinate of the center of this ROI in
         # physical units and add to our dictionary
-        ROIInfo['X_Coordinate_In_{}'.format(imgUnits)].append(imgCal.getX(ROICenter.xpoints[0]))
-        ROIInfo['Y_Coordinate_In_{}'.format(imgUnits)].append(imgCal.getY(ROICenter.ypoints[0]))
+        ROIInfo['X_Coordinate_In_{}'.format(imgUnits)].append(imgCal.getX(ROICenter.xpoints[0] - imgCenter[0]))
+        ROIInfo['Y_Coordinate_In_{}'.format(imgUnits)].append(imgCal.getY(ROICenter.ypoints[0] - imgCenter[1]))
 
         # Add the name of the ROI, which should store the cell type of
         # this selection
