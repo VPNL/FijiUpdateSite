@@ -541,7 +541,7 @@ del labeledNuclei, labeledNucleus
 # Get all of the unique cell type labels, making sure to include both
 # all cell types in the field of view as well as all cell types we're
 # expecting (i.e., cells expressing each marker)
-cellTypes = list(set(labelsByNuclei + [marker2seg + '-' + marker2label for marker2label in markers2label]))
+cellTypes = list(set(labelsByNuclei + [marker2seg + '-' + marker2label for marker2label in markers2label] + [marker2seg]))
 del marker2label, markers2label
 
 # Loop across all cell types
