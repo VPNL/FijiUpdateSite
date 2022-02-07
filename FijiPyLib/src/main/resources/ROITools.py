@@ -207,6 +207,9 @@ class gridOfFields:
 
     AR Oct 2021
     AR Jan 2022: Rewrote to account for rotated tile scans
+    AR Feb 2022: Changed the rotation of the fields of view to account
+                 for the potential that the image was rotated 180
+                 degrees
     '''
 
     # Define initialization function to create new instances of this
@@ -216,7 +219,10 @@ class gridOfFields:
         # Store the image, field size, field overlap and degree of
         # rotation as attributes of the object
         self.img = img
-        self.rotation = rotation
+        self.rotation = rotation % -180 # The rotation needed to be
+                                        # transformed in case the whole
+                                        # image needed to be flipped 180
+                                        # degrees
 
         # Normalize the image so that the pixel intensities are brighter
         normalizedImg = ImageProcessing.normalizeImg(self.img)
@@ -270,7 +276,7 @@ class gridOfFields:
             topLPt = getTopLeftPoint(self.imgROI)
 
             # Make a full sized field of view at this top left point
-            newField = makeRotatedR0I(topLPt,fullFieldWidth,rotation - 180)
+            newField = makeRotatedR0I(topLPt,fullFieldWidth,self.rotation)
 
             # Check to see if this field of view is fully contained
             # within the image ROI
@@ -317,7 +323,7 @@ class gridOfFields:
         # Rotate this field of view to generate our final true field
         # boundary
         self.fieldBoundary = roirotator.rotate(baseFovBoundsROI,
-                                               rotation - 180,
+                                               self.rotation,
                                                fovCenter[0],
                                                fovCenter[1])
 
@@ -334,7 +340,7 @@ class gridOfFields:
         # projection to keep track of what areas of the image have
         # already been sampled
         field4Cropping = makeRotatedR0I(topLeftPoint,ceil(cropWidth/2.0),
-                                        self.rotation - 180)
+                                        self.rotation)
 
         # Sometimes the image ROI will have fuzzy edges, so it's hard to
         # have ROIs fit perfectly within the area that was actually
