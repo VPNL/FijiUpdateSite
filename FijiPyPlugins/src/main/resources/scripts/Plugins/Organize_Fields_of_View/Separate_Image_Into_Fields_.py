@@ -136,10 +136,12 @@ if u'\xb5' in lengthUnits:
 											  					['True Field of View Size in {}:'.format(lengthUnits),
 											   					 'Overlap into Neighboring Fields in {}:'.format(lengthUnits)],
 											  			 		['60','15'])
+del lengthUnits
 
 # Convert field size and field overlap from physical units to pixels
 field_size = int(round(imgCal.getRawX(float(field_size_physical))))
 field_overlap = int(round(imgCal.getRawX(float(field_overlap_physical))))
+del imgCal, field_size_physical, field_overlap_physical
 
 # If the image was previously rotated, there will be a text file storing
 # the angle of rotation. Find this text file
@@ -162,9 +164,13 @@ else:
 		# Read the angle saved in the text file
 		rotation = float(rotAngleTextFile.read())
 
+		rotAngleTextFile.close()
+del rotAngleTextFilePath, rotAngleTextFile
+
 # Separate the image into a grid-like configuration of fields of view
 fovGrid = ROITools.gridOfFields(frst_img,field_size,field_overlap,
 								rotation)
+del field_overlap, rotation
 
 # Create a dictionary that will store the names of all of these fields
 # of view as well as their x,y coordinates in physical units
@@ -199,6 +205,7 @@ def crop_norm_save_fov(img2separate,fieldOfViewROI,outDir):
 						   normalized field of view
 
 	AR Oct 2021
+	AR Feb 2022 Make sure images close so they don't take up memory
 	'''
 
 	# Crop the field of view from the larger image
@@ -207,8 +214,14 @@ def crop_norm_save_fov(img2separate,fieldOfViewROI,outDir):
 	# Normalize this field of view
 	normalizedField = ImageProcessing.normalizeImg(field)
 
-	# Save this field of view
+	# Clear the field of view from memory
+	field.close()
+
+	# Save this normalized field of view
 	IJ.save(normalizedField,os.path.join(outDir,normalizedField.getTitle()))
+
+	# Clear the normalized field of view from memory
+	normalizedField.close()
 
 # Define a wrapper function that will crop, normalize and save each
 # field of view in a given image to be separated

@@ -183,13 +183,11 @@ class gridOfFields:
           the size of field_size and overlap 50% into the
           neighboring fields of view.
 
-        * img (Fiji ImagePlus): The image that was divided up into
-                                fields
+        * rotation (float): Amount that the field of views are rotated
+                            from the horizontal in degrees
 
-        * maxProj (Fiji ImagePlus): The normalized maximum intensity
-                                    projection of our image. Used to
-                                    keep track of which portions of the
-                                    image have already been sampled.
+        * fieldBoundary (Fiji ROI): ROI with the size and rotation of a
+                                    true field of view with no overlap
 
     gridOfFields(img,field_size,field_overlap,isRotated)
 
@@ -209,23 +207,21 @@ class gridOfFields:
     AR Jan 2022: Rewrote to account for rotated tile scans
     AR Feb 2022: Changed the rotation of the fields of view to account
                  for the potential that the image was rotated 180
-                 degrees
+                 degrees, delete variables and close images after use 
     '''
 
     # Define initialization function to create new instances of this
     # class of objects
     def __init__(self,img,field_size,field_overlap,rotation):
 
-        # Store the image, field size, field overlap and degree of
-        # rotation as attributes of the object
-        self.img = img
+        # Store the rotation as an attributes of the object
         self.rotation = rotation % -180 # The rotation needed to be
                                         # transformed in case the whole
                                         # image needed to be flipped 180
                                         # degrees
 
         # Normalize the image so that the pixel intensities are brighter
-        normalizedImg = ImageProcessing.normalizeImg(self.img)
+        normalizedImg = ImageProcessing.normalizeImg(img)
 
         # Create a z-stack object for this image
         imgStack = ImageProcessing.zStack(normalizedImg)
@@ -233,20 +229,24 @@ class gridOfFields:
         del normalizedImg
 
         # Generate a maximum intensity projection of the image
-        self.maxProj = imgStack.maxProj()
+        maxProj = imgStack.maxProj()
         imgStack.orig_z_stack.close()
         del imgStack
 
         # Create an ROI surrounding just the area of the tile scan that
         # we want to sample from, using the max projection
-        self.imgROI = selectNonBlackRegion(self.maxProj)
+        self.imgROI = selectNonBlackRegion(maxProj)
+
+        # Clear the max projection
+        maxProj.close()
+        del maxProj
 
         # Use the image ROI and the size of the original image to create
         # an image segmentation mask, labeling the full area we need to
         # sample from. We'll use this segmentation mask to keep track of
         # what has already been sampled, and what hasn't.
-        self.img.setRoi(self.imgROI)
-        self.imgSegMask = ImagePlus('Area2Sample',self.img.createRoiMask())
+        img.setRoi(self.imgROI)
+        self.imgSegMask = ImagePlus('Area2Sample',img.createRoiMask())
         self.imgSegMask.show()
 
         # Store the total width of a full field of view
@@ -305,8 +305,11 @@ class gridOfFields:
             # divided up
             imgROIArea = self.imgROI.getFloatWidth() * self.imgROI.getFloatHeight()
 
-        # Hide the segmentation mask
-        self.imgSegMask.hide()
+        # Close and clear the segmentation mask and image left to sample
+        # ROI
+        self.imgSegMask.close()
+        delattr(self,'imgSegMask')
+        delattr(self,'imgROI')
 
         # Each of these fields of view will later be cropped. Find the
         # central coordinate of this crop
