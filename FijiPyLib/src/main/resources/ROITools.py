@@ -207,7 +207,7 @@ class gridOfFields:
     AR Jan 2022: Rewrote to account for rotated tile scans
     AR Feb 2022: Changed the rotation of the fields of view to account
                  for the potential that the image was rotated 180
-                 degrees, delete variables and close images after use 
+                 degrees, delete variables and close images after use
     '''
 
     # Define initialization function to create new instances of this
@@ -1187,7 +1187,7 @@ def grayLevelTTest(ROIs,ROI2Compare,img):
 ########################################################################
 
 # Write a function to get the names and locations of a set of ROIs
-def getLabelsAndLocations(ROIs,img):
+def getLabelsAndLocations(ROIs,img,xForm2Center=True):
     '''
     Organize ROI names and x/y coordinates into a python dictionary
 
@@ -1197,6 +1197,11 @@ def getLabelsAndLocations(ROIs,img):
                                       coordinates of
 
         - img (ImagePlus): Image containing your ROIs
+
+        - xForm2Center (Boolean): Do you want to transform the data
+                                  points so that (0,0) is at the center
+                                  of the image? Default sets (0,0) as
+                                  center
 
     OUTPUT dictionary with keys a python dictionary with keys
     'Cell_Type','X_Coordinate_In_{}' and 'Y_Coordinate_In_{}' where {}
@@ -1220,9 +1225,18 @@ def getLabelsAndLocations(ROIs,img):
                'X_Coordinate_In_{}'.format(imgUnits): [],
                'Y_Coordinate_In_{}'.format(imgUnits): []}
 
-    # Identify the center of the image in pixels. We will set 0 as this
-    # coordinate
-    imgCenter = (float(img.getWidth())/2.0,float(img.getHeight())/2.0)
+    # If we want to set 0,0 to the center of the image
+    if xForm2Center:
+
+        # Identify the center of the image in pixels. We will set 0 as
+        # this coordinate
+        imgCenter = (float(img.getWidth())/2.0,float(img.getHeight())/2.0)
+
+    # Otherwise
+    else:
+
+        # The center of the image will be at ImageJ's default 0,0
+        imgCenter = (0.0,0.0)
 
     # Iterate across our list of ROIs
     for ROI in ROIs:

@@ -174,7 +174,8 @@ del field_overlap, rotation
 
 # Create a dictionary that will store the names of all of these fields
 # of view as well as their x,y coordinates in physical units
-fovNamesLocs = ROITools.getLabelsAndLocations(fovGrid.ROIs,frst_img)
+fovNamesLocs = ROITools.getLabelsAndLocations(fovGrid.ROIs,frst_img,
+											  False)
 
 # From all of the names of the fields of view, extract just the number,
 # which will come after 'Field-' string (see gridOfFields class
