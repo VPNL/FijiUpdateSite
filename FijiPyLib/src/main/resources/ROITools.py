@@ -183,13 +183,11 @@ class gridOfFields:
           the size of field_size and overlap 50% into the
           neighboring fields of view.
 
-        * img (Fiji ImagePlus): The image that was divided up into
-                                fields
+        * rotation (float): Amount that the field of views are rotated
+                            from the horizontal in degrees
 
-        * maxProj (Fiji ImagePlus): The normalized maximum intensity
-                                    projection of our image. Used to
-                                    keep track of which portions of the
-                                    image have already been sampled.
+        * fieldBoundary (Fiji ROI): ROI with the size and rotation of a
+                                    true field of view with no overlap
 
     gridOfFields(img,field_size,field_overlap,isRotated)
 
@@ -207,19 +205,23 @@ class gridOfFields:
 
     AR Oct 2021
     AR Jan 2022: Rewrote to account for rotated tile scans
+    AR Feb 2022: Changed the rotation of the fields of view to account
+                 for the potential that the image was rotated 180
+                 degrees, delete variables and close images after use
     '''
 
     # Define initialization function to create new instances of this
     # class of objects
     def __init__(self,img,field_size,field_overlap,rotation):
 
-        # Store the image, field size, field overlap and degree of
-        # rotation as attributes of the object
-        self.img = img
-        self.rotation = rotation
+        # Store the rotation as an attributes of the object
+        self.rotation = rotation % -180 # The rotation needed to be
+                                        # transformed in case the whole
+                                        # image needed to be flipped 180
+                                        # degrees
 
         # Normalize the image so that the pixel intensities are brighter
-        normalizedImg = ImageProcessing.normalizeImg(self.img)
+        normalizedImg = ImageProcessing.normalizeImg(img)
 
         # Create a z-stack object for this image
         imgStack = ImageProcessing.zStack(normalizedImg)
@@ -227,20 +229,24 @@ class gridOfFields:
         del normalizedImg
 
         # Generate a maximum intensity projection of the image
-        self.maxProj = imgStack.maxProj()
+        maxProj = imgStack.maxProj()
         imgStack.orig_z_stack.close()
         del imgStack
 
         # Create an ROI surrounding just the area of the tile scan that
         # we want to sample from, using the max projection
-        self.imgROI = selectNonBlackRegion(self.maxProj)
+        self.imgROI = selectNonBlackRegion(maxProj)
+
+        # Clear the max projection
+        maxProj.close()
+        del maxProj
 
         # Use the image ROI and the size of the original image to create
         # an image segmentation mask, labeling the full area we need to
         # sample from. We'll use this segmentation mask to keep track of
         # what has already been sampled, and what hasn't.
-        self.img.setRoi(self.imgROI)
-        self.imgSegMask = ImagePlus('Area2Sample',self.img.createRoiMask())
+        img.setRoi(self.imgROI)
+        self.imgSegMask = ImagePlus('Area2Sample',img.createRoiMask())
         self.imgSegMask.show()
 
         # Store the total width of a full field of view
@@ -270,7 +276,7 @@ class gridOfFields:
             topLPt = getTopLeftPoint(self.imgROI)
 
             # Make a full sized field of view at this top left point
-            newField = makeRotatedR0I(topLPt,fullFieldWidth,rotation - 180)
+            newField = makeRotatedR0I(topLPt,fullFieldWidth,self.rotation)
 
             # Check to see if this field of view is fully contained
             # within the image ROI
@@ -299,8 +305,11 @@ class gridOfFields:
             # divided up
             imgROIArea = self.imgROI.getFloatWidth() * self.imgROI.getFloatHeight()
 
-        # Hide the segmentation mask
-        self.imgSegMask.hide()
+        # Close and clear the segmentation mask and image left to sample
+        # ROI
+        self.imgSegMask.close()
+        delattr(self,'imgSegMask')
+        delattr(self,'imgROI')
 
         # Each of these fields of view will later be cropped. Find the
         # central coordinate of this crop
@@ -317,7 +326,7 @@ class gridOfFields:
         # Rotate this field of view to generate our final true field
         # boundary
         self.fieldBoundary = roirotator.rotate(baseFovBoundsROI,
-                                               rotation - 180,
+                                               self.rotation,
                                                fovCenter[0],
                                                fovCenter[1])
 
@@ -334,7 +343,7 @@ class gridOfFields:
         # projection to keep track of what areas of the image have
         # already been sampled
         field4Cropping = makeRotatedR0I(topLeftPoint,ceil(cropWidth/2.0),
-                                        self.rotation - 180)
+                                        self.rotation)
 
         # Sometimes the image ROI will have fuzzy edges, so it's hard to
         # have ROIs fit perfectly within the area that was actually
@@ -1178,7 +1187,7 @@ def grayLevelTTest(ROIs,ROI2Compare,img):
 ########################################################################
 
 # Write a function to get the names and locations of a set of ROIs
-def getLabelsAndLocations(ROIs,img):
+def getLabelsAndLocations(ROIs,img,xForm2Center=True):
     '''
     Organize ROI names and x/y coordinates into a python dictionary
 
@@ -1188,6 +1197,11 @@ def getLabelsAndLocations(ROIs,img):
                                       coordinates of
 
         - img (ImagePlus): Image containing your ROIs
+
+        - xForm2Center (Boolean): Do you want to transform the data
+                                  points so that (0,0) is at the center
+                                  of the image? Default sets (0,0) as
+                                  center
 
     OUTPUT dictionary with keys a python dictionary with keys
     'Cell_Type','X_Coordinate_In_{}' and 'Y_Coordinate_In_{}' where {}
@@ -1211,9 +1225,18 @@ def getLabelsAndLocations(ROIs,img):
                'X_Coordinate_In_{}'.format(imgUnits): [],
                'Y_Coordinate_In_{}'.format(imgUnits): []}
 
-    # Identify the center of the image in pixels. We will set 0 as this
-    # coordinate
-    imgCenter = (float(img.getWidth())/2.0,float(img.getHeight())/2.0)
+    # If we want to set 0,0 to the center of the image
+    if xForm2Center:
+
+        # Identify the center of the image in pixels. We will set 0 as
+        # this coordinate
+        imgCenter = (float(img.getWidth())/2.0,float(img.getHeight())/2.0)
+
+    # Otherwise
+    else:
+
+        # The center of the image will be at ImageJ's default 0,0
+        imgCenter = (0.0,0.0)
 
     # Iterate across our list of ROIs
     for ROI in ROIs:

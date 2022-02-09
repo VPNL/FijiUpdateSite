@@ -371,8 +371,8 @@ class zStack:
             # Get a copy of the z-stack including only our desired
             # z-slices
             cropped_img = duplicator.run(self.orig_z_stack,
-                                        self.starting_z_included,
-                                        self.ending_z_included)
+                                         self.starting_z_included,
+                                         self.ending_z_included)
 
             # Rename the cropped image so that it's the same as the
             # original z stack
@@ -408,6 +408,10 @@ def normalizeImg(img):
     imgStack = zStack(z_stack)
     maxProjection = imgStack.maxProj()
 
+    # Clear the image stack from memory
+    imgStack.orig_z_stack.close()
+    del imgStack
+
     # Enhance the contrast of the maximum intensity projection. The .35
     # is Fiji's default value for the parameter called "saturated" that
     # controls what proportion of pixels become saturated by the
@@ -418,6 +422,10 @@ def normalizeImg(img):
     # contrast adjustment
     min4contrast = maxProjection.getDisplayRangeMin()
     max4contrast = maxProjection.getDisplayRangeMax()
+
+    # Clear the max projection image from memory
+    maxProjection.close()
+    del maxProjection
 
     # Use the contrast range from the maximum intensity projection to
     # adjust the dynamic range of the full z-stack

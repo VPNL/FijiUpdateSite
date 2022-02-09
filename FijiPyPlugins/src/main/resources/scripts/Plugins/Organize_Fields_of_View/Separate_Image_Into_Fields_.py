@@ -39,6 +39,7 @@ AR Oct 2021
 AR Dec 2021 Determine calibration of image to ask user about field of
 			view size
 AR Jan 2022 Account for rotated tile scans
+AR Feb 2022 Save locations of the fields to a csv file
 '''
 
 ########################################################################
@@ -59,8 +60,8 @@ del input_dir
 # Import tools that will allow us to work easily with files
 from ImageTools import ImageFiles
 
-# Import our user interface library
-import UIs
+# Import our user interface and data files libraries
+import UIs, DataFiles
 
 # Import generic dialog so we can make quick and dirty UI's
 from ij.gui import GenericDialog
@@ -135,10 +136,12 @@ if u'\xb5' in lengthUnits:
 											  					['True Field of View Size in {}:'.format(lengthUnits),
 											   					 'Overlap into Neighboring Fields in {}:'.format(lengthUnits)],
 											  			 		['60','15'])
+del lengthUnits
 
 # Convert field size and field overlap from physical units to pixels
 field_size = int(round(imgCal.getRawX(float(field_size_physical))))
 field_overlap = int(round(imgCal.getRawX(float(field_overlap_physical))))
+del imgCal, field_size_physical, field_overlap_physical
 
 # If the image was previously rotated, there will be a text file storing
 # the angle of rotation. Find this text file
@@ -161,9 +164,24 @@ else:
 		# Read the angle saved in the text file
 		rotation = float(rotAngleTextFile.read())
 
+		rotAngleTextFile.close()
+del rotAngleTextFilePath, rotAngleTextFile
+
 # Separate the image into a grid-like configuration of fields of view
 fovGrid = ROITools.gridOfFields(frst_img,field_size,field_overlap,
 								rotation)
+del field_overlap, rotation
+
+# Create a dictionary that will store the names of all of these fields
+# of view as well as their x,y coordinates in physical units
+fovNamesLocs = ROITools.getLabelsAndLocations(fovGrid.ROIs,frst_img,
+											  False)
+
+# From all of the names of the fields of view, extract just the number,
+# which will come after 'Field-' string (see gridOfFields class
+# definition)
+fovNamesLocs['Field_Number'] = [int(fieldName[6:]) for fieldName in fovNamesLocs['Cell_Type']]
+del fovNamesLocs['Cell_Type']
 
 ########################################################################
 ################## SEPARATE IMAGES INTO FIELDS OF VIEW #################
@@ -188,6 +206,7 @@ def crop_norm_save_fov(img2separate,fieldOfViewROI,outDir):
 						   normalized field of view
 
 	AR Oct 2021
+	AR Feb 2022 Make sure images close so they don't take up memory
 	'''
 
 	# Crop the field of view from the larger image
@@ -196,8 +215,14 @@ def crop_norm_save_fov(img2separate,fieldOfViewROI,outDir):
 	# Normalize this field of view
 	normalizedField = ImageProcessing.normalizeImg(field)
 
-	# Save this field of view
+	# Clear the field of view from memory
+	field.close()
+
+	# Save this normalized field of view
 	IJ.save(normalizedField,os.path.join(outDir,normalizedField.getTitle()))
+
+	# Clear the normalized field of view from memory
+	normalizedField.close()
 
 # Define a wrapper function that will crop, normalize and save each
 # field of view in a given image to be separated
@@ -271,6 +296,15 @@ fieldROIsPath = os.path.join(inputDir,'ROIs',str(field_size) + 'pxlFields.zip')
 ROITools.saveROIs(fovGrid.ROIs,fieldROIsPath)
 
 del fieldROIsPath
+
+# Write a file path to where we want to save a csv file with all of the
+# field of view numbers and x,y coordinates in physical units
+fieldCoordsPath = os.path.join(inputDir,'FieldsOfView',str(field_size) + 'pxlFields',str(field_size) + 'pxlFieldLocations.csv')
+
+# Save the field x and y coordinates to a csv file
+DataFiles.dict2csv(fovNamesLocs,fieldCoordsPath)
+
+del fovNamesLocs, fieldCoordsPath
 
 # Write a file path to where we want to save our Field boundary ROI
 fieldBoundaryROIPath = os.path.join(inputDir,'FieldsOfView',str(field_size) + 'pxlFields',str(field_size) + 'pxlFieldBoundary.roi')
