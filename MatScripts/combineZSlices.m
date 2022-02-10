@@ -27,6 +27,7 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %   AR Dec 2021
 %   AR Jan 2022: Changed angle saved to text file to negative to correspond
 %   with how the angle will be interpreted in Fiji/ImageJ
+%   AR Feb 2022: Moved files in dir function to a separate file
 
 % Check to see if needsRotation was provided
 if nargin < 2
@@ -57,31 +58,6 @@ if ischar(bestChannel)
 
     % Convert bestChannel to a double 
     bestChannel = str2double(bestChannel);
-
-end
-
-% Define a function that will get all of the files within a directory
-function files = filesInDir(directory)
-% FILESINDIR will list out all of the files within a directory
-%
-%   files = filesInDir(directory)
-%
-%       directory (String): Path to the directory within which you want all
-%                           of the files
-%
-%       files (Cell Array of Strings): File names for all files within the
-%                                      directory
-%
-% AR Dec 2021
-
-% Get all of the files within the directory
-files = dir(directory);
-
-% Exclude any directories from this list of files 
-files = files(~[files.isdir]);
-
-% Transform files into a cell array 
-files = {files.name};
 
 end
 
