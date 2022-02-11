@@ -40,10 +40,10 @@ clear allFiles
 
 % Store the name of the image we want to use to define our cropping
 % boundaries
-imgFile4Cropping = imgFiles2Rotate{~cellfun(@isempty, ...
-                                            regexp(imgFiles2Rotate, ...
-                                                   sprintf('c%d_', ...
-                                                           channel4Crop)))};
+imgFile4Cropping = fullfile(imgFilesDir,imgFiles2Rotate{~cellfun(@isempty, ...
+                                                                 regexp(imgFiles2Rotate, ...
+                                                                        sprintf('c%d_', ...
+                                                                        channel4Crop)))});
 
 % Get the information of the image we want to use to set our cropping
 % bounds
@@ -71,10 +71,10 @@ clear rotatedImg4CropDef
 for imgFile2Rotate = imgFiles2Rotate
 
     % Separate the image file path into separate components
-    [imgFileDir,imgFileName,imgFileExt] = fileparts(imgFile2Rotate);
+    [~,imgFileName,imgFileExt] = fileparts(imgFile2Rotate{1});
 
     % Store the name of the file we want to save the rotated image to
-    rotatedImgFile = fullfile(imgFileDir,strcat('Rotated_',imgFileName, ...
+    rotatedImgFile = fullfile(imgFilesDir,strcat('Rotated_',imgFileName, ...
                                                 imgFileExt));
     clear imgFileDir imgFileName imgFileExt
 
@@ -82,7 +82,9 @@ for imgFile2Rotate = imgFiles2Rotate
     for z = 1:imgNSlices
 
         % Read and rotate the current slice of the image
-        imgSlice = imrotate(imread(imgFile2Rotate,z),-rotAngle);
+        rotatedImgSlice = imrotate(imread(fullfile(imgFilesDir, ...
+                                                   imgFile2Rotate{1}),z), ...
+                                   -rotAngle);
 
         % Crop and save the final rotated image
         imwrite(rotatedImgSlice(rows2keep,cols2keep),rotatedImgFile, ...
