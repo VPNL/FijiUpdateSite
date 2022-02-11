@@ -27,7 +27,8 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %   AR Dec 2021
 %   AR Jan 2022: Changed angle saved to text file to negative to correspond
 %   with how the angle will be interpreted in Fiji/ImageJ
-%   AR Feb 2022: Moved files in dir function to a separate file
+%   AR Feb 2022: Moved files in dir function to a separate file, make sure
+%                to export rotation angle if 0
 
 % Check to see if needsRotation was provided
 if nargin < 2
@@ -144,25 +145,6 @@ if needsRotation
     rotAngle = rad2deg(atan(min(refImgW/refImgH,refImgH/refImgW)));
     clear refImgH refImgW
 
-    % We'll want to save this rotation angle to a text file so we can keep
-    % track. Get our base file name without the image type extension (e.g.
-    % 'tif')
-    [~,baseTextFileName,~] = fileparts(baseFileName);
-
-    % Open the text file where we will print out the rotation angle
-    rotTextFID = fopen(fullfile(separateSliceChannelDir,'..', ...
-                                append('RotationInDegrees_', ...
-                                       baseTextFileName,'.txt')),'wt');
-    clear baseTextFileName
-
-    % Print the rotation angle to the text file. Print as a negative number
-    % since Fiji/ImageJ interprets angles the opposite as imrotate in
-    % Matlab
-    fprintf(rotTextFID,num2str(-rotAngle));
-
-    % Close the text file
-    fclose(rotTextFID);
-
     % Rotate our reference image
     rotatedRef = imrotate(refImg,rotAngle);
     clear refImg;
@@ -173,7 +155,31 @@ if needsRotation
     cols2keep = find(any(rotatedRef,1));
     clear rotatedRef
 
+else
+
+    % If we don't need to rotate, the rotation angle is 0
+    rotAngle = 0;
+
 end
+
+% We'll want to save this rotation angle to a text file so we can keep
+% track. Get our base file name without the image type extension (e.g. 
+% 'tif')
+[~,baseTextFileName,~] = fileparts(baseFileName);
+
+% Open the text file where we will print out the rotation angle
+rotTextFID = fopen(fullfile(separateSliceChannelDir,'..', ...
+                            append('RotationInDegrees_', ...
+                                   baseTextFileName,'.txt')),'wt');
+clear baseTextFileName
+
+% Print the rotation angle to the text file. Print as a negative number
+% since Fiji/ImageJ interprets angles the opposite as imrotate in
+% Matlab
+fprintf(rotTextFID,num2str(-rotAngle));
+
+% Close the text file
+fclose(rotTextFID);
 
 % Loop across all channels that were present in the composite image 
 for c = channels
