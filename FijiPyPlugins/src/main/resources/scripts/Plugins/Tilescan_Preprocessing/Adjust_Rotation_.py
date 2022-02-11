@@ -119,24 +119,12 @@ del rotAngleTextFilePath, rotAngleTextFile, currRot
 ################## READ, ROTATE AND RESAVE ALL IMAGES ##################
 ########################################################################
 
-# Get a list of all image files that we want to rotate
-imgFiles2Rotate = ImageFiles.findImgsInDir(inputDir,'tif','c\d_')
-
-# If only one image file was found...
-if isinstance(imgFiles2Rotate,(unicode,str)):
-
-    # Convert to a list of one element
-    imgFiles2Rotate = [imgFiles2Rotate]
-
 # Locate the location of the Paredes & Grill-Spector Labs' Matlab
 # scripts
 matScriptsPath = os.path.join(os.getcwd(),'scripts')
 
-# Rotate across all image files
-for imgFile2Rotate in imgFiles2Rotate:
+# Write out a command to rotate and save the image files
+command = 'matlab -nosplash -nodesktop -nojvm -r "addpath(genpath(\'' + matScriptsPath + '\'));rotateAndSaveStacks(\'' + inputDir  + '\',\'' + str(rotAngle) + '\',\'' + str(channel4ManualRotation) + '\');"'
 
-    # Write out a command to rotate and save the image file
-    command = 'matlab -nosplash -nodesktop -nojvm -r "addpath(genpath(\'' + matScriptsPath + '\'));rotateAndSaveStack(\'' + imgFile2Rotate  + '\',\'' + str(rotAngle) + '\');"'
-
-    # Run the command
-    _ = os.system(command)
+# Run the command
+_ = os.system(command)
