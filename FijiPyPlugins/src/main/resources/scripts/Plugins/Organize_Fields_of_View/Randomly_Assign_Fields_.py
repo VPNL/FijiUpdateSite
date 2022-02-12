@@ -1,5 +1,6 @@
 #@ File(label='Where is your FieldsOfView folder located?',style='directory') fields_dir
 #@ Short(label='How many researchers will quantify these fields of view?',value=2) NResearchers
+#@ Boolean(label='Assign all fields of view',value=True) sampleAllFovs
 
 '''
 Randomly Assign Fields
@@ -17,6 +18,11 @@ INPUTS
     - NResearchers (int): The number of researchers amongst whom you
                           would like to distribute your fields of view
 
+    - sampleAllFovs (boolean): Will you be assigning all fields of view,
+                               or do you want to subsample the fields?
+                               (default = True, sample all fields of
+                               view)
+
 OUTPUTS
 
     The script will automatically randomize all fields of view created
@@ -30,8 +36,9 @@ OUTPUTS
 AR Oct 2021
 AR Jan 2022 Added UI so that the user can specify the initials of the
             RAs
-AR Feb 2022 Made sure the folder name with the list of markers is in 
-			alphabetical order
+AR Feb 2022 Made sure the folder name with the list of markers is in
+			alphabetical order; added option to only assign a certain
+            number of fields
 '''
 
 ########################################################################
@@ -61,6 +68,12 @@ from ImageTools import ImageFiles
 
 # Import our ROI tools
 import ROITools
+
+# Import generic dialog so we can make quick and dirty UI's
+from ij.gui import GenericDialog
+
+# Import python's fraction module
+from fractions import Fraction
 
 # Import python's random package so we can randomly sort and assign
 # fields of view
@@ -139,9 +152,60 @@ fieldsROIs = ROITools.openROIFile(os.path.join(fieldsDir,'..','ROIs',fieldSize +
 # equivalent to the list of all fields of view in the grid layed out
 # previously in Separate Image Into Fields
 fieldNames = [fieldROI.getName() for fieldROI in fieldsROIs]
-
 del fieldsROIs
 
+# Check to see if we are assigning all fields of view
+if not sampleAllFovs:
+
+    # Store the total number of fields of view
+    totNFovs = len(fieldNames)
+
+    # Initialize a generic dialog where we can ask the user to specify
+    # how many fields of view they want to assign
+    NFovsUI = GenericDialog('How many fields of view do you want to assign?')
+
+    # Add a slider for the user to indicate how many fields of view they
+    # want to assign to their RAs
+    NFovsUI.addSlider('Number of Fields',1,totNFovs,totNFovs)
+
+    # Display the UI to the user
+    NFovsUI.showDialog()
+
+    # Grab the desired number of fields of view to assign to the RAs
+    nFovs2Assign = NFovsUI.getNextNumber()
+    del NFovsUI
+
+    # Check to see if the number of fields of view we want to assign is
+    # greater than half of the total number of fields of view
+    if nFovs2Assign > float(totNFovs) / 2.0 and nFovs2Assign < totNFovs:
+
+    	# Compute the number of fields of view we want to leave out
+    	nFovs2NotAssign = totNFovs - nFovs2Assign
+
+    	# We'll want to avoid sampling every ith element from the list
+    	# of field names. Compute i below. Increase by 1 so that we're
+    	# not getting rid of too many fields of view.
+    	iAvoid = Fraction(1.0/(float(nFovs2NotAssign)/float(totNFovs))).limit_denominator(1) + 1
+        del nFovs2NotAssign
+
+    	# Delete every iAvoid'th element from the field names list
+    	del fieldNames[::int(iAvoid)]
+        del iAvoid
+
+    else:
+
+    	# We'll want to sample every ith element from the list of field
+    	# names such that after sampling we get slightly more than our
+    	# desired number of fields of view. Calculate i and subtract by
+    	# 1 so we get more fields than desired
+    	iAssign = Fraction(1.0/(float(nFovs2Assign/float(totNFovs)))).limit_denominator(1) - 1
+
+    	# Shorten fieldNames so that we're only sampling every
+    	# iAssign'th element
+    	fieldNames = fieldNames[::int(iAssign)]
+        del iAssign
+
+    del totNFovs, nFovs2Assign
 # Randomly shuffle this list of fields of view
 random.shuffle(fieldNames)
 
