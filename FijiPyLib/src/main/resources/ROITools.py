@@ -215,7 +215,7 @@ class gridOfFields:
     def __init__(self,img,field_size,field_overlap,rotation):
 
         # Store the rotation as an attributes of the object
-        self.rotation = rotation % -180 # The rotation needed to be
+        self.rotation = rotation % -90 # The rotation needed to be
                                         # transformed in case the whole
                                         # image needed to be flipped 180
                                         # degrees
