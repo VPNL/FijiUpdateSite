@@ -367,7 +367,9 @@ for m in range(len(markers2label)):
     for nuc in range(nCells2Lable):
 
         # Check to see if the t statistic for this nuclei and label was
-        # high
+        # high. Since the degrees of freedom will be very high since
+        # we're comparing two large populations of pixels, t approaches
+        # z and a statistic of 2.5 corresponds with a p of about 0.005
         if tStatsByNuc[nuc] > 2.5:
 
             # Add this marker to our predicted cell type
