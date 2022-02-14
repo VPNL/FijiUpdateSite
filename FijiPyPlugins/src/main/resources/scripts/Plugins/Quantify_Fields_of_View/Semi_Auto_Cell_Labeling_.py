@@ -48,6 +48,8 @@ OUTPUTS
     user.
 
 AR Dec 2021
+AR Feb 2022 Edited output to keep track of distance between cells and
+            protein/transcript expression within each cell 
 '''
 
 ########################################################################
