@@ -215,10 +215,10 @@ class gridOfFields:
     def __init__(self,img,field_size,field_overlap,rotation):
 
         # Store the rotation as an attributes of the object
-        self.rotation = rotation % -90 # The rotation needed to be
-                                        # transformed in case the whole
-                                        # image needed to be flipped 180
-                                        # degrees
+        self.rotation = rotation % -90 # The rotation needs to be
+                                       # transformed to make sure it's
+                                       # divisible by 90 and the sign
+                                       # needs to be flipped
 
         # Normalize the image so that the pixel intensities are brighter
         normalizedImg = ImageProcessing.normalizeImg(img)
