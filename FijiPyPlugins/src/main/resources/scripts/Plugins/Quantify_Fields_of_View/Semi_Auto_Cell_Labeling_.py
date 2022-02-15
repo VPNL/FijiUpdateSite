@@ -49,7 +49,7 @@ OUTPUTS
 
 AR Dec 2021
 AR Feb 2022 Edited output to keep track of distance between cells and
-            protein/transcript expression within each cell 
+            protein/transcript expression within each cell
 '''
 
 ########################################################################
@@ -371,8 +371,8 @@ for m in range(len(markers2label)):
         # Check to see if the t statistic for this nuclei and label was
         # high. Since the degrees of freedom will be very high since
         # we're comparing two large populations of pixels, t approaches
-        # z and a statistic of 2.5 corresponds with a p of about 0.005
-        if tStatsByNuc[nuc] > 2.5:
+        # z and a statistic of 3 corresponds with a p of about 0.0005
+        if tStatsByNuc[nuc] > 3:
 
             # Add this marker to our predicted cell type
             predictedNucLabels[nuc] += '-' + markers2label[m]
