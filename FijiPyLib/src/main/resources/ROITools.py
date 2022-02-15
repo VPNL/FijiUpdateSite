@@ -1098,13 +1098,18 @@ def computeSNR(ROIs,backgroundROI,img):
     inputted list of ROIs
 
     AR Nov 2021
+    AR Feb 2022 Edited formula for SNR
     '''
 
     # Superimpose the background ROI on the image
     img.setRoi(backgroundROI)
 
-    # Store the average gray level in the background of this image
-    avgNoise = img.getStatistics().mean
+    # Store the statistics for the background of this image
+    imgStats = img.getStatistics()
+
+    # Store the mean and standard deviation of the background
+    avgNoise = imgStats.mean
+    stdNoise = imgStats.stdDev
 
     # Start a list that will store all of the SNR values for each ROI we
     # want to measure
@@ -1117,7 +1122,7 @@ def computeSNR(ROIs,backgroundROI,img):
         img.setRoi(ROI)
 
         # Compute the signal inside this ROI and divide it by the noise
-        SNRs.append(img.getStatistics().mean/avgNoise)
+        SNRs.append((img.getStatistics().mean - avgNoise) / stdNoise)
 
     # Return the list of SNRs of each ROI
     return SNRs
