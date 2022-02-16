@@ -462,6 +462,10 @@ labeledNuclei = ROITools.getOpenROIs()
 # Clear the ROI Manager
 ROITools.clearROIs()
 
+########################################################################
+############## SAVE NUCLEAR SEGMENTATION AND LABELED ROIS ##############
+########################################################################
+
 # Check to make sure that all of these final ROIs are still contained
 # within the true field of view boundary
 labeledNuclei = ROITools.ROIsInArea(labeledNuclei,fieldBoundROI)
@@ -495,6 +499,10 @@ ImageFiles.makedir(roiDir)
 # Save all of the ROIs that were labeled by cell type
 ROITools.saveROIs(labeledNuclei,os.path.join(roiDir,'Cell_Labeling_' + outFileName + '.zip'))
 del roiDir
+
+########################################################################
+################ EXPORT FINAL MEASUREMENTS TO CSV FILES ################
+########################################################################
 
 # Store the number of nuclei labeled in our quantification dictionary
 fieldQuants['Total_N_Cells'] = [len(labeledNuclei)]
