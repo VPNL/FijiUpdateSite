@@ -516,15 +516,33 @@ notNucROI = ROITools.getBackgroundROI(labeledNuclei,fieldBoundROI,editedNucSeg)
 editedNucSeg.close()
 del fieldBoundROI, editedNucSeg
 
-# Store the average SNR of the nuclear stain
-fieldQuants['Average_{}_SNR'.format(marker2seg)] = [sum(ROITools.computeSNR(labeledNuclei,
-                                                                            notNucROI,
-                                                                            nucMaxProj)) / fieldQuants['Total_N_Cells'][0]]
+# Store the SNR of the nuclear stain
+fieldQuants['{}_SNR'.format(marker2seg)] = [ROITools.computeSNR(ROITools.combineROIs(labeledNuclei),
+                                                                notNucROI,
+                                                                nucMaxProj)]
 nucMaxProj.close()
 del nucMaxProj
 
 # Loop across all markers to label
 for m in range(len(markers2label)):
+
+    # Get a list of all nuclear ROIs that were expressing this marker
+    nucsExpressMrkr = [nucROI for nucROI in labeledNuclei if markers2label[m] in nucROI.getName()]
+
+    # Check to see if there is at least one nuclear ROI that was found
+    # to express this marker
+    if len(nucsExpressMrkr) > 0:
+
+        # Compute and store the approximate SNR of this stain
+        fieldQuants['Approximate_{}_SNR'.format(markers2label[m])] = [ROITools.computeSNR(ROITools.combineROIs(nucsExpressMrkr),
+                                                                        notNucROI,
+                                                                        labelMaxProjs[m])]
+
+    # Otherwise...
+    else:
+
+        # Store the approximate SNR of this stain as NaN
+        fieldQuants['Approximate_{}_SNR'.format(markers2label[m])] = [float('nan')]
 
     # Compute a t-statistic comparing the gray level inside each final
     # ROI with the gray level outside all of the nuclear ROIs using the

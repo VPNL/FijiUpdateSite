@@ -98,8 +98,8 @@ This module contains tools to work easily with Fiji ROIs
     computeSNR(ROIs,backgroundROI,img)
 
         - Function that will compute the signal to noise ratio (SNR) of
-          the gray level inside a set of ROIs compared to the
-          background
+          the gray level inside a signal ROI compared to a background
+          ROI
 
     grayLevelTTest(ROIs,ROI2Compare,img)
 
@@ -1015,20 +1015,24 @@ def combineROIs(ROIs):
     OUTPUT Fiji ROI that is the composite of the ROIs you inputted
 
     AR Nov 2021
+    AR Feb 2022 Check to see if only one ROI is listed to be combined 
     '''
 
     # Initialize a shape ROI that will store the combined ROI using the
     # first ROI in your list
     combinedROI = ShapeRoi(ROIs[0])
 
-    # Loop across all other ROIs in the list
-    for ROI in ROIs[1:]:
+    # Check to make sure more than one ROI is present in the list
+    if len(ROIs) > 1:
 
-        # Convert this ROI into a shape ROI
-        shapeROI = ShapeRoi(ROI)
+        # Loop across all other ROIs in the list
+        for ROI in ROIs[1:]:
 
-        # Add the new shape ROI to our combined ROI
-        combinedROI = combinedROI.or(shapeROI)
+            # Convert this ROI into a shape ROI
+            shapeROI = ShapeRoi(ROI)
+
+            # Add the new shape ROI to our combined ROI
+            combinedROI = combinedROI.or(shapeROI)
 
     # Return the final combined ROI
     return combinedROI
@@ -1078,15 +1082,15 @@ def getBackgroundROI(nucROIs,fieldROI,refImg):
 ########################################################################
 
 # Define a function to compute SNR
-def computeSNR(ROIs,backgroundROI,img):
+def computeSNR(ROI,backgroundROI,img):
     '''
     Function that will compute the signal to noise ratio (SNR) of the
-    gray level inside a set of ROIs compared to the background
+    gray level inside a signal ROI compared to a background ROI
 
-    computeSNR(ROIs,backgroundROI,img)
+    computeSNR(ROI,backgroundROI,img)
 
-        - ROIs (List of Fiji ROIs): Areas in the image where your signal
-                                    is located (e.g. a stained cell)
+        - ROI (Fiji ROI): Areas in the image where your signal is
+                          located (e.g. a stained cell)
 
         - backgroundROI (Fiji ROI): Area in image where there is
                                     background (e.g. where there are no
@@ -1094,33 +1098,28 @@ def computeSNR(ROIs,backgroundROI,img):
 
         - img (Fiji ImagePlus): Image from which to measure gray level
 
-    OUTPUT List of floats representing the SNR of each ROI in your
-    inputted list of ROIs
+    OUTPUT float representing your SNR
 
     AR Nov 2021
+    AR Feb 2022 Edited SNR formula and changed from list of signal ROIs
+                to single composite signal ROI
     '''
 
     # Superimpose the background ROI on the image
     img.setRoi(backgroundROI)
 
-    # Store the average gray level in the background of this image
-    avgNoise = img.getStatistics().mean
+    # Store the statistics for the background of this image
+    imgStats = img.getStatistics()
 
-    # Start a list that will store all of the SNR values for each ROI we
-    # want to measure
-    SNRs = []
+    # Store the mean and standard deviation of the background
+    avgNoise = imgStats.mean
+    stdNoise = imgStats.stdDev
 
-    # Loop across all ROIs denoting areas of signal (e.g. cell nuclei)
-    for ROI in ROIs:
+    # Superimpose the ROI containing the signal on our image
+    img.setRoi(ROI)
 
-        # Superimpose this ROI on our image
-        img.setRoi(ROI)
-
-        # Compute the signal inside this ROI and divide it by the noise
-        SNRs.append(img.getStatistics().mean/avgNoise)
-
-    # Return the list of SNRs of each ROI
-    return SNRs
+    # Compute and return the final SNR
+    return (img.getStatistics().mean - avgNoise) / stdNoise
 
 ########################################################################
 ############################ grayLevelTTest ############################
