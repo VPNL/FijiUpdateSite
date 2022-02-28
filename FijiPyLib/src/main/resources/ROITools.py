@@ -108,6 +108,10 @@ This module contains tools to work easily with Fiji ROIs
           nuceli) versus a comparison ROI (for instance, pixels not
           labeled as cells)
 
+    getMeanGrayLevel(ROI,img)
+
+        - Get the average gray level within an ROI on an image
+
     getLabelsAndLocations(ROIs,img)
 
         - Organize ROI names and x/y coordinates into a python
@@ -1015,7 +1019,7 @@ def combineROIs(ROIs):
     OUTPUT Fiji ROI that is the composite of the ROIs you inputted
 
     AR Nov 2021
-    AR Feb 2022 Check to see if only one ROI is listed to be combined 
+    AR Feb 2022 Check to see if only one ROI is listed to be combined
     '''
 
     # Initialize a shape ROI that will store the combined ROI using the
@@ -1180,6 +1184,33 @@ def grayLevelTTest(ROIs,ROI2Compare,img):
 
     # Return all of our test results
     return testResults
+
+########################################################################
+########################### getMeanGrayLevel ###########################
+########################################################################
+
+# Define a function to get the average pixel intensity inside of an ROI
+def getMeanGrayLevel(ROI,img):
+    '''
+    Get the average gray level within an ROI on an image
+
+    getMeanGrayLevel(ROI,img)
+
+        ROI (ImageJ ROI): The ROI that you want the mean pixel intensity
+                          of
+
+        img (ImagePlus): Image containing your ROI
+
+    OUTPUT average pixel intensity inside the ROI as a float
+
+    AR Feb 2022
+    '''
+
+    # Place the ROI on the image
+    img.setRoi(ROI)
+
+    # Return the average pixel intensity inside the ROI
+    return img.getStatistics().mean 
 
 ########################################################################
 ######################### getLabelsAndLocations ########################

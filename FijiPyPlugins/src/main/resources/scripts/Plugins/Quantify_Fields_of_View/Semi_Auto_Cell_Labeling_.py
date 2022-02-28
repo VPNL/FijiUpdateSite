@@ -544,14 +544,9 @@ for m in range(len(markers2label)):
         # Store the approximate SNR of this stain as NaN
         fieldQuants['Approximate_{}_SNR'.format(markers2label[m])] = [float('nan')]
 
-    # Compute a t-statistic comparing the gray level inside each final
-    # ROI with the gray level outside all of the nuclear ROIs using the
-    # image of this marker.
-    cellQuants['{}_Expression_T-Statistic'.format(markers2label[m])] = ROITools.grayLevelTTest(labeledNuclei,
-                                                                                               notNucROI,
-                                                                                               labelMaxProjs[m])
+    # Get the average gray level inside each final ROI for this marker
+    cellQuants['Mean_{}_Pixel_Intensity'.format(markers2label[m])] = [ROITools.getMeanGrayLevel(ROI,labelMaxProjs[m]) for ROI in labeledNuclei]                                                                                               labelMaxProjs[m])
     labelMaxProjs[m].close()
-
 del notNucROI, labelMaxProjs
 
 # Make the directory where we want to store all of our cell
