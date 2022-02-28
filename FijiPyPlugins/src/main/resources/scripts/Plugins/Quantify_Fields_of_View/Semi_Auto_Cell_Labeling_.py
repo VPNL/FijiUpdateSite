@@ -547,7 +547,26 @@ for m in range(len(markers2label)):
     # Get the average gray level inside each final ROI for this marker
     cellQuants['Mean_{}_Pixel_Intensity'.format(markers2label[m])] = [ROITools.getMeanGrayLevel(ROI,labelMaxProjs[m]) for ROI in labeledNuclei]
     labelMaxProjs[m].close()
+
+    # Initialize a new list that will store the z-scored mean pixel
+    # intensity for this channel
+    cellQuants['{}_Z-Scored_Mean_Pixel_Intensity'.format(markers2label[m])] = []
+
 del notNucROI, labelMaxProjs
+
+# Loop across all nuclei that were labeled
+for n in range(len(labeledNuclei)):
+
+    # For this cell, get a list of all of the average pixel intensities
+    # of each channel imaged
+    avgPxlLevels = [cellQuants['Mean_{}_Pixel_Intensity'.format(m)] for m in markers2label]
+
+    # Z-Score this list of average pixel intensities
+    ZdPxlLevels = Stats.zScoreData(avgPxlLevels)
+
+    # Add the z-scored average pixel intensity for this channel to our
+    # dataset
+    [cellQuants['{}_Z-Scored_Mean_Pixel_Intensity'.format(markers2label[m])].append(ZdPxlLevels[m]) for m in range(len(markers2label))]
 
 # Make the directory where we want to store all of our cell
 # quantifications
