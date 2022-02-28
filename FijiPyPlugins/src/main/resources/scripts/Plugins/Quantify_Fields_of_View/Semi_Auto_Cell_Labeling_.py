@@ -545,7 +545,7 @@ for m in range(len(markers2label)):
         fieldQuants['Approximate_{}_SNR'.format(markers2label[m])] = [float('nan')]
 
     # Get the average gray level inside each final ROI for this marker
-    cellQuants['Mean_{}_Pixel_Intensity'.format(markers2label[m])] = [ROITools.getMeanGrayLevel(ROI,labelMaxProjs[m]) for ROI in labeledNuclei]                                                                                               labelMaxProjs[m])
+    cellQuants['Mean_{}_Pixel_Intensity'.format(markers2label[m])] = [ROITools.getMeanGrayLevel(ROI,labelMaxProjs[m]) for ROI in labeledNuclei]
     labelMaxProjs[m].close()
 del notNucROI, labelMaxProjs
 
