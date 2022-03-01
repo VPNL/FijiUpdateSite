@@ -604,6 +604,13 @@ for cellType in cellTypes:
     # Count the number of cells of this cell type
     nCellType = labelsByNuclei.count(cellType)
 
+    # Check to see if the cell type is just the name of the nuclear
+    # marker
+    if cellType == marker2seg:
+
+        # Change the name of the cell type to other
+        cellType = 'Other'
+
     # Store the raw number of cells in this field of view
     fieldQuants['N_{}'.format(cellType)] = [nCellType]
 
