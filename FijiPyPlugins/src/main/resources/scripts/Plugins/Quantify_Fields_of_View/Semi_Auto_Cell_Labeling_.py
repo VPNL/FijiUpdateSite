@@ -112,7 +112,7 @@ from itertools import izip
 # substring shared between two strings
 from difflib import SequenceMatcher
 
-# Import our statistics module so we can compute z-scores 
+# Import our statistics module so we can compute z-scores
 import Stats
 
 # Import our data files module so we can write data files
@@ -424,6 +424,11 @@ del markers2LabelShortStacks, nucShortZStack
 # Display the merged short stack
 mergedShortZStack.show()
 
+# Merge and display all of the max projections for all markers in this
+# image
+mergedMaxProj = ImageDisplay.overlayImages(labelMaxProjs)
+mergedMaxProj.show()
+
 # Display all of the ROIs labeled by cell type
 ROITools.addROIs2Manager(nucROIs)
 del nucROIs
@@ -457,6 +462,8 @@ del time2label
 
 # Close the overlay
 mergedShortZStack.close()
+del mergedShortZStack
+mergedMaxProj.close()
 del mergedShortZStack
 
 # Get all of the ROIs in the ROI Manager
