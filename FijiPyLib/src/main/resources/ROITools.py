@@ -1153,6 +1153,7 @@ def grayLevelTTest(ROIs,ROI2Compare,img):
     comparison ROI
 
     AR Nov 2021
+    AR Mar 2022 Make sure ROIs are removed from image at end of function
     '''
 
     # Superimpose the comparison ROI on top of the image
@@ -1182,6 +1183,9 @@ def grayLevelTTest(ROIs,ROI2Compare,img):
                                        ROIStats.pixelCount,
                                        compareStats.pixelCount))
 
+    # Delete the ROI from the image
+    img.deleteRoi()
+
     # Return all of our test results
     return testResults
 
@@ -1210,7 +1214,7 @@ def getMeanGrayLevel(ROI,img):
     img.setRoi(ROI)
 
     # Return the average pixel intensity inside the ROI
-    return img.getStatistics().mean 
+    return img.getStatistics().mean
 
 ########################################################################
 ######################### getLabelsAndLocations ########################
