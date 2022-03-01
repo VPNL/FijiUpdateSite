@@ -112,6 +112,9 @@ from itertools import izip
 # substring shared between two strings
 from difflib import SequenceMatcher
 
+# Import our statistics module so we can compute z-scores 
+import Stats
+
 # Import our data files module so we can write data files
 import DataFiles
 
@@ -559,7 +562,7 @@ for n in range(len(labeledNuclei)):
 
     # For this cell, get a list of all of the average pixel intensities
     # of each channel imaged
-    avgPxlLevels = [cellQuants['Mean_{}_Pixel_Intensity'.format(m)] for m in markers2label]
+    avgPxlLevels = [cellQuants['Mean_{}_Pixel_Intensity'.format(m)][n] for m in markers2label]
 
     # Z-Score this list of average pixel intensities
     ZdPxlLevels = Stats.zScoreData(avgPxlLevels)
