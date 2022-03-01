@@ -426,7 +426,7 @@ mergedShortZStack.show()
 
 # Merge and display all of the max projections for all markers in this
 # image
-mergedMaxProj = ImageDisplay.overlayImages(labelMaxProjs)
+mergedMaxProj = ImageDisplay.overlayImages(labelMaxProjs + [nucMaxProj])
 mergedMaxProj.show()
 
 # Display all of the ROIs labeled by cell type
