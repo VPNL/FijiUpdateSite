@@ -48,6 +48,8 @@ OUTPUTS
     user.
 
 AR Dec 2021
+AR Feb 2022 Edited output to keep track of distance between cells and
+            protein/transcript expression within each cell
 '''
 
 ########################################################################
@@ -109,6 +111,9 @@ from itertools import izip
 # Import sequence matcher so that we can identify the longest common
 # substring shared between two strings
 from difflib import SequenceMatcher
+
+# Import our statistics module so we can compute z-scores
+import Stats
 
 # Import our data files module so we can write data files
 import DataFiles
@@ -367,8 +372,10 @@ for m in range(len(markers2label)):
     for nuc in range(nCells2Lable):
 
         # Check to see if the t statistic for this nuclei and label was
-        # high
-        if tStatsByNuc[nuc] > 2.5:
+        # high. Since the degrees of freedom will be very high since
+        # we're comparing two large populations of pixels, t approaches
+        # z and a statistic of 3 corresponds with a p of about 0.0005
+        if tStatsByNuc[nuc] > 3:
 
             # Add this marker to our predicted cell type
             predictedNucLabels[nuc] += '-' + markers2label[m]
@@ -417,6 +424,11 @@ del markers2LabelShortStacks, nucShortZStack
 # Display the merged short stack
 mergedShortZStack.show()
 
+# Merge and display all of the max projections for all markers in this
+# image
+mergedMaxProj = ImageDisplay.overlayImages(labelMaxProjs)
+mergedMaxProj.show()
+
 # Display all of the ROIs labeled by cell type
 ROITools.addROIs2Manager(nucROIs)
 del nucROIs
@@ -451,12 +463,18 @@ del time2label
 # Close the overlay
 mergedShortZStack.close()
 del mergedShortZStack
+mergedMaxProj.close()
+del mergedMaxProj
 
 # Get all of the ROIs in the ROI Manager
 labeledNuclei = ROITools.getOpenROIs()
 
 # Clear the ROI Manager
 ROITools.clearROIs()
+
+########################################################################
+############## SAVE NUCLEAR SEGMENTATION AND LABELED ROIS ##############
+########################################################################
 
 # Check to make sure that all of these final ROIs are still contained
 # within the true field of view boundary
@@ -492,6 +510,10 @@ ImageFiles.makedir(roiDir)
 ROITools.saveROIs(labeledNuclei,os.path.join(roiDir,'Cell_Labeling_' + outFileName + '.zip'))
 del roiDir
 
+########################################################################
+################ EXPORT FINAL MEASUREMENTS TO CSV FILES ################
+########################################################################
+
 # Store the number of nuclei labeled in our quantification dictionary
 fieldQuants['Total_N_Cells'] = [len(labeledNuclei)]
 
@@ -504,25 +526,57 @@ notNucROI = ROITools.getBackgroundROI(labeledNuclei,fieldBoundROI,editedNucSeg)
 editedNucSeg.close()
 del fieldBoundROI, editedNucSeg
 
-# Store the average SNR of the nuclear stain
-fieldQuants['Average_{}_SNR'.format(marker2seg)] = [sum(ROITools.computeSNR(labeledNuclei,
-                                                                            notNucROI,
-                                                                            nucMaxProj)) / fieldQuants['Total_N_Cells'][0]]
+# Store the SNR of the nuclear stain
+fieldQuants['{}_SNR'.format(marker2seg)] = [ROITools.computeSNR(ROITools.combineROIs(labeledNuclei),
+                                                                notNucROI,
+                                                                nucMaxProj)]
 nucMaxProj.close()
 del nucMaxProj
 
 # Loop across all markers to label
 for m in range(len(markers2label)):
 
-    # Compute a t-statistic comparing the gray level inside each final
-    # ROI with the gray level outside all of the nuclear ROIs using the
-    # image of this marker.
-    cellQuants['{}_Expression_T-Statistic'.format(markers2label[m])] = ROITools.grayLevelTTest(labeledNuclei,
-                                                                                               notNucROI,
-                                                                                               labelMaxProjs[m])
+    # Get a list of all nuclear ROIs that were expressing this marker
+    nucsExpressMrkr = [nucROI for nucROI in labeledNuclei if markers2label[m] in nucROI.getName()]
+
+    # Check to see if there is at least one nuclear ROI that was found
+    # to express this marker
+    if len(nucsExpressMrkr) > 0:
+
+        # Compute and store the approximate SNR of this stain
+        fieldQuants['Approximate_{}_SNR'.format(markers2label[m])] = [ROITools.computeSNR(ROITools.combineROIs(nucsExpressMrkr),
+                                                                        notNucROI,
+                                                                        labelMaxProjs[m])]
+
+    # Otherwise...
+    else:
+
+        # Store the approximate SNR of this stain as NaN
+        fieldQuants['Approximate_{}_SNR'.format(markers2label[m])] = [float('nan')]
+
+    # Get the average gray level inside each final ROI for this marker
+    cellQuants['Mean_{}_Pixel_Intensity'.format(markers2label[m])] = [ROITools.getMeanGrayLevel(ROI,labelMaxProjs[m]) for ROI in labeledNuclei]
     labelMaxProjs[m].close()
 
+    # Initialize a new list that will store the z-scored mean pixel
+    # intensity for this channel
+    cellQuants['{}_Z-Scored_Mean_Pixel_Intensity'.format(markers2label[m])] = []
+
 del notNucROI, labelMaxProjs
+
+# Loop across all nuclei that were labeled
+for n in range(len(labeledNuclei)):
+
+    # For this cell, get a list of all of the average pixel intensities
+    # of each channel imaged
+    avgPxlLevels = [cellQuants['Mean_{}_Pixel_Intensity'.format(m)][n] for m in markers2label]
+
+    # Z-Score this list of average pixel intensities
+    ZdPxlLevels = Stats.zScoreData(avgPxlLevels)
+
+    # Add the z-scored average pixel intensity for this channel to our
+    # dataset
+    [cellQuants['{}_Z-Scored_Mean_Pixel_Intensity'.format(markers2label[m])].append(ZdPxlLevels[m]) for m in range(len(markers2label))]
 
 # Make the directory where we want to store all of our cell
 # quantifications
@@ -549,6 +603,13 @@ for cellType in cellTypes:
 
     # Count the number of cells of this cell type
     nCellType = labelsByNuclei.count(cellType)
+
+    # Check to see if the cell type is just the name of the nuclear
+    # marker
+    if cellType == marker2seg:
+
+        # Change the name of the cell type to other
+        cellType = 'Other'
 
     # Store the raw number of cells in this field of view
     fieldQuants['N_{}'.format(cellType)] = [nCellType]
