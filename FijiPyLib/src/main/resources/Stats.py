@@ -12,13 +12,18 @@ Contains functions for running statistics on our data
 
         - Z-scores a list of data
 
+    distanceMatrix(x,y)
+
+        - Computes the distance between every x and y coordinate and
+          organizes these distances into a matrix
+
 '''
 
 ########################################################################
 ########################### IMPORT PACKAGES ############################
 ########################################################################
 
-# Import square root from math
+# Import square root and distance from math
 from math import sqrt
 
 # Import java's summary statistics package so we can compute means and
@@ -86,3 +91,64 @@ def zScoreData(data):
 
     # Return the z-scored list of data
     return [(value - avg)/std for value in data]
+
+########################################################################
+############################ distanceMatrix ############################
+########################################################################
+
+# Compute the distance between all points in a list
+def distanceMatrix(x,y):
+    '''
+    Computes the distance between every x and y coordinate and organizes
+    these distances into a matrix
+
+    distanceMatrix(x,y)
+
+        - x (List of floats): X coordinates of all points in our data
+                              set
+
+        - y (List of floats): Y coordinates of all points in our data
+                              set
+
+    OUTPUT List of lists of floats representing the distance between all
+           points in our data set.
+
+    AR Mar 2022
+    '''
+
+    # Store the number of points in the data set
+    nPts = len(x)
+
+    # Initialize a list of lists that will store the distances between
+    # all points
+    distMat = []
+
+    # Loop across all points in our data set, except the last point
+    for p in range(nPts-1):
+
+        # Generate a list that will store the distance from this point p
+        # to all other sequential points
+        distList = [0] * nPts
+
+        # Loop across all points in our data set, starting at the point
+        # after p
+        for q in range(p+1,nPts):
+
+            # Compute the distance from point p to q and add it to our
+            # list of distances
+            distList[q] = sqrt((x[p] - x[q])**2 + (y[p] - y[q])**2)
+
+        # Add our list of distances to the distance matrix
+        distMat.append(distList)
+
+    # Add a final column with only zeros to the end of the distance
+    # matrix
+    distMat.append([0] * nPts)
+
+    # Mirror the matrix across the diagonal
+    for i in range(nPts):
+        for j in range(i+1):
+            distMat[i][j] = distMat[j][i]
+
+    # Return the final matrix
+    return distMat
