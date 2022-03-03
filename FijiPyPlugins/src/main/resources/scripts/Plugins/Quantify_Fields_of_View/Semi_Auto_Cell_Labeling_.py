@@ -112,7 +112,8 @@ from itertools import izip
 # substring shared between two strings
 from difflib import SequenceMatcher
 
-# Import our statistics module so we can compute z-scores
+# Import our statistics module so we can compute z-scores and the
+# distance between cells
 import Stats
 
 # Import our data files module so we can write data files
@@ -578,15 +579,12 @@ for n in range(len(labeledNuclei)):
     # dataset
     [cellQuants['{}_Z-Scored_Mean_Pixel_Intensity'.format(markers2label[m])].append(ZdPxlLevels[m]) for m in range(len(markers2label))]
 
-# Make the directory where we want to store all of our cell
-# quantifications
-cellQuantsDir = os.path.join(dataDir,'Quantifications_By_Cell')
-ImageFiles.makedir(cellQuantsDir)
+# Store the plural version of the length units used in this image
+plural_length_units = field_length_units[:field_length_units.index('_')] + 's'
 
-# Save the field of view quantifications to a csv file
-DataFiles.dict2csv(cellQuants,os.path.join(cellQuantsDir,
-                                           'Cell-Quantifications_' + outFileName + '.csv'))
-del cellQuantsDir, cellQuants
+# Compute the distace between all labeled nuclei
+distBetweenNucs = Stats.distanceMatrix(cellQuants['X_Coordinate_In_{}'.format(plural_length_units)],
+                                       cellQuants['Y_Coordinate_In_{}'.format(plural_length_units)])
 
 # Get all of the labels that were assigned to each nuclei
 labelsByNuclei = [labeledNucleus.getName() for labeledNucleus in labeledNuclei]
@@ -601,8 +599,11 @@ del marker2label, markers2label
 # Loop across all cell types
 for cellType in cellTypes:
 
+    # Get the index of all nuclei that were labeled as this cell type
+    nucsOfCellType = [int(n) for n in range(len(labelsByNuclei)) if labelsByNuclei[n] == cellType]
+
     # Count the number of cells of this cell type
-    nCellType = labelsByNuclei.count(cellType)
+    nCellType = len(nucsOfCellType)
 
     # Check to see if the cell type is just the name of the nuclear
     # marker
@@ -610,6 +611,29 @@ for cellType in cellTypes:
 
         # Change the name of the cell type to other
         cellType = 'Other'
+
+    # Initialize a list that will store the smallest distance between
+    # each cell to this cell type
+    cellQuants['Distance_to_next_nearest_{}_nucleus_in_{}'.format(cellType,plural_length_units)] = [float('nan')] * len(labelsByNuclei)
+
+    # Check to see if at least one nucleus of this cell type is in this
+    # field of view
+    if nCellType > 0:
+
+        # Loop across all nuclei that were labeled
+        for n in range(len(labelsByNuclei)):
+
+            # Get the distances from this nucleus all nuclei of this
+            # cell type, excluding this nucleus
+            distances2CellType = [distBetweenNucs[n][nucOfCellType] for nucOfCellType in nucsOfCellType if nucOfCellType != n]
+
+            # Check to make sure there's at least one other nucleus of
+            # this cell type
+            if len(distances2CellType) > 0:
+
+                # Store the smallest distance from this nucleus to the
+                # next nearest nucleus of this cell type
+                cellQuants['Distance_to_next_nearest_{}_nucleus_in_{}'.format(cellType,plural_length_units)][n] = min(distances2CellType)
 
     # Store the raw number of cells in this field of view
     fieldQuants['N_{}'.format(cellType)] = [nCellType]
@@ -621,6 +645,16 @@ for cellType in cellTypes:
     fieldQuants['Percent_of_cells_that_are_{}'.format(cellType)] = [(float(nCellType) / fieldQuants['Total_N_Cells'][0]) * 100.0]
 del labelsByNuclei, cellTypes, cellType, nCellType, marker2seg
 del field_area, field_length_units
+
+# Make the directory where we want to store all of our cell
+# quantifications
+cellQuantsDir = os.path.join(dataDir,'Quantifications_By_Cell')
+ImageFiles.makedir(cellQuantsDir)
+
+# Save the field of view quantifications to a csv file
+DataFiles.dict2csv(cellQuants,os.path.join(cellQuantsDir,
+                                           'Cell-Quantifications_' + outFileName + '.csv'))
+del cellQuantsDir, cellQuants
 
 # Make the directory where we want to store all of our field
 # quantifications
