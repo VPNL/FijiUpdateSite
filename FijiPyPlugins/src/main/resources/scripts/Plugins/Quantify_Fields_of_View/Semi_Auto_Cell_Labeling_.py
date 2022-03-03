@@ -579,9 +579,12 @@ for n in range(len(labeledNuclei)):
     # dataset
     [cellQuants['{}_Z-Scored_Mean_Pixel_Intensity'.format(markers2label[m])].append(ZdPxlLevels[m]) for m in range(len(markers2label))]
 
+# Store the plural version of the length units used in this image
+plural_length_units = field_length_units[:field_length_units.index('_')] + 's'
+
 # Compute the distace between all labeled nuclei
-distBetweenNucs = Stats.distanceMatrix(cellQuants['X_Coordinate_In_{}'.format(field_length_units)],
-                                       cellQuants['Y_Coordinate_In_{}'.format(field_length_units)])
+distBetweenNucs = Stats.distanceMatrix(cellQuants['X_Coordinate_In_{}'.format(plural_length_units)],
+                                       cellQuants['Y_Coordinate_In_{}'.format(plural_length_units)])
 
 # Get all of the labels that were assigned to each nuclei
 labelsByNuclei = [labeledNucleus.getName() for labeledNucleus in labeledNuclei]
@@ -600,7 +603,7 @@ for cellType in cellTypes:
     nucsOfCellType = [int(n) for n in range(len(labelsByNuclei)) if labelsByNuclei[n] == cellType]
 
     # Count the number of cells of this cell type
-    nCellType = len(nucOfCellType)
+    nCellType = len(nucsOfCellType)
 
     # Check to see if the cell type is just the name of the nuclear
     # marker
@@ -611,7 +614,7 @@ for cellType in cellTypes:
 
     # Initialize a list that will store the smallest distance between
     # each cell to this cell type
-    cellQuants['Distance_to_next_nearest_{}_nucleus_in_{}'.format(cellType,field_length_units)] = [float('nan')] * len(labelsByNuclei)
+    cellQuants['Distance_to_next_nearest_{}_nucleus_in_{}'.format(cellType,plural_length_units)] = [float('nan')] * len(labelsByNuclei)
 
     # Check to see if at least one nucleus of this cell type is in this
     # field of view
@@ -630,7 +633,7 @@ for cellType in cellTypes:
 
                 # Store the smallest distance from this nucleus to the
                 # next nearest nucleus of this cell type
-                cellQuants['Distance_to_next_nearest_{}_nucleus_in_{}'.format(cellType,field_length_units)][n] = min(distances2CellType)
+                cellQuants['Distance_to_next_nearest_{}_nucleus_in_{}'.format(cellType,plural_length_units)][n] = min(distances2CellType)
 
     # Store the raw number of cells in this field of view
     fieldQuants['N_{}'.format(cellType)] = [nCellType]
