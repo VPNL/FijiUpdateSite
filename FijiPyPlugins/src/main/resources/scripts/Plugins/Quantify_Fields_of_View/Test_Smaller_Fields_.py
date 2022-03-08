@@ -1,10 +1,13 @@
 #@ File(label='Where are your SemiautoCellLabels located?',style='directory') input_dir
-#@ String(label='What is the name of the marker you want to calculate the CE for?',value='NeuN') marker4CE
+#@ String(label='What is the name of the marker you want to analyze at different field of view sizes?',value='NeuN') markerOfInterest
 
 '''
-Coefficient of Error Analysis
+Test Smaller Fields
 
 AR Mar 2022
+
+TODO: export all measurements at each field of view size so we can make
+      box plots
 '''
 
 ########################################################################
@@ -120,9 +123,12 @@ smallestFieldPhysical = float(smallestFieldPhysical)
 ########################################################################
 
 # Start a dictionary that will store our data
-dataDict = {'Field_of_View_Side_Length_in_{}'.format(lengthUnits): [],
+dataDict = {'Field_of_View_Size_in_{}'.format(lengthUnits): [],
             'Total_N_Cells_Per_{}_Squared'.format(lengthUnits): [],
-            'N_{}_Per_{}_Squared'.format(marker4CE,lengthUnits): []}
+            'N_{}_Per_{}_Squared'.format(markerOfInterest,lengthUnits): [],
+            'Total_N_Cells': [],
+            'N_{}'.format(markerOfInterest): [],
+            'Field_of_View_Number': []}
 
 # Loop across all RAs that worked on fields of view
 for subDir in RADirs:
@@ -162,7 +168,7 @@ for subDir in RADirs:
             while fovSidePhysicalLength > smallestFieldPhysical:
 
                 # Store the length of the side of the field of view
-                dataDict['Field_of_View_Side_Length_in_{}'.format(lengthUnits)].append(round(fovSidePhysicalLength))
+                dataDict['Field_of_View_Size_in_{}'.format(lengthUnits)].append(round(fovSidePhysicalLength))
 
                 # Compute the area of the field of view
                 fovArea = fovSidePhysicalLength ** 2
@@ -179,15 +185,15 @@ for subDir in RADirs:
 
                     # Count the number of nuclei with the marker we're
                     # interested in getting the CE for
-                    nucsPositive4Marker = [nuc for nuc in nucsInSmallFov if marker4CE in nuc.getName()]
+                    nucsPositive4Marker = [nuc for nuc in nucsInSmallFov if markerOfInterest in nuc.getName()]
 
                     # Store the density of this cell type in the field of view
-                    dataDict['N_{}_Per_{}_Squared'.format(marker4CE,lengthUnits)].append(float(len(nucsPositive4Marker)) / fovArea)
+                    dataDict['N_{}_Per_{}_Squared'.format(markerOfInterest,lengthUnits)].append(float(len(nucsPositive4Marker)) / fovArea)
 
                 else:
 
                     # Store the density of this cell type in the field of view
-                    dataDict['N_{}_Per_{}_Squared'.format(marker4CE,lengthUnits)].append(0.0)
+                    dataDict['N_{}_Per_{}_Squared'.format(markerOfInterest,lengthUnits)].append(0.0)
 
                 # Shrink the field of view by our incremental factor
                 fovROI_cp = roienlarger.enlarge(fovROI_cp,-float(fieldIncrementPxl)/ 2.0)
@@ -196,31 +202,5 @@ for subDir in RADirs:
                 # physical units
                 fovSidePhysicalLength = imgCal.getX(fovROI_cp.getLength() / 4.0)
 
-# Get all unique field of view sizes
-fovSizesTested = list(set(dataDict['Field_of_View_Side_Length_in_{}'.format(lengthUnits)]))
-
-# Store the number of field of view sizes that were tested
-nFovSizesTested = len(fovSizesTested)
-
-# Create a dictionary to store the average, standard deviation, and
-# coefficients of error of the density metric at each field size
-ceDict = {'Field_of_View_Side_Length_in_{}'.format(lengthUnits): [],
-          'Coefficient_of_Error_Total_N_Cells_Per_{}_Squared'.format(lengthUnits): [],
-          'Coefficient_of_Error_N_{}_Per_{}_Squared'.format(marker4CE,lengthUnits): []}
-
-# Loop across each field size that was tested
-for s in range(nFovSizesTested):
-
-    # Store the size of the field of view
-    ceDict['Field_of_View_Side_Length_in_{}'.format(lengthUnits)].append(dataDict['Field_of_View_Side_Length_in_{}'.format(lengthUnits)][s])
-
-    # Compute and store the coefficient of error for the total cell
-    # densities at this field of view size
-    ceDict['Coefficient_of_Error_Total_N_Cells_Per_{}_Squared'.format(lengthUnits)].append(Stats.coefficientOfError(dataDict['Total_N_Cells_Per_{}_Squared'.format(lengthUnits)][s::nFovSizesTested]))
-
-    # Compute and store the coefficient of error for the cell density
-    # for the marker of interest
-    ceDict['Coefficient_of_Error_N_{}_Per_{}_Squared'.format(marker4CE,lengthUnits)].append(Stats.coefficientOfError(dataDict['N_{}_Per_{}_Squared'.format(marker4CE,lengthUnits)][s::nFovSizesTested]))
-
 # Save the results of this analysis to a csv file
-DataFiles.dict2csv(ceDict,os.path.join(dataDir,'{}_Coefficient_of_Error_By_Field_Size.csv'.format(marker4CE)))
+DataFiles.dict2csv(ceDict,os.path.join(dataDir,'Analysis_of_{}_By_Field_Size.csv'.format(markerOfInterest)))
