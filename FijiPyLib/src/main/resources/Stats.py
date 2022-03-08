@@ -17,6 +17,10 @@ Contains functions for running statistics on our data
         - Computes the distance between every x and y coordinate and
           organizes these distances into a matrix
 
+    coefficientOfError(data)
+
+        - Computes the coefficient of error on the data set
+
 '''
 
 ########################################################################
@@ -152,3 +156,35 @@ def distanceMatrix(x,y):
 
     # Return the final matrix
     return distMat
+
+########################################################################
+########################## coefficientOfError ##########################
+########################################################################
+
+# Write a function to calculate the coefficient of error
+def coefficientOfError(data):
+    '''
+    Computes the coefficient of error on the data set
+
+    coefficientOfError(data)
+
+        - data (List of Floats): Measurements you want the coefficient
+                                 of error for
+
+    OUTPUT float with coefficient of error
+
+    AR Mar 2022
+    '''
+
+    # Initialize a descriptive statistics object so we can compute the
+    # average and standard deviation of the sample
+    stats = DSS(data)
+
+    # Store the average and standard deviation of the data
+    avg = stats.getMean()
+    std = stats.getStandardDeviation()
+    del stats
+
+    # Return the coefficient of error assuming systematic sampling (from
+    # West et al., The Anatomical Record (1991))
+    return std / (len(data) * avg)
