@@ -42,9 +42,12 @@ import UIs
 from ij.plugin import RoiEnlarger
 roienlarger = RoiEnlarger()
 
-# Import java's summary statistics package so we can compute means and
-# standard deviations to compute z-scores
-from org.apache.commons.math3.stat.descriptive import DescriptiveStatistics as DSS
+# Import out statistics library so we can compute the coefficient of
+# error
+import Stats
+
+# Import data files so we can write csv files
+import DataFiles
 
 ########################################################################
 #################### IDENTIFY SIZE OF FIELDS TO TEST ###################
@@ -77,6 +80,10 @@ nucSegs = ImageFiles.findImgsInDir(os.path.join(frstRAPath,nucSegDir),
                                    None,'-Segmentation_Field-')
 del frstRAPath, nucSegDir
 
+# Check to make sure nucSegs is a list and not just a character array
+if not isinstance(nucSegs,list):
+    nucSegs = [nucSegs]
+
 # Open the first nuclear segmentation as an example to get the physical
 # units of the field of view ROI
 nucSeg = ImagePlus(nucSegs[0])
@@ -99,7 +106,7 @@ fovPhysicalSize = imgCal.getX(fovPxlSize)
 [smallestFieldPhysical,fieldIncrementPhysical] = UIs.textFieldsUI('Specify what field of view sizes you would like to test',
                                                                   ['Smallest Field of View Size to Test in {}'.format(lengthUnits),
                                                                    'Difference in Size of Fields to Test in {}'.format(lengthUnits)],
-                                                                  ['15','2.5'])
+                                                                  ['10','5'])
 
 # Convert the incremental change in field of view size from physical
 # units to pixels
@@ -183,7 +190,7 @@ for subDir in RADirs:
                     dataDict['N_{}_Per_{}_Squared'.format(marker4CE,lengthUnits)].append(0.0)
 
                 # Shrink the field of view by our incremental factor
-                fovROI_cp = roienlarger.enlarge(fovROI_cp,-float(fieldIncrementPxl))
+                fovROI_cp = roienlarger.enlarge(fovROI_cp,-float(fieldIncrementPxl)/ 2.0)
 
                 # Store the length of a side of the new field of view in
                 # physical units
@@ -195,8 +202,8 @@ fovSizesTested = list(set(dataDict['Field_of_View_Side_Length_in_{}'.format(leng
 # Store the number of field of view sizes that were tested
 nFovSizesTested = len(fovSizesTested)
 
-# Create a dictionary to store just the coefficients of error at each
-# field size
+# Create a dictionary to store the average, standard deviation, and
+# coefficients of error of the density metric at each field size
 ceDict = {'Field_of_View_Side_Length_in_{}'.format(lengthUnits): [],
           'Coefficient_of_Error_Total_N_Cells_Per_{}_Squared'.format(lengthUnits): [],
           'Coefficient_of_Error_N_{}_Per_{}_Squared'.format(marker4CE,lengthUnits): []}
@@ -214,3 +221,6 @@ for s in range(nFovSizesTested):
     # Compute and store the coefficient of error for the cell density
     # for the marker of interest
     ceDict['Coefficient_of_Error_N_{}_Per_{}_Squared'.format(marker4CE,lengthUnits)].append(Stats.coefficientOfError(dataDict['N_{}_Per_{}_Squared'.format(marker4CE,lengthUnits)][s::nFovSizesTested]))
+
+# Save the results of this analysis to a csv file
+DataFiles.dict2csv(ceDict,os.path.join(dataDir,'{}_Coefficient_of_Error_By_Field_Size.csv'.format(marker4CE)))
