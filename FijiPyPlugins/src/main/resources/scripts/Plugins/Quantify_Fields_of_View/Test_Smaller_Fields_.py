@@ -123,7 +123,7 @@ smallestFieldPhysical = float(smallestFieldPhysical)
 ########################################################################
 
 # Start a dictionary that will store our data
-dataDict = {'Field_of_View_Size_in_{}'.format(lengthUnits): [],
+dataDict = {'Field_of_View_Width_in_{}'.format(lengthUnits): [],
             'Total_N_Cells_Per_{}_Squared'.format(lengthUnits): [],
             'N_{}_Per_{}_Squared'.format(markerOfInterest,lengthUnits): [],
             'Total_N_Cells': [],
@@ -171,7 +171,7 @@ for subDir in RADirs:
             while fovSidePhysicalLength > smallestFieldPhysical:
 
                 # Store the length of the side of the field of view
-                dataDict['Field_of_View_Size_in_{}'.format(lengthUnits)].append(round(fovSidePhysicalLength))
+                dataDict['Field_of_View_Width_in_{}'.format(lengthUnits)].append(round(fovSidePhysicalLength))
 
                 # Store the field of view number in our data set
                 dataDict['Field_of_View_Number'].append(fovNum)
