@@ -154,14 +154,17 @@ for subDir in RADirs:
         # Loop across all sets of nuclear segmentations
         for fovNucSegsPath in fovNucSegsPaths:
 
+            # Get the field of view number for this segmentation
+            fovNum = ImageFiles.getFieldNumber(fovNucSegsPath)
+
             # Get all of the labeled nuclei ROIs for this field of view
             fovLabeledNucs = ROITools.openROIFile(fovNucSegsPath)
 
             # Make a copy of the original field of view boundary ROI
             fovROI_cp = fovROI.clone()
 
-            # Store the length of a side of the field of view in physical
-            # units
+            # Store the length of a side of the field of view in
+            # physical units
             fovSidePhysicalLength = imgCal.getX(fovROI_cp.getLength() / 4.0)
 
             # Loop across all field of view sizes that we want to test
@@ -170,30 +173,48 @@ for subDir in RADirs:
                 # Store the length of the side of the field of view
                 dataDict['Field_of_View_Size_in_{}'.format(lengthUnits)].append(round(fovSidePhysicalLength))
 
+                # Store the field of view number in our data set
+                dataDict['Field_of_View_Number'].append(fovNum)
+
                 # Compute the area of the field of view
                 fovArea = fovSidePhysicalLength ** 2
 
-                # Identify which nuclear ROIs are contained within the field
-                # of view of this size
+                # Identify which nuclear ROIs are contained within the
+                # field of view of this size
                 nucsInSmallFov = ROITools.ROIsInArea(fovLabeledNucs,fovROI_cp)
 
-                # Store the density of all cells in this field of view
-                dataDict['Total_N_Cells_Per_{}_Squared'.format(lengthUnits)].append(float(len(nucsInSmallFov)) / fovArea)
+                # Get the total number of nuclei in the field of view
+                totNNucs = float(len(nucsInSmallFov))
 
-                # Check to see if there is at least one cell in the field of view
-                if len(nucsInSmallFov) > 0:
+                # Store the total number of nuclei in this field of view
+                dataDict['Total_N_Cells'].append(totNNucs)
+
+                # Store the density of all cells in this field of view
+                dataDict['Total_N_Cells_Per_{}_Squared'.format(lengthUnits)].append(totNNucs / fovArea)
+
+                # Check to see if there is at least one cell in the
+                # field of view
+                if totNNucs > 0:
 
                     # Count the number of nuclei with the marker we're
                     # interested in getting the CE for
                     nucsPositive4Marker = [nuc for nuc in nucsInSmallFov if markerOfInterest in nuc.getName()]
 
-                    # Store the density of this cell type in the field of view
-                    dataDict['N_{}_Per_{}_Squared'.format(markerOfInterest,lengthUnits)].append(float(len(nucsPositive4Marker)) / fovArea)
+                    # Store the total number of nuclei expressing this
+                    # marker
+                    NNucsWithMarker = float(len(nucsPositive4Marker))
+                    dataDict['N_{}'.format(markerOfInterest)].append(NNucsWithMarker)
+
+                    # Store the density of this cell type in the field
+                    # of view
+                    dataDict['N_{}_Per_{}_Squared'.format(markerOfInterest,lengthUnits)].append(NNucsWithMarker / fovArea)
 
                 else:
 
-                    # Store the density of this cell type in the field of view
+                    # Store the density and total number of this cell
+                    # type in the field of view
                     dataDict['N_{}_Per_{}_Squared'.format(markerOfInterest,lengthUnits)].append(0.0)
+                    dataDict['N_{}'.format(markerOfInterest)].append(0.0)
 
                 # Shrink the field of view by our incremental factor
                 fovROI_cp = roienlarger.enlarge(fovROI_cp,-float(fieldIncrementPxl)/ 2.0)
@@ -203,4 +224,6 @@ for subDir in RADirs:
                 fovSidePhysicalLength = imgCal.getX(fovROI_cp.getLength() / 4.0)
 
 # Save the results of this analysis to a csv file
-DataFiles.dict2csv(ceDict,os.path.join(dataDir,'Analysis_of_{}_By_Field_Size.csv'.format(markerOfInterest)))
+DataFiles.dict2csv(dataDict,
+                   os.path.join(dataDir,
+                                'Analysis_of_{}_By_Field_Size.csv'.format(markerOfInterest)))
