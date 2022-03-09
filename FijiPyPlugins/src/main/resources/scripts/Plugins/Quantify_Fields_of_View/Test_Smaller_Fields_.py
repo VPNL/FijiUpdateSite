@@ -101,7 +101,7 @@ del nucSeg
 # Get the length units used in this image
 lengthUnits = imgCal.getUnits()
 
-# Get the size of the field of view in physical units and round it
+# Get the size of the field of view in physical units
 fovPhysicalSize = imgCal.getX(fovPxlSize)
 
 # Ask the user to specify the size of the smallest field of view as well
@@ -171,7 +171,7 @@ for subDir in RADirs:
             while fovSidePhysicalLength > smallestFieldPhysical:
 
                 # Store the length of the side of the field of view
-                dataDict['Field_of_View_Width_in_{}'.format(lengthUnits)].append(round(fovSidePhysicalLength))
+                dataDict['Field_of_View_Width_in_{}'.format(lengthUnits)].append(fovSidePhysicalLength)
 
                 # Store the field of view number in our data set
                 dataDict['Field_of_View_Number'].append(fovNum)
