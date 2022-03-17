@@ -531,8 +531,6 @@ del fieldBoundROI, editedNucSeg
 fieldQuants['{}_SNR'.format(marker2seg)] = [ROITools.computeSNR(ROITools.combineROIs(labeledNuclei),
                                                                 notNucROI,
                                                                 nucMaxProj)]
-nucMaxProj.close()
-del nucMaxProj
 
 # Loop across all markers to label
 for m in range(len(markers2label)):
@@ -565,6 +563,10 @@ for m in range(len(markers2label)):
 
 del notNucROI, labelMaxProjs
 
+# Initialize a new list that will store the average pixel intensity of
+# the nuclear stain for each segmented nucleus
+cellQuants['Mean_{}_Pixel_Intensity'.format(marker2seg)] = []
+
 # Loop across all nuclei that were labeled
 for n in range(len(labeledNuclei)):
 
@@ -578,6 +580,12 @@ for n in range(len(labeledNuclei)):
     # Add the z-scored average pixel intensity for this channel to our
     # dataset
     [cellQuants['{}_Z-Scored_Mean_Pixel_Intensity'.format(markers2label[m])].append(ZdPxlLevels[m]) for m in range(len(markers2label))]
+
+    # Store the average gray level inside the nucleus for the nuclear
+    # stain
+    cellQuants['Mean_{}_Pixel_Intensity'.format(marker2seg)].append(ROITools.getMeanGrayLevel(labeledNuclei[n],nucMaxProj))
+nucMaxProj.close()
+del nucMaxProj
 
 # Store the plural version of the length units used in this image
 plural_length_units = field_length_units[:field_length_units.index('_')] + 's'
