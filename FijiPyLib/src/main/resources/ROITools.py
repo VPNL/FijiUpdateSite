@@ -1253,11 +1253,15 @@ def getLabelsAndLocations(ROIs,img,xForm2Center=True):
     # Store the units used in the image
     imgUnits = imgCal.getUnits()
 
-    # Initialize python dictionary that will store the cell types and
-    # locations based on these ROIs
+    # Initialize python dictionary that will store the cell types,
+    # locations and morphology metrics based on these ROIs
     ROIInfo = {'Cell_Type': [],
                'X_Coordinate_In_{}'.format(imgUnits): [],
-               'Y_Coordinate_In_{}'.format(imgUnits): []}
+               'Y_Coordinate_In_{}'.format(imgUnits): [],
+               'Major_Diameter_In_{}'.format(imgUnits): [],
+               'Minor_Diameter_In_{}'.format(imgUnits): [],
+               'Area_In_{}_Squared'.format(imgUnits): [],
+               'Perimeter_In_{}'.format(imgUnits): []}
 
     # If we want to set 0,0 to the center of the image
     if xForm2Center:
@@ -1275,6 +1279,9 @@ def getLabelsAndLocations(ROIs,img,xForm2Center=True):
     # Iterate across our list of ROIs
     for ROI in ROIs:
 
+        # Make sure that the ROI is not associated with the image
+        ROI.setImage(None)
+
         # Get the rotational center of this ROI
         ROICenter = ROI.getRotationCenter()
 
@@ -1286,6 +1293,19 @@ def getLabelsAndLocations(ROIs,img,xForm2Center=True):
         # Add the name of the ROI, which should store the cell type of
         # this selection
         ROIInfo['Cell_Type'].append(ROI.getName())
+
+        # Store the length of the perimeter of the ROI
+        ROIInfo['Perimeter_In_{}'.format(imgUnits)].append(imgCal.getX(ROI.getLength()))
+
+        # Compute the statistics for this ROI
+        ROIStats = ROI.getStatistics()
+
+        # Compute the area of the ROI
+        ROIInfo['Area_In_{}_Squared'.format(imgUnits)].append(ROIStats.area * imgCal.getX(1)**2)
+
+        # Store the major and minor diameters of the ROI
+        ROIInfo['Major_Diameter_In_{}'.format(imgUnits)].append(imgCal.getX(ROIStats.major))
+        ROIInfo['Minor_Diameter_In_{}'.format(imgUnits)].append(imgCal.getX(ROIStats.minor))
 
     # Return the final python dictionary
     return ROIInfo
