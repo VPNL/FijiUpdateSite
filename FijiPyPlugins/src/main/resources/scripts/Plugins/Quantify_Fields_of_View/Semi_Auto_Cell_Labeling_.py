@@ -567,6 +567,9 @@ del notNucROI, labelMaxProjs
 # the nuclear stain for each segmented nucleus
 cellQuants['Mean_{}_Pixel_Intensity'.format(marker2seg)] = []
 
+# Initialize a new list that will store the area of each nuclei labeled
+cellQuants['{}_Area_in_{}'.format(marker2seg,field_length_units)] = []
+
 # Loop across all nuclei that were labeled
 for n in range(len(labeledNuclei)):
 
@@ -584,6 +587,9 @@ for n in range(len(labeledNuclei)):
     # Store the average gray level inside the nucleus for the nuclear
     # stain
     cellQuants['Mean_{}_Pixel_Intensity'.format(marker2seg)].append(ROITools.getMeanGrayLevel(labeledNuclei[n],nucMaxProj))
+
+    # Store the size of the nucleus as an area 
+    cellQuants['{}_Area_in_{}'.format(marker2seg,field_length_units)].append(ROITools.getROIArea(labeledNuclei[n],nucMaxProj))
 nucMaxProj.close()
 del nucMaxProj
 
