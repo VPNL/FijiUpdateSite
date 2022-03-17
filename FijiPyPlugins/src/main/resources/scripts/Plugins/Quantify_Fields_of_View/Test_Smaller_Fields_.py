@@ -4,10 +4,43 @@
 '''
 Test Smaller Fields
 
-AR Mar 2022
+This script can be used to test out smaller field of view sizes and
+evaluate the error of the resulting density metrics.
 
-TODO: export all measurements at each field of view size so we can make
-      box plots
+INPUTS
+
+    - input_dir (java.io.File): Location with the semi automatically
+                                labeled images for the tile scan you are
+                                evaluating
+
+    - markerOfInterest (String): The fluorescent marker whose density
+                                 you are interested in evaluating (e.g.
+                                 'NeuN')
+
+OUTPUT csv file with the following data:
+
+    - Field_of_View_Number: The number of the field of view
+      systematically sampled from the confocal tile scan.
+
+    - Field_of_View_Width_in_microns: The length of one side of the
+      square field of view that was tested by this script.
+
+    - Total_N_Cells: The total number of nuclei that reside within this
+      field of view given the width we are testing.
+
+    - N_NeuN: The number of NeuN+ nuclei (mature neuronal nuclei) that
+      reside within this field of view given the field width we are
+      testing.
+
+    - Total_N_Cells_Per_{}_Squared: The total nuclear density measured
+      within this field of view. {} would be replaced with the length
+      unit of your images.
+
+    - N_NeuN_Per_{}_Squared: The neuronal nuclear density measured
+      within this field of view. {} would be replaced with the length
+      unit of your images.
+
+AR Mar 2022
 '''
 
 ########################################################################
