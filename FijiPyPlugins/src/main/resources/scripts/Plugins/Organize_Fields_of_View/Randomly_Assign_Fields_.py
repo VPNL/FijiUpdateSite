@@ -39,6 +39,9 @@ AR Jan 2022 Added UI so that the user can specify the initials of the
 AR Feb 2022 Made sure the folder name with the list of markers is in
 			alphabetical order; added option to only assign a certain
             number of fields
+AR Mar 2022 Only select the desired number of fields of view by randomly
+            cropping off some fields after systematic sampling across
+            cortical depth 
 '''
 
 ########################################################################
@@ -205,9 +208,17 @@ if not sampleAllFovs:
     	fieldNames = fieldNames[::int(iAssign)]
         del iAssign
 
-    del totNFovs, nFovs2Assign
+    del totNFovs
 # Randomly shuffle this list of fields of view
 random.shuffle(fieldNames)
+
+# If the length of the list is greater than the number of fields we
+# desire...
+if len(fieldNames) > nFovs2Assign:
+
+    # Only select our desired number of fields
+    fieldNames = fieldNames[:nFovs2Assign]
+del nFovs2Assign
 
 ########################################################################
 ############# DISTRIBUTE FIELDS OF VIEW AMONGST RESEARCHERS ############
