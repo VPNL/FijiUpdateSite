@@ -5,7 +5,10 @@
 Test Smaller Fields
 
 This script can be used to test out smaller field of view sizes and
-evaluate the error of the resulting density metrics.
+evaluate the error of the resulting density metrics. In addition to the
+inputs listed below, the script will ask the user what is the smallest
+field of view size they would like to test and the difference in size
+between the fields of view.
 
 INPUTS
 
