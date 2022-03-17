@@ -112,7 +112,7 @@ This module contains tools to work easily with Fiji ROIs
 
         - Get the average gray level within an ROI on an image
 
-    getLabelsAndLocations(ROIs,img)
+    getLabelsAndLocations(ROIs,img,xForm2Center=True)
 
         - Organize ROI names and x/y coordinates into a python
           dictionary
@@ -1225,7 +1225,7 @@ def getLabelsAndLocations(ROIs,img,xForm2Center=True):
     '''
     Organize ROI names and x/y coordinates into a python dictionary
 
-    getLabelsAndLocations(ROIs,img)
+    getLabelsAndLocations(ROIs,img,xForm2Center=True)
 
         - ROIs (List of ImageJ ROIs): ROIs you want the labels and
                                       coordinates of

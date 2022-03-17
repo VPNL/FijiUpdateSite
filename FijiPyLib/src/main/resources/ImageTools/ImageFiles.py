@@ -82,7 +82,7 @@ from loci.formats.gui import AWTImageTools as tools
 ########################################################################
 
 # Define function to find image files within a directory
-def findImgsInDir(dirPath,fileType=None,searchPhrase=None):
+def findImgsInDir(dirPath,fileType=None,searchPhrase=None,searchSubDirs=False):
     '''
     Looks inside a directory for files (like images) of an optional file
     type that contain an optional key phrase in the file name.
@@ -100,6 +100,10 @@ def findImgsInDir(dirPath,fileType=None,searchPhrase=None):
                                  are trying to locate, optional
                                  (default = None)
 
+        - searchSubDirs (Boolean): Do you want to search sub-folders
+                                   recursively? (default = False, don't
+                                   search subfolders)
+
     OUTPUT
 
         - files (List of Strings): Paths to all files in directory that
@@ -108,6 +112,7 @@ def findImgsInDir(dirPath,fileType=None,searchPhrase=None):
 
     AR Oct 2021
     AR Jan 2022: Changed searchPhrase to a regular expression
+    AR Mar 2022: Added option to search sub folders
     '''
 
     # If dirPath was provided in unicode, convert to String
@@ -183,26 +188,52 @@ def findImgsInDir(dirPath,fileType=None,searchPhrase=None):
     # correct file type and that contain our desired key phrase
     files2return = []
 
-    # Use os.listdir to list out the contents of our search directory
-    for file_name in glob.glob(os.path.join(dirPath,'*')):
+    # If we are searching through sub-directories ...
+    if searchSubDirs:
 
-        # Concatenate the directory's path with each file name
-        full_path = os.path.join(dirPath,file_name)
+        # Us os.walk to loop across all files in the input directory and
+        # its sub directories
+        for subDir, _, files in os.walk(dirPath):
 
-        # Check to make sure this content is a file rather than a
-        # directory
-        if os.path.isfile(full_path) or os.path.islink(full_path):
+            # Loop across all files
+            for file_name in files:
 
-            # Check the file type
-            if is_file_type(file_name):
+                # Concatenate the directory's path with each file name
+                full_path = os.path.join(subDir,file_name)
 
-                # Check to see if the file contains our desired key
-                # phrase
-                if has_search_phrase(file_name):
+                # Check the file type
+                if is_file_type(file_name):
 
-                    # If this file passes these checks, we should return
-                    # it
-                    files2return.append(full_path)
+                    # Check to see if the file's path contains our
+                    # desired key phrase
+                    if has_search_phrase(full_path):
+
+                        # If this file passes these checks, we should
+                        # return it
+                        files2return.append(full_path)
+
+    else:
+
+        # Use os.listdir to list out the contents of our search directory
+        for file_name in glob.glob(os.path.join(dirPath,'*')):
+
+            # Concatenate the directory's path with each file name
+            full_path = os.path.join(dirPath,file_name)
+
+            # Check to make sure this content is a file rather than a
+            # directory
+            if os.path.isfile(full_path) or os.path.islink(full_path):
+
+                # Check the file type
+                if is_file_type(file_name):
+
+                    # Check to see if the file contains our desired key
+                    # phrase
+                    if has_search_phrase(file_name):
+
+                        # If this file passes these checks, we should return
+                        # it
+                        files2return.append(full_path)
 
     # Check to see if there was only one file to return
     if len(files2return) == 1:

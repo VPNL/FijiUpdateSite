@@ -610,7 +610,7 @@ for cellType in cellTypes:
     if cellType == marker2seg:
 
         # Change the name of the cell type to other
-        cellType = 'Other'
+        cellType = marker2seg + '-Only'
 
     # Initialize a list that will store the smallest distance between
     # each cell to this cell type
