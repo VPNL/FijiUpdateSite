@@ -11,6 +11,7 @@ displayed to the user so that they can use Fiji's rotation function to
 adjust the rotation of the image.
 
 INPUTS
+
      - input_dir (java.io.File): Directory containing the separate
 								 channels of the image the user wanted
                                  to adjust the rotation.

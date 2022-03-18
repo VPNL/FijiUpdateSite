@@ -2,7 +2,7 @@ function rotateAndSaveStacks(imgFilesDir,rotAngle,channel4Crop)
 % ROTATEANDSAVESTACKS Rotates a set of image stacks, crops them, and then
 % saves them using a deflation compression
 %
-%   rotateAndSaveStacks(imgFilesDir,rotAngle)
+%   rotateAndSaveStacks(imgFilesDir,rotAngle,channel4Crop)
 %
 %       - imgFilesDir (String): File paths to the folder containing the
 %                               images you want to rotate

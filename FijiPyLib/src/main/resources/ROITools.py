@@ -178,8 +178,8 @@ import Stats
 class gridOfFields:
     '''
     Class of objects that will divide up an image into a grid-like set
-    of fields of view, where each field overlaps 50% into its neighbors.
-    Stores the following attribute:
+    of fields of view, where each field overlaps into its neighbors by a
+    given amount. Stores the following attributes:
 
         * ROIs (list of Fiji ROIs): A list of square ROIs
           corresponding to separate fields of view sampled in a
