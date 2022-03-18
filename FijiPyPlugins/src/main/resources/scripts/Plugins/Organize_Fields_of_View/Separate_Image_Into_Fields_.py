@@ -60,6 +60,9 @@ del input_dir
 # Import tools that will allow us to work easily with files
 from ImageTools import ImageFiles
 
+# Import regular expressions so we can parse file paths
+import re
+
 # Import our user interface and data files libraries
 import UIs, DataFiles
 
@@ -136,17 +139,26 @@ if u'\xb5' in lengthUnits:
 											  					['True Field of View Size in {}:'.format(lengthUnits),
 											   					 'Overlap into Neighboring Fields in {}:'.format(lengthUnits)],
 											  			 		['60','15'])
-del lengthUnits
 
 # Convert field size and field overlap from physical units to pixels
 field_size = int(round(imgCal.getRawX(float(field_size_physical))))
 field_overlap = int(round(imgCal.getRawX(float(field_overlap_physical))))
-del imgCal, field_size_physical, field_overlap_physical
+del imgCal
 
 # If the image was previously rotated, there will be a text file storing
 # the angle of rotation. Find this text file
 rotAngleTextFilePath = ImageFiles.findImgsInDir(inputDir,'txt',
 											    'RotationInDegrees_')
+
+# Generate a regular expression to get the name of the image we are
+# separating into multiple fields of view
+regex = re.compile('.*RotationInDegrees_(?P<Image_Name>.*)\.txt')
+
+# Search the text file path for this regular expression
+matches = regex.match(str(rotAngleTextFilePath))
+
+# Store the name of the image we are analyzing
+imgFileName = matches.groupdict()['Image_Name']
 
 # If the text file wasn't found, the output of the previous command will
 # be an empty list
@@ -253,7 +265,7 @@ def breakupIntoFields(img2separate,markerInImg):
 
 	# Store the path to the directory where the fields of view from this
 	# channel will be stored
-	outDir = os.path.join(inputDir,'FieldsOfView',str(field_size) + 'pxlFields',markerInImg)
+	outDir = os.path.join(inputDir,'FieldsOfView','{}{}Fields'.format(field_size_physical,lengthUnits),markerInImg)
 
 	# Create this output directory
 	ImageFiles.makedir(outDir)
@@ -290,7 +302,7 @@ del imgs2separate, markersImaged, frst_img_dims, imgPath, marker
 
 # Write a file path to where we want to save our set of Field of View
 # ROIs
-fieldROIsPath = os.path.join(inputDir,'ROIs',str(field_size) + 'pxlFields.zip')
+fieldROIsPath = os.path.join(inputDir,'ROIs','{}{}Fields_{}{}Overlap.zip'.format(field_size_physical,lengthUnits,field_overlap_physical,lengthUnits))
 
 # Save the field of view ROIs to this file path
 ROITools.saveROIs(fovGrid.ROIs,fieldROIsPath)
@@ -299,7 +311,7 @@ del fieldROIsPath
 
 # Write a file path to where we want to save a csv file with all of the
 # field of view numbers and x,y coordinates in physical units
-fieldCoordsPath = os.path.join(inputDir,'FieldsOfView',str(field_size) + 'pxlFields',str(field_size) + 'pxlFieldLocations.csv')
+fieldCoordsPath = os.path.join(inputDir,'FieldsOfView','{}{}Fields'.format(field_size_physical,lengthUnits),'{}{}FieldLocations_{}.csv'.format(field_size_physical,lengthUnits,imgFileName))
 
 # Save the field x and y coordinates to a csv file
 DataFiles.dict2csv(fovNamesLocs,fieldCoordsPath)
@@ -307,7 +319,7 @@ DataFiles.dict2csv(fovNamesLocs,fieldCoordsPath)
 del fovNamesLocs, fieldCoordsPath
 
 # Write a file path to where we want to save our Field boundary ROI
-fieldBoundaryROIPath = os.path.join(inputDir,'FieldsOfView',str(field_size) + 'pxlFields',str(field_size) + 'pxlFieldBoundary.roi')
+fieldBoundaryROIPath = os.path.join(inputDir,'FieldsOfView','{}{}Fields'.format(field_size_physical,lengthUnits),'{}{}FieldBoundary.zip'.format(field_size_physical,lengthUnits))
 
 del inputDir, field_size
 
