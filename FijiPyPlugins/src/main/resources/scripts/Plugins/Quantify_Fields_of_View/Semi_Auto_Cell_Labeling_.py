@@ -39,13 +39,12 @@ INPUTS
 
 OUTPUTS
 
-    The script will automatically produce 3 files within the same
-    data_directory specified by the user. The first file is a
-    segmentation of the nuclei in this field of view. The second is an
-    ROI file containing all of the Fiji ROIs with appropriate cell
-    labeling. The final is a csv file containing all of the
-    quantifications performed semi-automatically by the script and the
-    user.
+    The script will automatically produce files within the same
+    data_directory specified by the user. One is a segmentation of the
+    nuclei in this field of view. The second is an ROI file containing
+    all of the Fiji ROIs with appropriate cell labeling. Lastly, two csv
+    files will be saved containing all of the quantifications performed
+    semi-automatically by the script and the user.
 
 AR Dec 2021
 AR Feb 2022 Edited output to keep track of distance between cells and
@@ -188,8 +187,8 @@ del marker2focusZStack, z_height
 # Start a python dictionary that will store various aspects about this
 # field of view we are quantifying. Add in the bottom and top z-slice
 # used for quantification
-fieldQuants = {'Bottom_Z_Slice_Quantified': [zBounds4Quants[0]]}
-fieldQuants['Top_Z_Slice_Quantified'] = [zBounds4Quants[-1]]
+fieldQuants = {'Bottom_Z_Slice_Quantified': [zBounds4Quants[0]],
+               'Top_Z_Slice_Quantified': [zBounds4Quants[-1]]}
 
 ########################################################################
 ####################### SEGMENT OUR NUCLEAR STAIN ######################
@@ -233,7 +232,7 @@ nucBlur = ImageProcessing.smoothImg(nucMaxProj)
 
 # Find the file containing our field boundary ROI
 fieldBoundROIFile = ImageFiles.findImgsInDir(dataDir,'roi',
-                                             'pxlFieldBoundary')
+                                             'FieldBoundary')
 
 # Open the field boundary ROI file to get the ROI
 fieldBoundROI = ROITools.openROIFile(fieldBoundROIFile)
@@ -427,7 +426,7 @@ mergedShortZStack.show()
 
 # Merge and display all of the max projections for all markers in this
 # image
-mergedMaxProj = ImageDisplay.overlayImages(labelMaxProjs)
+mergedMaxProj = ImageDisplay.overlayImages(labelMaxProjs + [nucMaxProj])
 mergedMaxProj.show()
 
 # Display all of the ROIs labeled by cell type
@@ -643,7 +642,8 @@ for cellType in cellTypes:
                 # next nearest nucleus of this cell type
                 cellQuants['Distance_to_next_nearest_{}_nucleus_in_{}'.format(cellType,plural_length_units)][n] = min(distances2CellType)
 
-    # Store the raw number of cells in this field of view
+    # Store the raw number of cells of this cell type contained in this
+    # field of view
     fieldQuants['N_{}'.format(cellType)] = [nCellType]
 
     # Store the density of this cell type in the field of view
