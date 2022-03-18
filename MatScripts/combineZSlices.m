@@ -3,7 +3,7 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 % separated by the Separate_Slices-Channels ImageJ macros that is part of
 % the Paredes-GrillSpectorLabs update site.
 %
-%   combineZSlices(separateSliceChannelDir,needsRotation)
+%   combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %
 %       - separateSliceChannelDir (String): Path to the folder produced by
 %                                           the Separate_Slices-Channels
@@ -32,7 +32,7 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 
 % Check to see if needsRotation was provided
 if nargin < 2
-    
+
     % Set a default value for needsRotation
     needsRotation = true;
 
@@ -41,7 +41,7 @@ end
 % Check to see if bestChannel was provided
 if nargin < 3
 
-    % Set default value for bestChannel 
+    % Set default value for bestChannel
     bestChannel = 1;
 
 end
@@ -54,10 +54,10 @@ if ischar(needsRotation)
 
 end
 
-% Check to see if bestChannel was provided as a character array 
+% Check to see if bestChannel was provided as a character array
 if ischar(bestChannel)
 
-    % Convert bestChannel to a double 
+    % Convert bestChannel to a double
     bestChannel = str2double(bestChannel);
 
 end
@@ -66,7 +66,7 @@ end
 % script
 imgFiles = filesInDir(separateSliceChannelDir);
 
-% Get information of the first image 
+% Get information of the first image
 imgInfo = imfinfo(fullfile(separateSliceChannelDir,imgFiles{1}));
 
 % Copy the image description as well as the x and y resolution
@@ -85,31 +85,31 @@ function [channel,zSlice] = getChannelSlice(fileName)
 %       - fileName (String): Name of the image file that you want the slice
 %                            and channel number from
 %
-%       - channel (Double): Channel number of this file 
+%       - channel (Double): Channel number of this file
 %
-%       - zSlice (Double): z-slice of this file 
+%       - zSlice (Double): z-slice of this file
 %
 % AR Dec 2021
 
 % Define a regular expression that will pick up the channel and slice
-% number 
+% number
 expr = 'c(?<channel>\d+)z(?<slice>\d+)_';
 
 % Apply the regular expression to the file name
 matchCell = regexp(fileName,expr,'tokens');
 
 % The channel and z-slice number can be extracted from the cell array
-% produced by regexp 
+% produced by regexp
 channel = str2double(matchCell{1}{1});
 zSlice = str2double(matchCell{1}{2});
 
 end
 
 % Extract all of the channel and z-slice numbers from all of the
-% discoverable image files 
+% discoverable image files
 [channels,slices] = cellfun(@getChannelSlice,imgFiles);
 
-% Store only the unique channels and slices without repeats 
+% Store only the unique channels and slices without repeats
 channels = unique(channels);
 slices = unique(slices);
 
@@ -122,7 +122,7 @@ clear imgFiles
 % Check to see if we want to rotate and crop the images
 if needsRotation
 
-    % Store the image file name for the first channel middle slice. This 
+    % Store the image file name for the first channel's middle slice. This
     % serve as a reference image to compute the rotation and the amount of
     % cropping
     refImgFileName = append('c',num2str(bestChannel),'z', ...
@@ -130,14 +130,14 @@ if needsRotation
                             baseFileName);
     clear bestChannel
 
-    % Open up this reference image 
+    % Open up this reference image
     refImg = imread(fullfile(separateSliceChannelDir,refImgFileName));
     clear refImgFileName
 
-    % Store the width and height of the reference image 
+    % Store the width and height of the reference image
     refImgW = size(refImg,1);
     refImgH = size(refImg,2);
-    
+
     % We will want to rotate the image such that the diagonal from the top
     % left corner to the bottom right corner of the image becomes vertical.
     % Compute the angle of rotation below using the image dimensions and
@@ -163,7 +163,7 @@ else
 end
 
 % We'll want to save this rotation angle to a text file so we can keep
-% track. Get our base file name without the image type extension (e.g. 
+% track. Get our base file name without the image type extension (e.g.
 % 'tif')
 [~,baseTextFileName,~] = fileparts(baseFileName);
 
@@ -181,47 +181,47 @@ fprintf(rotTextFID,num2str(-rotAngle));
 % Close the text file
 fclose(rotTextFID);
 
-% Loop across all channels that were present in the composite image 
+% Loop across all channels that were present in the composite image
 for c = channels
 
     % Store the tiff file path that will contain the z-stack for this
     % channel
     filePath4Channel = fullfile(separateSliceChannelDir,'..', ...
                                 append('c',num2str(c),'_',baseFileName));
-    
-    % Loop across all slices for this channel 
+
+    % Loop across all slices for this channel
     for z = slices
 
-        % Store the file path to the image at this channel and z-slice 
+        % Store the file path to the image at this channel and z-slice
         currFilePath = fullfile(separateSliceChannelDir, ...
                                 append('c',num2str(c),'z', num2str(z),'_', ...
                                        baseFileName));
 
-        % Read the image at this file path 
+        % Read the image at this file path
         currImg = imread(currFilePath);
         clear currFilePath
 
-        % Check to see if we want to rotate and crop the image 
+        % Check to see if we want to rotate and crop the image
         if needsRotation
 
             % Rotate the image
             currImg = imrotate(currImg,rotAngle);
 
-            % Crop the rotated image 
+            % Crop the rotated image
             currImg = currImg(rows2keep,cols2keep);
 
         end
 
-        % Check to see if the image is tall or wide 
+        % Check to see if the image is tall or wide
         if size(currImg,1) > size(currImg,2)
 
             % If the image is taller than it is wide, we'll need to rotate
-            % it by 90 degrees so that it's wider than it is tall 
+            % it by 90 degrees so that it's wider than it is tall
             currImg = rot90(currImg);
 
         end
-        
-        % Append the image at this z-level to our composite z-stack file 
+
+        % Append the image at this z-level to our composite z-stack file
         imwrite(currImg,filePath4Channel,'WriteMode','append', ...
                 'Compression','deflate','Description',imgDescription, ...
                 'Resolution',imgResolution);
