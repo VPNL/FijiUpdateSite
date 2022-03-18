@@ -8,7 +8,16 @@ Randomly Assign Fields
 This script can be used to randomly organize and assign fields of view
 from various channels across a set number of researchers to perform
 semi-automated cell labeling. This script is intended to be run after
-Separate Image Into Fields.
+Separate Image Into Fields. First, the user will be asked about the
+location of the fields of view they would like to randomly assign, in
+addition to the number of researchers who will be segmenting these
+fields semi-automatically. Next the user will be asked to specify the
+initials of each RA who will be randomly assigned a subset of these
+fields of view. The user will also be able to indicate which field of
+view size they are specifically using and which fluorescent markers they
+want to analyze. Lastly, if the user indicates that they would not like
+to assign all fields of view, they will be later asked how many fields
+they would like to assign.
 
 INPUTS
 
@@ -41,7 +50,7 @@ AR Feb 2022 Made sure the folder name with the list of markers is in
             number of fields
 AR Mar 2022 Only select the desired number of fields of view by randomly
             cropping off some fields after systematic sampling across
-            cortical depth 
+            cortical depth
 '''
 
 ########################################################################
@@ -236,9 +245,8 @@ for setOfFields in fieldsByResearcher:
 
     # Store the path to our new directory where this researcher's
     # assigned fields of view will be stored
-    researcherOutDir = os.path.join(fieldsDir,'..','Quantifications',
+    researcherOutDir = os.path.join(fieldsDir,'..','SemiautoCellLabels',
                                     fieldSize,'-'.join(sorted(markers2Assign)),
-                                    'SemiautoCellLabels',
                                     'Researcher-' + RAInitials[r])
 
     # Make this folder if necessary

@@ -40,6 +40,7 @@ AR Dec 2021 Determine calibration of image to ask user about field of
 			view size
 AR Jan 2022 Account for rotated tile scans
 AR Feb 2022 Save locations of the fields to a csv file
+AR Mar 2022 Change files from reporting field size in pixels to microns
 '''
 
 ########################################################################
@@ -265,7 +266,7 @@ def breakupIntoFields(img2separate,markerInImg):
 
 	# Store the path to the directory where the fields of view from this
 	# channel will be stored
-	outDir = os.path.join(inputDir,'FieldsOfView','{}{}Fields'.format(field_size_physical,lengthUnits),markerInImg)
+	outDir = os.path.join(inputDir,'FieldsOfView','{}{}Fields_{}{}Overlap.zip'.format(field_size_physical,lengthUnits,field_overlap_physical,lengthUnits),markerInImg)
 
 	# Create this output directory
 	ImageFiles.makedir(outDir)
@@ -311,7 +312,7 @@ del fieldROIsPath
 
 # Write a file path to where we want to save a csv file with all of the
 # field of view numbers and x,y coordinates in physical units
-fieldCoordsPath = os.path.join(inputDir,'FieldsOfView','{}{}Fields'.format(field_size_physical,lengthUnits),'{}{}FieldLocations_{}.csv'.format(field_size_physical,lengthUnits,imgFileName))
+fieldCoordsPath = os.path.join(inputDir,'FieldsOfView','{}{}Fields_{}{}Overlap.zip'.format(field_size_physical,lengthUnits,field_overlap_physical,lengthUnits),'{}{}FieldLocations_{}.csv'.format(field_size_physical,lengthUnits,imgFileName))
 
 # Save the field x and y coordinates to a csv file
 DataFiles.dict2csv(fovNamesLocs,fieldCoordsPath)
@@ -319,7 +320,7 @@ DataFiles.dict2csv(fovNamesLocs,fieldCoordsPath)
 del fovNamesLocs, fieldCoordsPath
 
 # Write a file path to where we want to save our Field boundary ROI
-fieldBoundaryROIPath = os.path.join(inputDir,'FieldsOfView','{}{}Fields'.format(field_size_physical,lengthUnits),'{}{}FieldBoundary.zip'.format(field_size_physical,lengthUnits))
+fieldBoundaryROIPath = os.path.join(inputDir,'FieldsOfView','{}{}Fields_{}{}Overlap.zip'.format(field_size_physical,lengthUnits,field_overlap_physical,lengthUnits),'{}{}FieldBoundary.zip'.format(field_size_physical,lengthUnits))
 
 del inputDir, field_size
 
