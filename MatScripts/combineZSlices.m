@@ -29,6 +29,7 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %   with how the angle will be interpreted in Fiji/ImageJ
 %   AR Feb 2022: Moved files in dir function to a separate file, make sure
 %                to export rotation angle if 0
+%   AR Mar 2022: Fixed angle of rotation, should have been negative
 
 % Check to see if needsRotation was provided
 if nargin < 2
@@ -146,7 +147,7 @@ if needsRotation
     clear refImgH refImgW
 
     % Rotate our reference image
-    rotatedRef = imrotate(refImg,rotAngle);
+    rotatedRef = imrotate(refImg,-rotAngle);
     clear refImg;
 
     % Identify the rows and columns that contain at least one nonzero pixel
