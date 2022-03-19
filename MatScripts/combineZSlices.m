@@ -143,11 +143,11 @@ if needsRotation
     % left corner to the bottom right corner of the image becomes vertical.
     % Compute the angle of rotation below using the image dimensions and
     % convert this angle from radians to degrees.
-    rotAngle = rad2deg(atan(min(refImgW/refImgH,refImgH/refImgW)));
+    rotAngle = -rad2deg(atan(min(refImgW/refImgH,refImgH/refImgW)));
     clear refImgH refImgW
 
     % Rotate our reference image
-    rotatedRef = imrotate(refImg,-rotAngle);
+    rotatedRef = imrotate(refImg,rotAngle);
     clear refImg;
 
     % Identify the rows and columns that contain at least one nonzero pixel
