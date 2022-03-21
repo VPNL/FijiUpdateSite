@@ -334,9 +334,6 @@ class gridOfFields:
                                                fovCenter[0],
                                                fovCenter[1])
 
-        # Name this true field boundary ROI
-        self.fieldBoundary.setName(str(field_size) + ' Pixel Field of View Boundary')
-
     # Define a method that will clear the non-overlapping portion of the
     # field of view from the max projection to keep track of where we
     # have already sampled from
