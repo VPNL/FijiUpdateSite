@@ -226,7 +226,7 @@ random.shuffle(fieldNames)
 if len(fieldNames) > nFovs2Assign:
 
     # Only select our desired number of fields
-    fieldNames = fieldNames[:nFovs2Assign]
+    fieldNames = fieldNames[:int(nFovs2Assign)]
 del nFovs2Assign
 
 ########################################################################
