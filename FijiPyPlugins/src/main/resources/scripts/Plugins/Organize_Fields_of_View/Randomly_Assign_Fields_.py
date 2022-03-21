@@ -239,6 +239,15 @@ fieldsByResearcher = [fieldNames[i::NResearchers] for i in xrange(NResearchers)]
 
 del fieldNames
 
+# Find the true field of view boundary ROI that will later be copied
+# over to each individual RA's work folder
+fovBoundaryPath = ImageFiles.findImgsInDir(os.path.join(fieldsDir,
+                                                        fieldSize),
+                                           '.roi','FieldBoundary')
+
+# Store just the name of this field of view boundary roi file
+_,fovBoundaryFName = os.path.split(fovBoundaryPath)
+
 # Loop across researchers that will be assigned fields of view
 r = 0
 for setOfFields in fieldsByResearcher:
@@ -254,10 +263,8 @@ for setOfFields in fieldsByResearcher:
 
     # Copy the true field of view boundary ROI to the folder where the
     # assigned fields will be organized for this researcher
-    copyfile(os.path.join(fieldsDir,fieldSize,
-                          fieldSize[:-1] + 'Boundary.roi'),
-             os.path.join(researcherOutDir,
-                          fieldSize[:-1] + 'Boundary.roi'))
+    copyfile(fovBoundaryPath,os.path.join(researcherOutDir,
+                                          fovBoundaryFName))
 
     # Loop across markers imaged in various channels
     for imarker in range(len(markers2Assign)):
