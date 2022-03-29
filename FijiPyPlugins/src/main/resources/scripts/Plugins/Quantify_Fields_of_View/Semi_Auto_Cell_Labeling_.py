@@ -478,6 +478,10 @@ if nCells2Label > 0:
 
     # Get all of the ROIs in the ROI Manager
     labeledNuclei = ROITools.getOpenROIs()
+    
+    # Check to make sure that the labeled nuclei are contained in a list
+    if not isinstance(labeledNuclei,list):
+    	labeledNuclei = [labeledNuclei]
 
     # Clear the ROI Manager
     ROITools.clearROIs()
