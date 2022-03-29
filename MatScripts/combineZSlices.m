@@ -29,7 +29,9 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %   with how the angle will be interpreted in Fiji/ImageJ
 %   AR Feb 2022: Moved files in dir function to a separate file, make sure
 %                to export rotation angle if 0
-%   AR Mar 2022: Fixed angle of rotation, should have been negative
+%   AR Mar 2022: Fixed angle of rotation. Needed to check to see which
+%                direction we should rotate and was over-rotating by a
+%                factor of 2.
 
 % Check to see if needsRotation was provided
 if nargin < 2
@@ -143,18 +145,32 @@ if needsRotation
     % left corner to the bottom right corner of the image becomes vertical.
     % Compute the angle of rotation below using the image dimensions and
     % convert this angle from radians to degrees.
-    rotAngle = -rad2deg(atan(min(refImgW/refImgH,refImgH/refImgW)));
-    clear refImgH refImgW
+    rotAngle = rad2deg(atan(min(refImgW/refImgH,refImgH/refImgW))) / 2;
 
     % Rotate our reference image
     rotatedRef = imrotate(refImg,rotAngle);
-    clear refImg;
 
     % Identify the rows and columns that contain at least one nonzero pixel
     % intensity
     rows2keep = find(any(rotatedRef,2));
     cols2keep = find(any(rotatedRef,1));
-    clear rotatedRef
+
+    % Check to make sure that the area of our newly rotated image is
+    % smaller than the original image 
+    if length(rows2keep) * length(cols2keep) > refImgH * refImgW
+
+        % If the area of our newly rotated image is larger than the
+        % original image, we need to rotate the image the other way 
+        rotAngle = -rotAngle;
+
+        % Repeat steps above to generate the correct rows and columns to
+        % keep 
+        rotatedRef = imrotate(refImg,rotAngle);
+        rows2keep = find(any(rotatedRef,2));
+        cols2keep = find(any(rotatedRef,1));
+
+    end
+    clear refImgH refImgW refImg rotatedRef
 
 else
 
