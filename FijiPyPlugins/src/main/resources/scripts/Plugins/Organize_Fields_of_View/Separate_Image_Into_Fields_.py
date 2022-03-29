@@ -329,6 +329,10 @@ fieldBoundaryROIPath = os.path.join(inputDir,'FieldsOfView','{}{}Fields_{}{}Over
 
 del inputDir, field_size
 
+# Rename the field boundary ROI to match the name of the file we are
+# using
+fovGrid.fieldBoundary.setName('{}{}FieldBoundary_{}{}Overlap'.format(field_size_physical,lengthUnits,field_overlap_physical,lengthUnits))
+
 # Save the field of view boundary ROI to this file path
 ROITools.saveROIs(fovGrid.fieldBoundary,fieldBoundaryROIPath)
 
