@@ -608,7 +608,7 @@ if nCells2Label > 0:
 
     # Get all of the labels that were assigned to each nuclei
     labelsByNuclei = [labeledNucleus.getName() for labeledNucleus in labeledNuclei]
-    del labeledNuclei, labeledNucleus, marker2label, markers2label
+    del labeledNuclei, labeledNucleus
 
     # Get all of the unique cell type labels, making sure to include both
     # all cell types in the field of view as well as all cell types we're
