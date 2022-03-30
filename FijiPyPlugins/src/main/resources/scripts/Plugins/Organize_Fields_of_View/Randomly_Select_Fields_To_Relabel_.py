@@ -41,6 +41,9 @@ from math import ceil
 # Import regular expressions so we can search strings for expressions
 import re
 
+# Import copyfile from shutil so we can copy files
+from shutil import copyfile
+
 ########################################################################
 ######## FIND ALL FIELDS OF VIEW THAT WERE ORIGINALLY SEGMENTED ########
 ########################################################################
@@ -141,3 +144,17 @@ for iFov in iFovs:
 
     # Increase our counter
     i += 1
+
+# Identify the location of our true field of view boundary ROI so we can
+# copy it over to our relabeling folder
+fovBoundaryPath = ImageFiles.findImgsInDir(os.path.join(inputDir,
+                                                        origRALabelDirs[0]),
+                                           '.roi','FieldBoundary')
+
+# Store just the name of this field of view boundary roi file
+_,fovBoundaryFName = os.path.split(fovBoundaryPath)
+
+# Copy the true field of view boundary ROI to our new relabeling folder
+copyfile(fovBoundaryPath,
+         os.path.join(inputDir,'Relabeled-By-{}'.format(relabeler),
+         fovBoundaryFName))
