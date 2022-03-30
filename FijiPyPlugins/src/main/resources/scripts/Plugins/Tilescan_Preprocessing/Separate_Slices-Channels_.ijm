@@ -8,6 +8,7 @@ the image you are processing. Each image name will start with c_z_, specifying
 the channel and z-level the image comes from.
 
 AR Dec 2021
+AR Mar 2022: Function to index characters in string changed
 */
 
 // Set to batch mode so that new images are hidden
@@ -29,7 +30,7 @@ img_file_name = File.getNameWithoutExtension(img_file_path);
 img_dir = File.getDirectory(img_file_path);
 
 // Store the file separation character (last character in img_dir string)
-separator = img_dir.charAt(img_dir.length() - 1);
+separator = substring(img_dir,img_dir.length()-1);
 
 // Create a directory where all individual channels and z-slices will be saved
 out_dir = img_dir + 'Separate_Slices-Channels' + separator
