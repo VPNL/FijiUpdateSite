@@ -126,13 +126,13 @@ i = 1
 # Loop across all fields of view that we want to re-label
 for iFov in iFovs:
 
-    # Get the name of the field of view file independent of any leading
-    # numbers used to indicate the order the original labeler was to
-    # process the images
-    fovFName = re.findall('.*\d+(Field-.*)',unlabeledFiles4Relabel[0][iFov])[0]
-
     # Loop across all unlabeled field directories
     for iDir in range(len(unlabeledFieldDirs)):
+
+        # Identify the name of the field of view file we are linking,
+        # independent of any leading numbers used to indicate the order
+        # the original labeler was to process the images
+        fovFName = re.findall('.*\d+(Field-.*)',unlabeledFiles4Relabel[iDir][iFov])[0]
 
         # Create a soft link from the originally labeled file to this
         # new space where the RA will re-label
