@@ -145,7 +145,7 @@ if needsRotation
     % left corner to the bottom right corner of the image becomes vertical.
     % Compute the angle of rotation below using the image dimensions and
     % convert this angle from radians to degrees.
-    rotAngle = rad2deg(atan(min(refImgW/refImgH,refImgH/refImgW))) / 2;
+    rotAngle = rad2deg(atan(refImgW/refImgH));
 
     % Rotate our reference image
     rotatedRef = imrotate(refImg,rotAngle);
