@@ -440,7 +440,8 @@ def selectNonBlackRegion(img,cleanUpSelection=True):
     # Otherwise ...
     else:
 
-        # Just return the raw selection
+        # Just return the raw selection after closing the original image
+        img.hide()
         return nonBlackROI
 
 ########################################################################
