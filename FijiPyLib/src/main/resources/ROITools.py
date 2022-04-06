@@ -393,13 +393,17 @@ class gridOfFields:
 
 # Define a function to select just the relevant portion of the image
 # that isn't all black
-def selectNonBlackRegion(img):
+def selectNonBlackRegion(img,cleanUpSelection=True):
     '''
     Makes an ROI just around the non-black region of the image
 
     selectNonBlackRegion(img)
 
         - img (Fiji ImagePlus): Image you want to process
+
+        - cleanUpSelection (Boolean): Flag governing whether you want
+                                      to clean up the selection after
+                                      thresholding
 
     OUTPUT Fiji ROI selecting the non-black region of the image
 
@@ -415,18 +419,29 @@ def selectNonBlackRegion(img):
     IJ.setRawThreshold(img,imgStats.min+1,imgStats.max,None)
     del imgStats
 
+    # Display the image
+    img.show()
+
     # Convert the threshold to an ROI
     nonBlackROI = thresholdtoselection.convert(img.getProcessor())
 
     # Display the ROI on the image
-    img.show()
     img.setRoi(nonBlackROI)
 
     # Fill any holes in the ROI
     IJ.run("Fill ROI holes", "")
 
-    # Clean up the ROI and return
-    return cleanUpROI(nonBlackROI,img)
+    # Check to see if we want to clean up the ROI
+    if cleanUpSelection:
+
+        # Clean up the ROI and return
+        return cleanUpROI(nonBlackROI,img)
+
+    # Otherwise ...
+    else:
+
+        # Just return the raw selection
+        return nonBlackROI
 
 ########################################################################
 ############################## cleanUpROI ##############################
@@ -1342,8 +1357,8 @@ def getDC_JI(seg1,seg2,window2compare):
     seg2.deleteRoi()
 
     # Select the area of both segmentations that is not blank
-    notBlankROI1 = selectNonBlackRegion(seg1)
-    notBlankROI2 = selectNonBlackRegion(seg2)
+    notBlankROI1 = selectNonBlackRegion(seg1,False)
+    notBlankROI2 = selectNonBlackRegion(seg2,False)
 
     # Invert these ROIs so that we are selecting all the area that is
     # blank
