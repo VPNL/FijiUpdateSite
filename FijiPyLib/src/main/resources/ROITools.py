@@ -1337,6 +1337,10 @@ def getDC_JI(seg1,seg2,window2compare):
     AR April 2022
     '''
 
+    # Make sure neither segmentation have any ROIs associated with them
+    seg1.deleteRoi()
+    seg2.deleteRoi()
+
     # Select the area of both segmentations that is not blank
     notBlankROI1 = selectNonBlackRegion(seg1)
     notBlankROI2 = selectNonBlackRegion(seg2)
