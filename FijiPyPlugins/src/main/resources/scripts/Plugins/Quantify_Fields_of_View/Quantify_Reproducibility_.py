@@ -214,3 +214,15 @@ for f in range(len(relabeledFields)):
 
 # Add in the initials of the first rater
 reproQuants['Rater2'] = [reLabelRA]*FoV2xsRated
+
+########################################################################
+######################## SAVE THE FINAL RESULTS ########################
+########################################################################
+
+# Store the name of the source image file where these fields of view
+# come from
+sourceFName = re.match('.*-Segmentation_Field-\d+_(.+)',
+                       origLabelSegFile).group(1)
+
+# Save the final results under the second rater's directory
+DataFiles.dict2csv(reproQuants,os.path.join(reLabelDir,sourceFName))
