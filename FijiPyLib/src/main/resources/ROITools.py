@@ -117,6 +117,11 @@ This module contains tools to work easily with Fiji ROIs
         - Organize ROI names and x/y coordinates into a python
           dictionary
 
+    getDC_JI(seg1,seg2)
+
+        - Computes the dice coefficient and jaccard index comparing two
+          segmentations
+
 '''
 
 ########################################################################
@@ -1306,3 +1311,78 @@ def getLabelsAndLocations(ROIs,img,xForm2Center=True):
 
     # Return the final python dictionary
     return ROIInfo
+
+########################################################################
+############################### getDC_JI ###############################
+########################################################################
+
+# Write a function to quantitatively compare segmentations
+def getDC_JI(seg1,seg2,window2compare):
+    '''
+    Computes the dice coefficient and jaccard index comparing two
+    segmentations
+
+    getDC_JI(seg1,seg2)
+
+        - seg1/seg2 (Image Plus): The two segmentation masks you want to
+                                  quantitatively compare
+
+        - window2compare (ROI): Area within the segmentations that you
+                                want to compare
+
+    OUTPUTS list of two floats representing the dice coefficient and the
+            jaccard index, respectively, comparing these two
+            segmentations
+
+    AR April 2022
+    '''
+
+    # Select the area of both segmentations that is not blank
+    notBlankROI1 = selectNonBlackRegion(seg1)
+    notBlankROI2 = selectNonBlackRegion(seg2)
+
+    # Invert these ROIs so that we are selecting all the area that is
+    # blank
+    totBlankROI1 = notBlankROI1.getInverse(seg1)
+    totBlankROI2 = notBlankROI2.getInverse(seg2)
+    del notBlankROI1, notBlankROI2
+
+    # Shrink these ROIs so that they are contained within our window of
+    # interest
+    blankROI1 = getIntersectingROI([totBlankROI1,window2compare])
+    blankROI2 = getIntersectingROI([totBlankROI2,window2compare])
+
+    # Get the intersection between these two segmentations and compute
+    # its size
+    segIntersectROI = getIntersectingROI([blankROI1,blankROI2])
+    segIntersect = float(segIntersectROI.getContainedFloatPoints().npoints)
+
+    # Do the same for the union between these two segmentations
+    segUnionROI = combineROIs([blankROI1,blankROI2])
+    segUnion = float(segUnionROI.getContainedFloatPoints().npoints)
+
+    # Get the total number of pixels across both segmentations
+    totSegArea = float(blankROI1.getContainedFloatPoints().npoints + blankROI2.getContainedFloatPoints().npoints)
+
+    # Compute the jaccard index, first checking to see if we would
+    # divide by zero
+    if segUnion > 0:
+
+        JI = segIntersect/segUnion
+
+    else:
+
+        # If we have to divide by zero, report not a number
+        JI = float('nan')
+
+    # Do the same with the dice coefficient
+    if totSegArea > 0:
+
+        DC = (2.0 * segIntersect) / totSegArea
+
+    else:
+
+        DC = float('nan')
+
+    # Return the final values
+    return [DC,JI]
