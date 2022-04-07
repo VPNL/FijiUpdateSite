@@ -32,6 +32,8 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %   AR Mar 2022: Fixed angle of rotation. Needed to check to see which
 %                direction we should rotate and was over-rotating by a
 %                factor of 2.
+%   AR Apr 2022: Check to see which direction we direction we should rotate
+%                                       by actually trying both
 
 % Check to see if needsRotation was provided
 if nargin < 2
@@ -146,31 +148,44 @@ if needsRotation
     % Compute the angle of rotation below using the image dimensions and
     % convert this angle from radians to degrees.
     rotAngle = rad2deg(atan(refImgW/refImgH));
+    clear refImgW refImgH
 
-    % Rotate our reference image
-    rotatedRef = imrotate(refImg,rotAngle);
+    % Rotate our reference image one direction
+    rotatedRef1 = imrotate(refImg,rotAngle);
 
-    % Identify the rows and columns that contain at least one nonzero pixel
-    % intensity
-    rows2keep = find(any(rotatedRef,2));
-    cols2keep = find(any(rotatedRef,1));
+    % Compute the final area of the image if we would rotate the image this
+    % direction
+    area2keep1 = sum(any(rotatedRef1,1)) * sum(any(rotatedRef1,2));
 
-    % Check to make sure that the area of our newly rotated image is
-    % smaller than the original image 
-    if length(rows2keep) * length(cols2keep) > refImgH * refImgW
+    % Rotate our reference image the other direction 
+    rotatedRef2 = imrotate(refImg,-rotAngle);
+    clear refImg
 
-        % If the area of our newly rotated image is larger than the
-        % original image, we need to rotate the image the other way 
+    % Compute the final area for this rotation 
+    area2keep2 = sum(any(rotatedRef2,1)) * sum(any(rotatedRef2,2));
+
+    % Check to see which direction we should rotate the image 
+    if area2keep1 < area2keep2
+
+        clear rotatedRef2
+        % Identify the rows and columns that contain at least one nonzero 
+        % pixel intensity for the image rotated in this direction
+        rows2keep = find(any(rotatedRef1,2));
+        cols2keep = find(any(rotatedRef1,1));
+        clear rotatedRef1
+
+    else
+
+        clear rotatedRef1
+        % Indicate that we would like to rotate the image the opposite way 
         rotAngle = -rotAngle;
 
-        % Repeat steps above to generate the correct rows and columns to
-        % keep 
-        rotatedRef = imrotate(refImg,rotAngle);
-        rows2keep = find(any(rotatedRef,2));
-        cols2keep = find(any(rotatedRef,1));
+        % Store which rows and columns to keep 
+        rows2keep = find(any(rotatedRef2,2));
+        cols2keep = find(any(rotatedRef2,1));
+        clear rotatedRef2
 
     end
-    clear refImgH refImgW refImg rotatedRef
 
 else
 
