@@ -1333,7 +1333,7 @@ def getLabelsAndLocations(ROIs,img,xForm2Center=True):
 ########################################################################
 
 # Write a function to quantitatively compare segmentations
-def getDC_JI(seg1,seg2,window2compare):
+def getDC_JI(seg1,seg2,compareForeground=True,window2compare=None):
     '''
     Computes the dice coefficient and jaccard index comparing two
     segmentations
@@ -1342,6 +1342,14 @@ def getDC_JI(seg1,seg2,window2compare):
 
         - seg1/seg2 (Image Plus): The two segmentation masks you want to
                                   quantitatively compare
+
+    getDC_JI(seg1,seg2,compareForeground,window2compare)
+
+        - compareBlankSpace (Boolean): Flag controlling whether you want
+                                       to compare the foreground or
+                                       background of the segmentation
+                                       masks. (default = True, compare
+                                       foreground)
 
         - window2compare (ROI): Area within the segmentations that you
                                 want to compare
@@ -1358,31 +1366,35 @@ def getDC_JI(seg1,seg2,window2compare):
     seg2.deleteRoi()
 
     # Select the area of both segmentations that is not blank
-    notBlankROI1 = selectNonBlackRegion(seg1,False)
-    notBlankROI2 = selectNonBlackRegion(seg2,False)
+    ROI1 = selectNonBlackRegion(seg1,False)
+    ROI2 = selectNonBlackRegion(seg2,False)
 
-    # Invert these ROIs so that we are selecting all the area that is
-    # blank
-    totBlankROI1 = notBlankROI1.getInverse(seg1)
-    totBlankROI2 = notBlankROI2.getInverse(seg2)
-    del notBlankROI1, notBlankROI2
+    # Check to see if we want to compare the background of the
+    # segmentations (i.e. the blank space in the image)
+    if not compareForeground:
 
-    # Shrink these ROIs so that they are contained within our window of
-    # interest
-    blankROI1 = getIntersectingROI([totBlankROI1,window2compare])
-    blankROI2 = getIntersectingROI([totBlankROI2,window2compare])
+        # Invert these ROIs so that we are selecting all the area that
+        # is blank
+        totBlankROI1 = ROI1.getInverse(seg1)
+        totBlankROI2 = ROI2.getInverse(seg2)
+
+        # Shrink these ROIs so that they are contained within our window
+        # of interest
+        ROI1 = getIntersectingROI([totBlankROI1,window2compare])
+        ROI2 = getIntersectingROI([totBlankROI2,window2compare])
+        del totBlankROI1, totBlankROI2
 
     # Get the intersection between these two segmentations and compute
     # its size
-    segIntersectROI = getIntersectingROI([blankROI1,blankROI2])
+    segIntersectROI = getIntersectingROI([ROI1,ROI2])
     segIntersect = float(segIntersectROI.getContainedFloatPoints().npoints)
 
     # Do the same for the union between these two segmentations
-    segUnionROI = combineROIs([blankROI1,blankROI2])
+    segUnionROI = combineROIs([ROI1,ROI2])
     segUnion = float(segUnionROI.getContainedFloatPoints().npoints)
 
     # Get the total number of pixels across both segmentations
-    totSegArea = float(blankROI1.getContainedFloatPoints().npoints + blankROI2.getContainedFloatPoints().npoints)
+    totSegArea = float(ROI1.getContainedFloatPoints().npoints + ROI2.getContainedFloatPoints().npoints)
 
     # Compute the jaccard index, first checking to see if we would
     # divide by zero

@@ -82,8 +82,10 @@ relabeledFields = ImageFiles.findImgsInDir(os.path.join(reLabelDir,
 # Start a dictionary that will store all of the reproducibility metrics
 # for each field of view
 reproQuants = {'Rater1': [],
-               'DC': [],
-               'JI': [],
+               'DC-Nuclei': [],
+               'JI-Nuclei': [],
+               'DC-Not-Nuclei': [],
+               'JI-Not-Nuclei': [],
                'Field_of_View_Number': []}
 
 # Start a counter for the total number of fields rated twice
@@ -161,19 +163,26 @@ for f in range(len(relabeledFields)):
     ####################################################################
 
     # Get the dice coefficient and jaccard index from comparing our two
-    # segmentations
-    [DC,JI] = ROITools.getDC_JI(origLabelSeg,reLabelSeg,fovBoundary)
+    # segmentations, specifically the areas that were labeled as nuclei
+    [DC,JI] = ROITools.getDC_JI(origLabelSeg,reLabelSeg)
 
     # Add the dice coefficient and jaccard index to our data set
-    reproQuants['DC'].append(DC)
-    reproQuants['JI'].append(JI)
+    reproQuants['DC-Nuclei'].append(DC)
+    reproQuants['JI-Nuclei'].append(JI)
+
+    # Do the same, this time comparing the areas that were not labeled
+    # as nuclei
+    [DC,JI] = ROITools.getDC_JI(origLabelSeg,reLabelSeg,False,
+                                fovBoundary)
+    reproQuants['DC-Not-Nuclei'].append(DC)
+    reproQuants['JI-Not-Nuclei'].append(JI)
 
     # Get a list of all the unique column names from the spreadsheets
     csvColNames = list(set(origLabelQuants.keys() + reLabelQuants.keys() + reproQuants.keys()))
 
     # Search for the column names that report the raw number of cells
     # for each cell type
-    nCellCols = list(set([re.match('^((?:Total_)?N_[^_]*)(?:_Rater1)?$',col).group(1) for col in csvColNames if re.search('^(?:Total_)?N_[^_]*(?:_Rater1)?$',col)]))
+    nCellCols = list(set([re.match('^((?:Total_)?N_[^_]*)(?:_(?:(?:Rater[12])|(?:Absolute_Difference)|(?:Percent_Difference)))?$',col).group(1) for col in csvColNames if re.search('^((?:Total_)?N_[^_]*)(?:_(?:(?:Rater[12])|(?:Absolute_Difference)|(?:Percent_Difference)))?$',col)]))
 
     # Loop across all of these csv column names
     for col in nCellCols:
@@ -187,6 +196,8 @@ for f in range(len(relabeledFields)):
             # cells of this cell type were labeled in any other fields
             reproQuants['{}_Rater1'.format(col)] = [0] * FoV2xsRated
             reproQuants['{}_Rater2'.format(col)] = [0] * FoV2xsRated
+            reproQuants['{}_Absolute_Difference'.format(col)] = [0] * FoV2xsRated
+            reproQuants['{}_Percent_Difference'.format(col)] = [0] * FoV2xsRated
 
         # Check to see if the column name is present in the original
         # rater's data set
@@ -207,6 +218,21 @@ for f in range(len(relabeledFields)):
             reproQuants['{}_Rater2'.format(col)].append(int(reLabelQuants[col][0]))
         else:
             reproQuants['{}_Rater2'.format(col)].append(0)
+
+        # Add the absolute difference between the number reported by
+        # the two raters
+        reproQuants['{}_Absolute_Difference'.format(col)].append(abs(reproQuants['{}_Rater1'.format(col)][-1] - reproQuants['{}_Rater2'.format(col)][-1]))
+
+        # Store the average number of cells of this type each rater
+        # indicated
+        avgNCells = float(reproQuants['{}_Rater1'.format(col)][-1] + reproQuants['{}_Rater2'.format(col)][-1])/2.0
+
+        # Add in the percent difference between the ratings, first
+        # checking for zero division
+        if avgNCells > 0:
+            reproQuants['{}_Percent_Difference'.format(col)].append((float(reproQuants['{}_Absolute_Difference'.format(col)][-1])/avgNCells)*100.0)
+        else:
+            reproQuants['{}_Percent_Difference'.format(col)].append(float('nan'))
 
     # Increase our counter for the number of fields of view that were
     # rated twice
