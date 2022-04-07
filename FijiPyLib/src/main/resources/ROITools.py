@@ -1382,7 +1382,7 @@ def getDC_JI(seg1,seg2,compareForeground=True,window2compare=None):
         # of interest
         ROI1 = getIntersectingROI([totBlankROI1,window2compare])
         ROI2 = getIntersectingROI([totBlankROI2,window2compare])
-        del totBlankROI1 totBlankROI2
+        del totBlankROI1, totBlankROI2
 
     # Get the intersection between these two segmentations and compute
     # its size
