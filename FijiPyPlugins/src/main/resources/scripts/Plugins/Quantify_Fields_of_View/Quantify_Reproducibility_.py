@@ -82,8 +82,10 @@ relabeledFields = ImageFiles.findImgsInDir(os.path.join(reLabelDir,
 # Start a dictionary that will store all of the reproducibility metrics
 # for each field of view
 reproQuants = {'Rater1': [],
-               'DC': [],
-               'JI': [],
+               'DC-Nuclei': [],
+               'JI-Nuclei': [],
+               'DC-Not-Nuclei': [],
+               'JI-Not-Nuclei': [],
                'Field_of_View_Number': []}
 
 # Start a counter for the total number of fields rated twice
@@ -161,12 +163,19 @@ for f in range(len(relabeledFields)):
     ####################################################################
 
     # Get the dice coefficient and jaccard index from comparing our two
-    # segmentations
-    [DC,JI] = ROITools.getDC_JI(origLabelSeg,reLabelSeg,fovBoundary)
+    # segmentations, specifically the areas that were labeled as nuclei
+    [DC,JI] = ROITools.getDC_JI(origLabelSeg,reLabelSeg)
 
     # Add the dice coefficient and jaccard index to our data set
-    reproQuants['DC'].append(DC)
-    reproQuants['JI'].append(JI)
+    reproQuants['DC-Nuclei'].append(DC)
+    reproQuants['JI-Nuclei'].append(JI)
+
+    # Do the same, this time comparing the areas that were not labeled
+    # as nuclei
+    [DC,JI] = ROITools.getDC_JI(origLabelSeg,reLabelSeg,False,
+                                fovBoundary)
+    reproQuants['DC-Not-Nuclei'].append(DC)
+    reproQuants['JI-Not-Nuclei'].append(JI)
 
     # Get a list of all the unique column names from the spreadsheets
     csvColNames = list(set(origLabelQuants.keys() + reLabelQuants.keys() + reproQuants.keys()))
