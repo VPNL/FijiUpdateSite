@@ -221,8 +221,10 @@ reproQuants['Rater2'] = [reLabelRA]*FoV2xsRated
 
 # Store the name of the source image file where these fields of view
 # come from
-sourceFName = re.match('.*-Segmentation_Field-\d+_(.+)',
-                       origLabelSegFile).group(1)
+sourceFName = os.path.splitext(re.match('.*-Segmentation_Field-\d+_(.+)',
+                               origLabelSegFile).group(1))[0]
 
 # Save the final results under the second rater's directory
-DataFiles.dict2csv(reproQuants,os.path.join(reLabelDir,sourceFName))
+DataFiles.dict2csv(reproQuants,
+                   os.path.join(reLabelDir,
+                                'Cell_Labeling_Reproducibility_{}.csv'.format(sourceFName)))
