@@ -1,4 +1,4 @@
-'''
+dic'''
 DataFiles Module
 
 This module contains functions for reading, writing and working with
@@ -11,6 +11,10 @@ data files
     csv2dict(csvPath)
 
         - Reads a csv file to a python dictionary
+
+    mergeDataDicts(dicts)
+
+        - Merges a list of python dictionaries
 
 '''
 
@@ -76,6 +80,8 @@ def csv2dict(csvPath):
                             you want to read into a dictionary
 
     OUTPUTS a python dictionary
+
+    AR April 2022
     '''
 
     # Open the csv file
@@ -103,7 +109,7 @@ def csv2dict(csvPath):
             # Initialize a list under this key
             dict[key] = []
 
-    # Re-open the csv file so we can read it with a different package 
+    # Re-open the csv file so we can read it with a different package
     with open(csvPath) as csvFile:
 
         # Use the dict reader to read the csv file row by row
@@ -120,3 +126,69 @@ def csv2dict(csvPath):
 
     # Return the final dictionary
     return dict
+
+########################################################################
+############################ mergeDataDicts ############################
+########################################################################
+
+# Write a function that will merge python dictionaries containing data
+def mergeDataDicts(dicts):
+    '''
+    Merges two python dictionaries
+
+    mergeDataDicts(dicts)
+
+        - dicts (List of Python Dictionary): Dictionaries containing our
+                                             data. Values of all keys
+                                             must be lists of the length
+                                             across all keys in each
+                                             dictionary.
+
+    OUTPUTS python dictionary containing the merged data
+
+    AR April 2022
+    '''
+
+    # Get a list of all the unique keys across the dictionaries
+    allKeys = []
+    [allKeys.extend(dict.keys()) for dict in dicts]
+    keys = list(set(allKeys))
+
+    # Initialize a python dictionary that will contain the merged data
+    mergedDict = {}
+    for key in keys:
+        mergedDict[key] = []
+
+    # Loop across all dictionaries that we want to merge
+    for dic in dicts:
+
+        # Get the number of elements in each list stored under the keys
+        # of this dictionary, first checking to see if the dictionary
+        # is empty
+        if len(dic.keys()) > 0:
+            nElem = len(dic[dic.keys()[0]])
+
+        # If the dictionary did not have any keys ...
+        else:
+
+            # ... then the dictionary is empty
+            nElem = 0
+
+        # Loop across all keys
+        for key in keys:
+
+            # Check to see if the key is in the dictionary
+            if dic.has_key(key):
+
+                # If the key is in our dictionary, just add the list
+                # under this key to our merged dictionary
+                mergedDict[key].extend(dic[key])
+
+            # If the key is not in the dictionary ...
+            else:
+
+                # ... then we need to fill in the blank data with nans
+                mergedDict[key].extend([float('nan')]*nElem)
+
+    # Return the final merged dictionary
+    return mergedDict
