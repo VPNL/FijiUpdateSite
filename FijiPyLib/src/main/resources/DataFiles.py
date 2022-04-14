@@ -1,4 +1,4 @@
-dic'''
+'''
 DataFiles Module
 
 This module contains functions for reading, writing and working with
