@@ -128,6 +128,43 @@ def csv2dict(csvPath):
     return dict
 
 ########################################################################
+########################## getNElementsInDict ##########################
+########################################################################
+
+# Write a function that will compute the number of elements in a python
+# dictionary
+def getNElementsInDict(dic):
+    '''
+    Returns the number of elements in the python dictionary, assuming
+    the values of all keys in the dictionary are lists of the same
+    length like a pandas data frame
+
+    getNElementsInDict(dic)
+
+        - dic (Python Diciontary): Dictionary containing data organized
+                                   in lists of the same length under
+                                   each index key
+
+    OUTPUTS the number of elements in the python dictionary as an
+    integer
+
+    AR April 2022
+    '''
+
+    # Check to see if the dictionary is empty (would have no keys)
+    if len(dic.keys()) > 0:
+
+        # Return the length of the list stored under the first key in
+        # the dictionary
+        return len(dic[dic.keys()[0]])
+
+    # If the dictionary did not have any keys ...
+    else:
+
+        # ... then it also did not have any elements
+        return 0
+
+########################################################################
 ############################ mergeDataDicts ############################
 ########################################################################
 
@@ -163,17 +200,9 @@ def mergeDataDicts(dicts):
     for dic in dicts:
 
         # Get the number of elements in each list stored under the keys
-        # of this dictionary, first checking to see if the dictionary
-        # is empty
-        if len(dic.keys()) > 0:
-            nElem = len(dic[dic.keys()[0]])
-
-        # If the dictionary did not have any keys ...
-        else:
-
-            # ... then the dictionary is empty
-            nElem = 0
-
+        # of this dictionary
+        nElem = getNElementsInDict(dic)
+        
         # Loop across all keys
         for key in keys:
 
