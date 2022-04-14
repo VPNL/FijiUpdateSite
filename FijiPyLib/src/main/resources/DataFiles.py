@@ -12,6 +12,12 @@ data files
 
         - Reads a csv file to a python dictionary
 
+    getNElementsInDict(dic)
+
+        - Returns the number of elements in the python dictionary,
+          assuming the values of all keys in the dictionary are lists of
+          the same length like a pandas data frame
+
     mergeDataDicts(dicts)
 
         - Merges a list of python dictionaries
@@ -202,7 +208,7 @@ def mergeDataDicts(dicts):
         # Get the number of elements in each list stored under the keys
         # of this dictionary
         nElem = getNElementsInDict(dic)
-        
+
         # Loop across all keys
         for key in keys:
 
