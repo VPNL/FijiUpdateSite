@@ -226,6 +226,10 @@ for t in range(len(tileScanQs)):
     mergedFieldQuantDict[tileScanQs[t]] = [tileScanAs[t]]*totNFoVs
     mergedCellQuantDict[tileScanQs[t]] = [tileScanAs[t]]*totNCells
 
+# Add the amount of overlap the full field of view displayed to the RAs
+# extends into neighboring fields
+mergedFieldQuantDict['Field_Overlap_in_{}'.format(fieldOverlapUnits)] = [fieldOverlap]*totNFoVs
+
 # Identify the name of our source image using the last csv file path we
 # opened
 sourceImgName = re.match('^.*Cell-Quantifications_Field-\d+_(.+$)',
