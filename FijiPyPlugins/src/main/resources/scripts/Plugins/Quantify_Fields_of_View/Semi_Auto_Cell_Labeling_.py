@@ -118,6 +118,9 @@ import Stats
 # Import our data files module so we can write data files
 import DataFiles
 
+# Import exit so we can stop the script early if needed
+from sys import exit
+
 ########################################################################
 ######### IDENTIFY THE MARKERS IMAGED IN THE DIFFERENT CHANNELS ########
 ########################################################################
@@ -183,6 +186,14 @@ del marker2focusImp
 zBounds4Quants = marker2focusZStack.setZLevels4Focus(z_height)
 marker2focusZStack.orig_z_stack.close()
 del marker2focusZStack, z_height
+
+# If the center of the z-stack is too close to either of the edges of
+# the stack, zBounds4Quants will be empty
+if zBounds4Quants is None:
+
+    # Let the user know that field of view should not be quantified
+    IJ.showMessage('Center of focus is too close to the edges of your z-stack. Skip this field of view as it should be excluded from analysis.')
+    exit()
 
 # Start a python dictionary that will store various aspects about this
 # field of view we are quantifying. Add in the bottom and top z-slice
@@ -478,7 +489,7 @@ if nCells2Label > 0:
 
     # Get all of the ROIs in the ROI Manager
     labeledNuclei = ROITools.getOpenROIs()
-    
+
     # Check to make sure that the labeled nuclei are contained in a list
     if not isinstance(labeledNuclei,list):
     	labeledNuclei = [labeledNuclei]
