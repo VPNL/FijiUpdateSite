@@ -21,6 +21,7 @@ function rotateAndSaveStacks(imgFilesDir,rotAngle,channel4Crop)
 %   AR Jan 2022
 %   AR Feb 2022 Inputs all image files of all channels so that we can
 %               crop after rotating
+%   AR Apr 2022 Use max projection to define area to crop
 
 % Convert the rotation angle and channel4Crop from character arrays to the
 % correct data type if necessary
@@ -56,10 +57,20 @@ imgResolution = [imgInfo(1).XResolution,imgInfo(1).YResolution];
 imgNSlices = numel(imgInfo);
 clear imgInfo
 
-% Read and rotate the central z-level of the image we want to use to define
-% our crop
-rotatedImg4CropDef = imrotate(imread(imgFile4Cropping,round(imgNSlices/2)), ...
-                              -rotAngle);
+% Read and rotate the first z-level of the image we want to use to define
+% our crop 
+rotatedImg4CropDef = imrotate(imread(imgFile4Cropping,1),-rotAngle);
+
+% Loop across all other z levels of the image 
+for z = 2:imgNSlices
+
+    % Generate a maximum intensity projection across all z-levels of our
+    % image 
+    rotatedImg4CropDef = max(cat(3,rotatedImg4CropDef,...
+                             imrotate(imread(imgFile4Cropping,z),...
+                                      -rotAngle)),[],3);
+
+end
 clear imgFile4Cropping
 
 % Store which rows and columns contain actual data rather than blank space
