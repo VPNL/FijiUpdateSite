@@ -132,17 +132,17 @@ for f in range(len(relabeledFields)):
     origLabelDir = os.path.join(cellLabelDir,
                                 origLabelDir[origLabelDir.rindex(os.path.sep)+1:])
 
+    # Check to make sure that we are able to locate the original
+    # segmentation file
+    if not len(ImageFiles.findImgsInDir(os.path.join(origLabelDir,'*_Segmentations'),None,'.+-Segmentation_Field-{}_.*'.format(nFoV))) > 0:
+        # Move to the next field of view
+        continue
     # Find the original DAPI segmentation and field quantification csv
     # file for this field of view
     origLabelSegFile = ImageFiles.findImgsInDir(os.path.join(origLabelDir,
                                                              '*_Segmentations'),
                                                 None,
                                                 '.+-Segmentation_Field-{}_.*'.format(nFoV))
-    # Check to make sure that we were able to locate the original
-    # segmentation file
-    if not len(origLabelSegFile) > 0:
-        # Move to the next field of view
-        continue
     origLabelSeg = ImagePlus(origLabelSegFile)
     origLabelCsv = ImageFiles.findImgsInDir(os.path.join(origLabelDir,
                                                          'Quantifications_By_Field'),
