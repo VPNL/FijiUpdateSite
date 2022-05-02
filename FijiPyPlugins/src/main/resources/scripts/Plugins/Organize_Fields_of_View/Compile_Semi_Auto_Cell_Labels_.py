@@ -310,13 +310,11 @@ rotFilePath = ImageFiles.findImgsInDir(os.path.join(cellLabelDir,'..','..',
 # Open the text file
 with open(rotFilePath,'r+') as rotFile:
 
-    # Read the angle saved in the text file
-    rotation = float(rotFile.read()) % -90 # The rotation needs to be
-                                           # transformed to make sure
-                                           # it's divisible by 90 and
-                                           # the sign needs to be
-                                           # flipped
-    rotFile.close()
+    # Read the angle saved in the text file. The rotation needs to be
+    # transformed to make sure it's divisible by 90 and the sign needs
+    # to be flipped
+    rotation = float(rotFile.read()) % -90
+
 
 # Identify all roi sets containing labeled cells
 cellROIFiles = ImageFiles.findImgsInDir(os.path.join(cellLabelDir,
@@ -376,9 +374,8 @@ for cellROIFile in cellROIFiles:
     # Rename this ROI based on what field of view number it belongs to
     fovROI.setName('Field-{}'.format(iFov))
 
-    # Make these ROIs with pink boundaries
+    # Make these ROIs with white boundaries
     fovROI.setStrokeColor(Color.white)
-    fovROI.setStrokeWidth​(50.0)
 
     # Add this ROI to our composite list
     analyzedFovROIs.append(fovROI)
@@ -410,9 +407,8 @@ for iFov in noCellFovs:
     # Rename this ROI based on what field of view number it belongs to
     fovROI.setName('Field-{}'.format(iFov))
 
-    # Make these ROIs with pink boundaries
+    # Make these ROIs with white boundaries
     fovROI.setStrokeColor(Color.white)
-    fovROI.setStrokeWidth​(50.0)
 
     # Add this ROI to our composite list
     analyzedFovROIs.append(fovROI)
