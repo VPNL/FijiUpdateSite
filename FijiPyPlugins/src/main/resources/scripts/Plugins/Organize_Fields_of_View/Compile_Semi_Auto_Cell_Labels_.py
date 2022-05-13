@@ -417,7 +417,7 @@ for iFov in noCellFovs:
 ########################################################################
 
 # Get a list of all the x coordinates of all cells in our ROI set
-allCellXCoords = [roi.getXBase() for roi in allCellLabels]
+allCellXCoords = [roi.getRotationCenter().xpoints[0] for roi in allCellLabels]
 
 # Sort our list of all cell labels based on the x coordinate of these
 # ROIs
