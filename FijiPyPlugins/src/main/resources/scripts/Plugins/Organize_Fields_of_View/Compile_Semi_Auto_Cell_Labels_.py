@@ -433,6 +433,12 @@ ROITools.saveROIs(sortedFovROIs,
                   os.path.join(cellLabelDir,'Analyzed_{}_{}.zip'.format(fieldSizeDir,
                                                                         os.path.splitext(sourceImgName)[0])))
 
+# Sort out data dictionaries by increasing x coordinate
+mergedFieldQuantDict = DataFiles.sortDictByKey(mergedFieldQuantDict,
+                                               xCoordCol)
+mergedCellQuantDict = DataFiles.sortDictByKey(mergedCellQuantDict,
+                                              xCoordCol)
+
 ########################################################################
 ################### COLOR NUCLEI BY LABELED CELL TYPE ##################
 ########################################################################
