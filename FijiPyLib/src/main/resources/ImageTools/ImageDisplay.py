@@ -11,6 +11,10 @@ This module contains functions changing how images are displayed in Fiji
 
         - Returns a list of all currently open images in Fiji
 
+    openAsVirtualStack(imageFile)
+
+        - Opens an image file into a virtual stack using Bio-Formats
+
 '''
 
 ########################################################################
@@ -135,3 +139,41 @@ def getOpenImages():
 
         # Return list of all open images
         return open_images
+
+########################################################################
+############################# getOpenImages ############################
+########################################################################
+
+# Define a function that will read image files into virtual stacks
+def openAsVirtualStack(imageFile):
+    '''
+    Opens an image file into a virtual stack using Bio-Formats
+
+    openAsVirtualStack(imageFile)
+
+        - imageFile (String): File path to the location of the image you
+                              want to open
+
+    OUTPUT Opened image as an ImagePlus object
+
+    AR May 2022
+    '''
+
+    # Read the image file into a virtual stack
+    IJ.run("Bio-Formats",
+          "open=[{}] color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT use_virtual_stack".format(imageFile))
+
+    # Grab the newly opened image
+    img = getOpenImages()
+
+    # Check to see if multiple images were opened
+    if isinstance(img,list):
+
+        # Return just the most recently opened image
+        return img[-1]
+
+    # Otherwise ...
+    else:
+
+        # ... return the only open image
+        return img
