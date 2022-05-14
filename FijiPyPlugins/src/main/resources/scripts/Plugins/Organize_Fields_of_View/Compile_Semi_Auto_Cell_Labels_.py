@@ -49,8 +49,9 @@ import os
 # dictionaries
 import DataFiles
 
-# Import ImagePlus so we can open up images
-from ij import ImagePlus
+# Import ImagePlus so we can open up images and IJ so we can run macro
+# commands
+from ij import ImagePlus, IJ
 ImagePlus()
 
 # Impor our ROI functions
@@ -115,6 +116,7 @@ matches = regex.match(str(fieldSizeDir)).groupdict()
 fieldOverlap = float(matches['Overlap'])
 fieldOverlapUnits = matches['Units'] + 's'
 fieldSize = float(matches['Size'])
+del regex, matches
 
 ########################################################################
 ################ IDENTIFY THE PHYSICAL LOCATION OF THESE ###############
@@ -135,6 +137,7 @@ coordCsvPath = ImageFiles.findImgsInDir(os.path.join(sourceImgDir,
 
 # Read these field of view coordinates into a python dictionary
 fovCoordsDict = DataFiles.csv2dict(coordCsvPath)
+del coordCsvPath
 
 # Store a list of all the column names in the field of view coordinate
 # csv file
@@ -257,6 +260,9 @@ for r in range(len(RALabelDirs)):
                 -1)
     # ... and then fill in these nans with the appropriate rater initials
     mergedCellQuantDict['Rater'][iNan:] = [RAInitials[r]]*(len(mergedCellQuantDict['Rater']) - iNan)
+del RAInitials, areaCoordCol, fovCoordCols, fieldQuantCsvs
+del fieldQuantCsv, quants4FieldDict, iNan, cellQuantCsvs
+del cellsInFieldDict, nCellsInFoV
 
 # Compute the total number of elements in each python dictionary
 totNFoVs = DataFiles.getNElementsInDict(mergedFieldQuantDict)
@@ -269,15 +275,18 @@ for t in range(len(tileScanQs)):
     # Add this information to each of our python dictionaries
     mergedFieldQuantDict[tileScanQs[t]] = [tileScanAs[t]]*totNFoVs
     mergedCellQuantDict[tileScanQs[t]] = [tileScanAs[t]]*totNCells
+del tileScanQs, tileScanAs, totNCells, t
 
 # Add the amount of overlap the full field of view displayed to the RAs
 # extends into neighboring fields
 mergedFieldQuantDict['Field_Overlap_in_{}'.format(fieldOverlapUnits)] = [fieldOverlap]*totNFoVs
+del fieldOverlap, fieldOverlapUnits, totNFoVs
 
 # Identify the name of our source image using the last csv file path we
 # opened. We will use this later when saving our data files.
 sourceImgName = re.match('^.*Cell-Quantifications_Field-\d+_(.+$)',
                          cellQuantCsv).group(1)
+del cellQuantCsv
 
 ########################################################################
 ### IDENTIFY THE SIZE AND ROTATION OF THE FIELDS OF VIEW WE ANALYZED ###
@@ -299,6 +308,8 @@ imgCal = nucSeg.getCalibration()
 
 # Store the center of the image in pixels
 fovCenter = (float(nucSeg.getWidth())/2.0,float(nucSeg.getHeight())/2.0)
+nucSeg.close()
+del nucSeg
 
 # Store one half of the true field of view size in pixels
 fieldSize = imgCal.getRawX(fieldSize)
@@ -315,6 +326,7 @@ with open(rotFilePath,'r+') as rotFile:
     # transformed to make sure it's divisible by 90 and the sign needs
     # to be flipped
     rotation = float(rotFile.read()) % -90
+del rotFilePath, rotFile
 
 ########################################################################
 ################ COMBINE ALL LABELED CELLS AND ANALYZED ################
@@ -387,6 +399,7 @@ for cellROIFile in cellROIFiles:
 
     # Add the x coordinate of the field of view to our list
     analyzedFovXCoords.append(xFov)
+del fovCenter, cellROIFiles, cellROIFile, cellROISet
 
 # Get a list of all fields of view numbers that did not contain any
 # cells
@@ -420,6 +433,8 @@ for iFov in noCellFovs:
 
     # Add the x coordinate of the field of view to our list
     analyzedFovXCoords.append(xFov)
+del fovCoordsDict, yCoordCol, iFov, imgCal, halfFieldSize, basefovROI
+del noCellFovs
 
 ########################################################################
 ######## ORDER OUR ROI AND DATA SETS BY INCREASING X COORDINATE ########
@@ -431,22 +446,32 @@ allCellXCoords = [roi.getRotationCenter().xpoints[0] for roi in allCellLabels]
 # Sort our list of all cell labels based on the x coordinate of these
 # ROIs
 sortedCellLabels = [cell for _,cell in sorted(izip(allCellXCoords,allCellLabels))]
+del allCellLabels, allCellXCoords
 
 # Repeat the above for our list of ROIs marking fields of view that were
 # analyzed
 sortedFovROIs = [fov for _,fov in sorted(izip(analyzedFovXCoords,analyzedFovROIs))]
+del analyzedFovROIs, analyzedFovXCoords
 
 # Save this final list of ROIs marking the fields of view that were
 # analyzed from the source image
 ROITools.saveROIs(sortedFovROIs,
                   os.path.join(cellLabelDir,'Analyzed_{}_{}.zip'.format(fieldSizeDir,
                                                                         os.path.splitext(sourceImgName)[0])))
+del fieldSizeDir, sortedFovROIs
 
 # Sort out data dictionaries by increasing x coordinate
 mergedFieldQuantDict = DataFiles.sortDictByKey(mergedFieldQuantDict,
                                                xCoordCol)
 mergedCellQuantDict = DataFiles.sortDictByKey(mergedCellQuantDict,
                                               xCoordCol)
+del xCoordCol
+
+# Save our field of view quantifications
+DataFiles.dict2csv(mergedFieldQuantDict,
+                   os.path.join(cellLabelDir,
+                                'Field-Quantifications_{}'.format(sourceImgName)))
+del mergedFieldQuantDict
 
 ########################################################################
 ################### COLOR NUCLEI BY LABELED CELL TYPE ##################
@@ -463,6 +488,7 @@ colors = ['lightGray','cyan','magenta','yellow','green','blue','red','black',
 # cell type
 cellTypeColors = UIs.textFieldsUI('Specify the color you would like to use for the ROIs of each cell type',
                               cellTypes,colors[:len(cellTypes)])
+del colors
 
 # Loop across all individual cells
 for roi in sortedCellLabels:
@@ -477,6 +503,7 @@ for roi in sortedCellLabels:
     # Set the color of our ROI
     roi.setStrokeColor(roiColor)
     roi.setFillColor(roiColor)
+del cellTypes, cellTypeColors, roiSolidColor, roiColor
 
 # Save our final set of cell ROIs
 ROITools.saveROIs(sortedCellLabels,
@@ -492,6 +519,9 @@ channelNames = re.split('-',os.path.basename(cellLabelDir))
 
 # Loop across all channels
 for channelName in channelNames:
+
+    # Make sure that all images are closed
+    IJ.run("Close All", "")
 
     # Get the name of the first unlabeled field of view for this channel
     # that the first RA later analyzed
@@ -530,10 +560,7 @@ for channelName in channelNames:
         mergedCellQuantDict['Mean_{}_Pixel_Intensity_Z-Scored_vs_Other_Markers'.format(channelName)] = mergedCellQuantDict['{}_Z-Scored_Mean_Pixel_Intensity'.format(channelName)]
         del mergedCellQuantDict['{}_Z-Scored_Mean_Pixel_Intensity'.format(channelName)]
 
-# Save the composite csv files under our input directory
-DataFiles.dict2csv(mergedFieldQuantDict,
-                   os.path.join(cellLabelDir,
-                                'Field-Quantifications_{}'.format(sourceImgName)))
+# Save the our cellular quantifications
 DataFiles.dict2csv(mergedCellQuantDict,
                    os.path.join(cellLabelDir,
                                 'Cell-Quantifications_{}'.format(sourceImgName)))
