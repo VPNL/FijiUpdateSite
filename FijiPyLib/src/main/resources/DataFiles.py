@@ -262,7 +262,7 @@ def sortDictByKey(dict,key):
     sortedDict = {}
 
     # Store all of the originally ordered values for our key of interest
-    origOrderedVals = dict[key]
+    origOrderedVals = map(float,dict[key])
 
     # Loop across all keys of our original python dictionary
     for k in dict.keys():
