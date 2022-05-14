@@ -34,7 +34,10 @@ cellLabelDir = dataDir.getAbsolutePath()
 import UIs
 
 # Import our image files module so we can locate files and directories
-from ImageTools import ImageFiles
+# Import our image display module so we can open images as virtual
+# stacks. Import out image processing module so we can make max
+# projections
+from ImageTools import ImageFiles, ImageDisplay, ImageProcessing
 
 # Import regular expressions so we can search strings for patterns
 import re
@@ -65,6 +68,9 @@ from itertools import izip
 
 # Import colors so we can color ROIs
 from java.awt import Color
+
+# Import our stats module so we can z-score lists
+import Stats
 
 ########################################################################
 ####### GET INFORMATION ABOUT SOURCE IMAGE THESE FIELDS CAME FROM ######
@@ -115,11 +121,15 @@ fieldSize = float(matches['Size'])
 ################## FIELDS OF VIEW ON THE SOURCE IMAGE ##################
 ########################################################################
 
-# There will be a csv file storing the physical coordinates of each fiel
-# of view under the appropriate field of view folder. Get the path to
-# this file.
-coordCsvPath = ImageFiles.findImgsInDir(os.path.join(cellLabelDir,'..','..',
-                                                     '..','FieldsOfView',
+# Store the path to the source image's directory, which will be a few
+# levels above the folder we're currently looking at
+sourceImgDir = os.path.join(cellLabelDir,'..','..','..')
+
+# There will be a csv file storing the physical coordinates of each
+# field of view under the appropriate field of view folder. Get the path
+# to this file.
+coordCsvPath = ImageFiles.findImgsInDir(os.path.join(sourceImgDir,
+                                                     'FieldsOfView',
                                                      fieldSizeDir),
                                         '.csv','.*FieldLocations_.*')
 
@@ -295,9 +305,8 @@ fieldSize = imgCal.getRawX(fieldSize)
 halfFieldSize = fieldSize / 2.0
 
 # Locate the text file storing how much our fields of view were rotated
-rotFilePath = ImageFiles.findImgsInDir(os.path.join(cellLabelDir,'..','..',
-                                                '..'),'.txt',
-                                   'RotationInDegrees_.*')
+rotFilePath = ImageFiles.findImgsInDir(sourceImgDir,'.txt',
+                                       'RotationInDegrees_.*')
 
 # Open the text file
 with open(rotFilePath,'r+') as rotFile:
@@ -473,6 +482,53 @@ for roi in sortedCellLabels:
 ROITools.saveROIs(sortedCellLabels,
                   os.path.join(cellLabelDir,
                                'Cell-Labeling_{}.zip'.format(os.path.splitext(sourceImgName)[0])))
+
+########################################################################
+###### RANK ORDER THE EXPRESSION OF EACH MARKER ACROSS ALL CELLS #######
+########################################################################
+
+# Generate a list of all channels analyzed, including the nuclear marker
+channelNames = re.split('-',os.path.basename(cellLabelDir))
+
+# Loop across all channels
+for channelName in channelNames:
+
+    # Get the name of the first unlabeled field of view for this channel
+    # that the first RA later analyzed
+    exFieldPath4Channel = ImageFiles.findImgsInDir(os.path.join(cellLabelDir,
+                                                                RALabelDirs[0],
+                                                                '{}_Unlabeled_Fields'.format(channelName)),
+                                                   None,'{}1Field-*'.format(os.sep))
+
+    # Get the name of the source image corresponding to this channel
+    # name
+    channelSourceImgName = re.match('^\d+Field-\d+_(.*$)',
+                                    os.path.basename(exFieldPath4Channel)).group(1)
+
+    # Open up this image as a virtual stack to save memory
+    channelSourceImg = ImageDisplay.openAsVirtualStack(os.path.join(sourceImgDir,
+                                                                    channelSourceImgName))
+    channelSourceImg.hide()
+
+    # Compute the maximum intensity projection of this image and then
+    # enhance the brightness/contrast
+    channelSourceMaxProj = ImageProcessing.normalizeImg(ImageProcessing.zStack(channelSourceImg).maxProj())
+    channelSourceImg.close()
+    del channelSourceImg
+
+    # Z-Score the average pixel intensity of the stain inside each
+    # nuclei in our data set and add to our data dictionary
+    mergedCellQuantDict['Mean_{}_Pixel_Intensity_Z-Scored_vs_Other_Nuclei'.format(channelName)] = Stats.zScoreData([ROITools.getMeanGrayLevel(nuc,
+                                                                                                                                              channelSourceMaxProj) for nuc in sortedCellLabels])
+    channelSourceMaxProj.close()
+    del channelSourceMaxProj
+
+    # Rename and delete other data columns relating to average pixel
+    # intensity to avoid confusion
+    del mergedCellQuantDict['Mean_{}_Pixel_Intensity'.format(channelName)]
+    if '{}_Z-Scored_Mean_Pixel_Intensity'.format(channelName) in mergedCellQuantDict:
+        mergedCellQuantDict['Mean_{}_Pixel_Intensity_Z-Scored_vs_Other_Markers'.format(channelName)] = mergedCellQuantDict['{}_Z-Scored_Mean_Pixel_Intensity'.format(channelName)]
+        del mergedCellQuantDict['{}_Z-Scored_Mean_Pixel_Intensity'.format(channelName)]
 
 # Save the composite csv files under our input directory
 DataFiles.dict2csv(mergedFieldQuantDict,
