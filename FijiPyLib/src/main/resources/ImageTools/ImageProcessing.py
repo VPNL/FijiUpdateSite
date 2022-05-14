@@ -400,43 +400,72 @@ def normalizeImg(img):
     AR Oct 2021
     '''
 
-    # Duplicate the input z-stack
-    z_stack = duplicator.run(img)
+    # Check to see if we are working with an image stack or a single
+    # image plane
+    if img.getImageStackSize() > 1:
 
-    # Compute the maximum intensity projection of our image using the
-    # zStack object
-    imgStack = zStack(z_stack)
-    maxProjection = imgStack.maxProj()
+        # Duplicate the input z-stack
+        z_stack = duplicator.run(img)
 
-    # Clear the image stack from memory
-    imgStack.orig_z_stack.close()
-    del imgStack
+        # Compute the maximum intensity projection of our image using
+        # the zStack object
+        imgStack = zStack(z_stack)
+        maxProjection = imgStack.maxProj()
 
-    # Enhance the contrast of the maximum intensity projection. The .35
-    # is Fiji's default value for the parameter called "saturated" that
-    # controls what proportion of pixels become saturated by the
-    # contrast adjustment
-    ContrastEnhancer().stretchHistogram(maxProjection,.35)
+        # Clear the image stack from memory
+        imgStack.orig_z_stack.close()
+        del imgStack
 
-    # Get the minimum and maximum value calculated for the ideal
-    # contrast adjustment
-    min4contrast = maxProjection.getDisplayRangeMin()
-    max4contrast = maxProjection.getDisplayRangeMax()
+        # Enhance the contrast of the maximum intensity projection. The
+        # .35 is Fiji's default value for the parameter called
+        # "saturated" that controls what proportion of pixels become
+        # saturated by the contrast adjustment
+        ContrastEnhancer().stretchHistogram(maxProjection,.35)
 
-    # Clear the max projection image from memory
-    maxProjection.close()
-    del maxProjection
+        # Get the minimum and maximum value calculated for the ideal
+        # contrast adjustment
+        min4contrast = maxProjection.getDisplayRangeMin()
+        max4contrast = maxProjection.getDisplayRangeMax()
 
-    # Use the contrast range from the maximum intensity projection to
-    # adjust the dynamic range of the full z-stack
-    z_stack.setDisplayRange(min4contrast,max4contrast)
-    IJ.run(z_stack,'Apply LUT', 'stack')
+        # Clear the max projection image from memory
+        maxProjection.close()
+        del maxProjection
 
-    # Reset the name of z_stack to match the original image
-    z_stack.setTitle(img.getTitle())
+        # Use the contrast range from the maximum intensity projection
+        # to adjust the dynamic range of the full z-stack
+        z_stack.setDisplayRange(min4contrast,max4contrast)
+        IJ.run(z_stack,'Apply LUT', 'stack')
 
-    # Return the normalized z-stack
-    return z_stack
+        # Reset the name of z_stack to match the original image
+        z_stack.setTitle(img.getTitle())
+
+        # Return the normalized z-stack
+        return z_stack
+
+    # If the original image is not a z-stack
+    else:
+
+        # Duplicate the image
+        imgCp = duplicator.run(img)
+
+        # Adjust the contrast of the image
+        ContrastEnhancer().stretchHistogram(imgCp,.35)
+
+        # Get the minimum and maximum value calculated for the ideal
+        # contrast adjustment
+        min4contrast = imgCp.getDisplayRangeMin()
+        max4contrast = imgCp.getDisplayRangeMax()
+
+        # Use the contrast range from the maximum intensity projection
+        # to adjust the dynamic range of the full z-stack
+        imgCp.setDisplayRange(min4contrast,max4contrast)
+        IJ.run(imgCp,'Apply LUT', '')
+
+        # Reset the name of imgCp to match the original image
+        imgCp.setTitle(img.getTitle())
+
+        # Return the normalized z-stack
+        return imgCp
 
 ########################################################################
 ############################### smoothImg ##############################
