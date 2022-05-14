@@ -22,6 +22,11 @@ data files
 
         - Merges a list of python dictionaries
 
+    sortDictByKey(dict,key)
+
+        - Sorts all lists of a data dictionary by ascending values of a
+          specific key
+
 '''
 
 ########################################################################
@@ -227,3 +232,44 @@ def mergeDataDicts(dicts):
 
     # Return the final merged dictionary
     return mergedDict
+
+########################################################################
+############################# sortDictByKey ############################
+########################################################################
+
+# Write a function to sort the values of a data dictionary
+def sortDictByKey(dict,key):
+    '''
+    Sorts all lists of a data dictionary by ascending values of a
+    specific key
+
+    sortDictByKey(dict,key)
+
+        - dict (Python Diciontary): Dictionary containing data organized
+                                    in lists of the same length under
+                                    each index key
+
+        - key (String): Which key in your python dictionary dict whose
+                        values you want sorted
+
+    OUTPUTS python dictionary containing the sorted data
+
+    AR May 2022
+    '''
+
+    # Initialize a new python dictionary that will store our sorted
+    # values
+    sortedDict = {}
+
+    # Store all of the originally ordered values for our key of interest
+    origOrderedVals = map(float,dict[key])
+
+    # Loop across all keys of our original python dictionary
+    for k in dict.keys():
+
+        # Sort the list of values stored under this key by ascending
+        # order of values under our key of interest
+        sortedDict[k] = [val for _,val in sorted(izip(origOrderedVals,dict[k]))]
+
+    # Return our final sorted data dictionary
+    return sortedDict
