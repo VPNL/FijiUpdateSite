@@ -52,6 +52,11 @@ from shutil import copyfile
 # directories will contain all of the original labelings made by each RA
 origRALabelDirs = ImageFiles.findSubDirs(inputDir)
 
+# Make sure that origRALabelDirs is a list. It will be a single string
+# if there was only one RA 
+if not isinstance(origRALabelDirs,list):
+	origRALabelDirs = [origRALabelDirs]
+
 # Look inside the first RA folder and get all of it's sub-directories
 origSubDirs = ImageFiles.findSubDirs(os.path.join(inputDir,origRALabelDirs[0]))
 
