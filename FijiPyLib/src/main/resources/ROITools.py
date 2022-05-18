@@ -408,6 +408,7 @@ def selectNonBlackRegion(img,cleanUpSelection=True):
     OUTPUT Fiji ROI selecting the non-black region of the image
 
     AR Jan 2022
+    AR May 2022 Make sure that ROI is not polygon before cleaning it up
     '''
 
     # Get the statistics for the image so we can know the min and max
@@ -432,7 +433,7 @@ def selectNonBlackRegion(img,cleanUpSelection=True):
     IJ.run("Fill ROI holes", "")
 
     # Check to see if we want to clean up the ROI
-    if cleanUpSelection:
+    if cleanUpSelection and nonBlackROI.getTypeAsString() != 'Polygon':
 
         # Clean up the ROI and return
         return cleanUpROI(nonBlackROI,img)
