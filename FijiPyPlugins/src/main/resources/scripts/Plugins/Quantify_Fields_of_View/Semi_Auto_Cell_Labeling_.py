@@ -342,6 +342,22 @@ nCells2Label = len(nucROIs)
 [field_area,field_length_units] = ROITools.getROIArea(fieldBoundROI,editedNucSeg)
 
 ########################################################################
+######### EXPAND ROI IF SPATIAL TRANSCRIPTOMIC DATA ####################
+########################################################################
+
+# Calculate the pixel area of the image
+nucImpCalibration = nucImp.getCalibration()
+nucPixelHeight = nucImpCalibration.pixelHeight
+nucPixelWidth  = nucImpCalibration.pixelWidth
+nucPixelArea   = nucPixelHeight * nucPixelWidth
+
+# Round the pixel area for display
+roundedPixelArea = round(nucPixelArea, 4)
+
+# Prompt the user to get amount of enlargement / dilation
+unitIncrease = int(UIs.textFieldsUI('Specify the amount of enlargement you would like to be applied to your nuclear segmented regions of interest.', ["Pixel size in your image is {} mm sq".format(roundedPixelArea)], ["0"])[0])
+
+########################################################################
 ####################### LABEL CELLS BY CELL TYPE #######################
 ########################################################################
 
