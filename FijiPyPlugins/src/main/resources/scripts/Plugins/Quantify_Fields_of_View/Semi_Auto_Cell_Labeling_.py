@@ -357,6 +357,37 @@ roundedPixelArea = round(nucPixelArea, 4)
 # Prompt the user to get amount of enlargement / dilation
 unitIncrease = int(UIs.textFieldsUI('Specify the amount of enlargement you would like to be applied to your nuclear segmented regions of interest.', ["Pixel size in your image is {} mm sq".format(roundedPixelArea)], ["0"])[0])
 
+# Iterate through nucROIs and dilate them by unitIncrease defined by user
+if(unitIncrease != 0):
+	psgROIs = nucROIs
+	nucROIs = [roienlarger.enlarge(nucROI,unitIncrease) for nucROI in psgROIs]
+
+# Remove resulting overlap between newly expanded ROI
+for i in range(len(nucROIs)-1):
+	# Grab the current ROI to compare to rest of ROIs
+	nucROI = nucROIs[i]
+	# Get the other ROIs using a lambda filter function
+	others = [nucROIs[j] for j in range(len(nucROIs)) if j != i]
+	# Merge the others
+	other = ROITools.combineROIs(others)
+	# Get the intersection of ROIs using the intersecting function
+	AND = ROITools.getIntersectingROI([nucROI, other])
+	# If there is overlap, then proceed to remove it
+	if AND.getLength() > 0:
+		# Define shape objects and use xor to get the ROI to remove
+		# To-do: add a non-rectangular fit function into ROITools
+		sAND = ShapeRoi(AND)
+		snucROI = ShapeRoi(nucROI)
+		croppedROI = snucROI.xor(sAND)
+		# Combine resulting ROI with original nuclear segmentation
+		nucROIs[i] = ROITools.combineROIs([croppedROI, psgROIs[i]])
+		nucImp.deleteRoi()
+		nucImp.hide()
+
+del psgROIs, croppedROI
+del AND, other, others, nucROI
+del sAND, snucROI
+
 ########################################################################
 ####################### LABEL CELLS BY CELL TYPE #######################
 ########################################################################
