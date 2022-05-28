@@ -363,7 +363,7 @@ if(unitIncrease != 0):
 	nucROIs = [roienlarger.enlarge(nucROI,unitIncrease) for nucROI in psgROIs]
 
 # Remove resulting overlap between newly expanded ROI
-for i in range(len(nucROIs)-1):
+for i in range(len(nucROIs)):
 	# Grab the current ROI to compare to rest of ROIs
 	nucROI = nucROIs[i]
 	# Get the other ROIs using a lambda filter function
