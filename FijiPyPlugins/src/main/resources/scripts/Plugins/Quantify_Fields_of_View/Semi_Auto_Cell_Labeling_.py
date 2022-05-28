@@ -49,6 +49,8 @@ OUTPUTS
 AR Dec 2021
 AR Feb 2022 Edited output to keep track of distance between cells and
             protein/transcript expression within each cell
+AP May 2022 Add ROI expansion and puncta quantification for spatial
+            transcriptomic data.
 '''
 
 ########################################################################
@@ -103,6 +105,12 @@ from ij.plugin import Duplicator
 
 # Initialize a duplicator object
 duplicator = Duplicator()
+
+# Import ROI Enlarger so we can dilate nuclei segmentation
+from ij.plugin import RoiEnlarger
+
+# Iniitalize a roi enlarger object
+roienlarger = RoiEnlarger()
 
 # Import izip so we can iterate across multiple lists
 from itertools import izip
