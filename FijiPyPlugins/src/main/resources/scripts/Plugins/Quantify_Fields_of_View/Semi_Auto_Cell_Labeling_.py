@@ -374,19 +374,13 @@ for i in range(len(nucROIs)):
 	AND = ROITools.getIntersectingROI([nucROI, other])
 	# If there is overlap, then proceed to remove it
 	if AND.getLength() > 0:
-		# Define shape objects and use xor to get the ROI to remove
-		# To-do: add a non-rectangular fit function into ROITools
-		sAND = ShapeRoi(AND)
-		snucROI = ShapeRoi(nucROI)
-		croppedROI = snucROI.xor(sAND)
+		# subtract AND from nucROI
+        croppedROI = subtractROI(nucROI, AND, fit = False)
 		# Combine resulting ROI with original nuclear segmentation
 		nucROIs[i] = ROITools.combineROIs([croppedROI, psgROIs[i]])
-		nucImp.deleteRoi()
-		nucImp.hide()
 
 del psgROIs, croppedROI
 del AND, other, others, nucROI
-del sAND, snucROI
 
 ########################################################################
 ####################### LABEL CELLS BY CELL TYPE #######################
