@@ -368,24 +368,24 @@ if(unitIncrease != 0):
 	nucROIs = [roienlarger.enlarge(nucROI,unitIncrease) for nucROI in psgROIs]
 
 # Remove resulting overlap between newly expanded ROI
-for i in range(len(nucROIs)):
-	# Grab the current ROI to compare to rest of ROIs
-	nucROI = nucROIs[i]
-	# Get the other ROIs using a lambda filter function
-	others = [nucROIs[j] for j in range(len(nucROIs)) if j != i]
-	# Merge the others
-	other = ROITools.combineROIs(others)
-	# Get the intersection of ROIs using the intersecting function
-	AND = ROITools.getIntersectingROI([nucROI, other])
-	# If there is overlap, then proceed to remove it
-	if AND.getLength() > 0:
-		# subtract AND from nucROI
-        croppedROI = subtractROI(nucROI, AND, fit = False)
-		# Combine resulting ROI with original nuclear segmentation
-		nucROIs[i] = ROITools.combineROIs([croppedROI, psgROIs[i]])
+    for i in range(len(nucROIs)):
+        # Grab the current ROI to compare to rest of ROIs
+        nucROI = nucROIs[i]
+        # Get the other ROIs using a lambda filter function
+        others = [nucROIs[j] for j in range(len(nucROIs)) if j != i]
+        # Merge the others
+        other = ROITools.combineROIs(others)
+        # Get the intersection of ROIs using the intersecting function
+        AND = ROITools.getIntersectingROI([nucROI, other])
+        # If there is overlap, then proceed to remove it
+        if AND.getLength() > 0:
+            # subtract AND from nucROI
+            croppedROI = subtractROI(nucROI, AND, fit = False)
+            # Combine resulting ROI with original nuclear segmentation
+            nucROIs[i] = ROITools.combineROIs([croppedROI, psgROIs[i]])
 
-del psgROIs, croppedROI
-del AND, other, others, nucROI
+    del psgROIs, croppedROI
+    del AND, other, others, nucROI
 
 ########################################################################
 ####################### LABEL CELLS BY CELL TYPE #######################
