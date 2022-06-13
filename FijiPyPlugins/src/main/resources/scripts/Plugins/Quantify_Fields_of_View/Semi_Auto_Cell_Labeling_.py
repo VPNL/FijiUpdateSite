@@ -345,17 +345,22 @@ nCells2Label = len(nucROIs)
 ######### EXPAND ROI IF SPATIAL TRANSCRIPTOMIC DATA ####################
 ########################################################################
 
-# Calculate the pixel area of the image
+# Extract the units of the image 
 nucImpCalibration = nucImp.getCalibration()
-nucPixelHeight = nucImpCalibration.pixelHeight
-nucPixelWidth  = nucImpCalibration.pixelWidth
-nucPixelArea   = nucPixelHeight * nucPixelWidth
+nucImpDims     = nucImp.getDimensions
+lengthUnits    = nucImpCalibration.getUnit()
 
-# Round the pixel area for display
-roundedPixelArea = round(nucPixelArea, 4)
+# Check to see if the micron symbol was used in the length units
+if u'\xb5' in lengthUnits:
+
+	# Convert the micron symbol to a u
+	lengthUnits = lengthUnits.replace(u'\xb5','u')
 
 # Prompt the user to get amount of enlargement / dilation
-unitIncrease = int(UIs.textFieldsUI('Specify the amount of enlargement you would like to be applied to your nuclear segmented regions of interest.', ["Pixel size in your image is {} mm sq".format(roundedPixelArea)], ["0"])[0])
+unitIncrease = UIs.textFieldsUI('Specify how much you would like to extend the radius of nuclear segmented regions of interest.', ["Extend ROI radius by {} mm".format(roundedPixelArea)], ["0"])[0]
+
+# Convert field size and field overlap from physical units to pixels
+unitIncrease = int(round(nucImpCalibration.getRawX(float(unitIncrease))))
 
 # Iterate through nucROIs and dilate them by unitIncrease defined by user
 if(unitIncrease != 0):
