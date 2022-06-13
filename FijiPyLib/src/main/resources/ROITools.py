@@ -643,7 +643,9 @@ def subtractROI(TotalRegion,Region2Remove,img,growth=0, fit = True):
     OUTPUT Fiji ROI storing the cropped region of interest
 
     AR Jan 2022
-    AP Jun 2022
+    AP Jun 2022: Create boolean parameter to condition rectangular fit
+    for spatial transcriptomic enlargement code written in Semi Auto
+    Segmentation plugin.
     '''
 
     # Make sure that the image is displayed

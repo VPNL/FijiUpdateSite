@@ -376,16 +376,16 @@ if(unitIncrease != 0):
         # Merge the others
         other = ROITools.combineROIs(others)
         # Get the intersection of ROIs using the intersecting function
-        AND = ROITools.getIntersectingROI([nucROI, other])
+        intersection = ROITools.getIntersectingROI([nucROI, other])
         # If there is overlap, then proceed to remove it
-        if AND.getLength() > 0:
+        if intersection.getLength() > 0:
             # subtract AND from nucROI
-            croppedROI = subtractROI(nucROI, AND, fit = False)
+            croppedROI = subtractROI(nucROI, intersection, fit = False)
             # Combine resulting ROI with original nuclear segmentation
             nucROIs[i] = ROITools.combineROIs([croppedROI, psgROIs[i]])
 
     del psgROIs, croppedROI
-    del AND, other, others, nucROI
+    del intersection, other, others, nucROI
 
 ########################################################################
 ####################### LABEL CELLS BY CELL TYPE #######################
