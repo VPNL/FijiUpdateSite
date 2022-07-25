@@ -409,6 +409,7 @@ def selectNonBlackRegion(img,cleanUpSelection=True):
 
     AR Jan 2022
     AR May 2022 Make sure that ROI is not polygon before cleaning it up
+    AR July 2022 Make sure that ROI is a composite selection before clean up
     '''
 
     # Get the statistics for the image so we can know the min and max
@@ -433,7 +434,7 @@ def selectNonBlackRegion(img,cleanUpSelection=True):
     IJ.run("Fill ROI holes", "")
 
     # Check to see if we want to clean up the ROI
-    if cleanUpSelection and nonBlackROI.getTypeAsString() != 'Polygon':
+    if cleanUpSelection and nonBlackROI.getTypeAsString() == 'Composite':
 
         # Clean up the ROI and return
         return cleanUpROI(nonBlackROI,img)
