@@ -1361,6 +1361,7 @@ def getDC_JI(seg1,seg2,compareForeground=True,window2compare=None):
             segmentations
 
     AR April 2022
+    AR Aug 2022 Adding logic for cases where a segmentation is blank
     '''
 
     # Make sure neither segmentation have any ROIs associated with them
@@ -1376,9 +1377,16 @@ def getDC_JI(seg1,seg2,compareForeground=True,window2compare=None):
     if not compareForeground:
 
         # Invert these ROIs so that we are selecting all the area that
-        # is blank
-        totBlankROI1 = ROI1.getInverse(seg1)
-        totBlankROI2 = ROI2.getInverse(seg2)
+        # is blank. If ROI1 or ROI2 are None, the whole window to
+        # compare is blank.
+        try:
+            totBlankROI1 = ROI1.getInverse(seg1)
+        except:
+            totBlankROI1 = window2compare
+        try:
+            totBlankROI2 = ROI2.getInverse(seg2)
+        except:
+            totBlankROI2 = window2compare
 
         # Shrink these ROIs so that they are contained within our window
         # of interest
