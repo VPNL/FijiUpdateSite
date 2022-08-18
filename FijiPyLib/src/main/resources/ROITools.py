@@ -1386,17 +1386,51 @@ def getDC_JI(seg1,seg2,compareForeground=True,window2compare=None):
         ROI2 = getIntersectingROI([totBlankROI2,window2compare])
         del totBlankROI1, totBlankROI2
 
-    # Get the intersection between these two segmentations and compute
-    # its size
-    segIntersectROI = getIntersectingROI([ROI1,ROI2])
-    segIntersect = float(segIntersectROI.getContainedFloatPoints().npoints)
+    # If either of the segmentations are blank...
+    if ROI1 is None or ROI2 is None:
 
-    # Do the same for the union between these two segmentations
-    segUnionROI = combineROIs([ROI1,ROI2])
-    segUnion = float(segUnionROI.getContainedFloatPoints().npoints)
+        # ... then there is no intersection between the ROIs
+        segIntersect = 0.0
 
-    # Get the total number of pixels across both segmentations
-    totSegArea = float(ROI1.getContainedFloatPoints().npoints + ROI2.getContainedFloatPoints().npoints)
+        # If both segmentations are blank...
+        if ROI1 is None and ROI2 is None:
+
+            # ... the combination of ROI1 and ROI2 will also be blank
+            segUnion = 0.0
+
+            # and the total area segmented is zero
+            totSegArea = 0.0
+
+        # If just the first ROI is the blank one...
+        elif ROI1 is None:
+
+            # ... the combination of the ROIs is just the 2nd ROI
+            segUnion = float(ROI2.getContainedFloatPoints().npoints)
+
+            # and the total area segmented is the same as just the 2nd
+            # ROI
+            totSegArea = segUnion
+
+        # Repeat the above for the condition where the 2nd ROI is blank
+        else:
+
+            segUnion = float(ROI1.getContainedFloatPoints().npoints)
+            totSegArea = segUnion
+
+    # otherwise...
+    else:
+
+        # Get the intersection between these two segmentations and
+        # compute its size
+        segIntersectROI = getIntersectingROI([ROI1,ROI2])
+        segIntersect = float(segIntersectROI.getContainedFloatPoints().npoints)
+
+        # Do the same for the union between these two segmentations
+        segUnionROI = combineROIs([ROI1,ROI2])
+        segUnion = float(segUnionROI.getContainedFloatPoints().npoints)
+
+        # Get the total number of pixels across both segmentations
+        totSegArea = float(ROI1.getContainedFloatPoints().npoints + ROI2.getContainedFloatPoints().npoints)
 
     # Compute the jaccard index, first checking to see if we would
     # divide by zero
