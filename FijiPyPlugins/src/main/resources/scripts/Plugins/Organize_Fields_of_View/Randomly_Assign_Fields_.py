@@ -51,6 +51,8 @@ AR Feb 2022 Made sure the folder name with the list of markers is in
 AR Mar 2022 Only select the desired number of fields of view by randomly
             cropping off some fields after systematic sampling across
             cortical depth
+AR Nov 2022 If assigning all fields of view, need to specify total 
+			number of fields
 '''
 
 ########################################################################
@@ -218,6 +220,13 @@ if not sampleAllFovs:
         del iAssign
 
     del totNFovs
+
+# If we are assigning all fields of view...
+else:
+	
+	# ... store the total number of fields
+	nFovs2Assign = len(fieldNames)
+
 # Randomly shuffle this list of fields of view
 random.shuffle(fieldNames)
 
