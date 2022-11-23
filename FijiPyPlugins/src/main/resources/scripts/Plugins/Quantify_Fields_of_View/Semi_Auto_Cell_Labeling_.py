@@ -49,6 +49,8 @@ OUTPUTS
 AR Dec 2021
 AR Feb 2022 Edited output to keep track of distance between cells and
             protein/transcript expression within each cell
+AP May 2022 Add ROI expansion and puncta quantification for spatial
+            transcriptomic data.
 '''
 
 ########################################################################
@@ -103,6 +105,12 @@ from ij.plugin import Duplicator
 
 # Initialize a duplicator object
 duplicator = Duplicator()
+
+# Import ROI Enlarger so we can dilate nuclei segmentation
+from ij.plugin import RoiEnlarger
+
+# Iniitalize a roi enlarger object
+roienlarger = RoiEnlarger()
 
 # Import izip so we can iterate across multiple lists
 from itertools import izip
@@ -332,6 +340,52 @@ nCells2Label = len(nucROIs)
 
 # Compute the area of the field of view we quantified from
 [field_area,field_length_units] = ROITools.getROIArea(fieldBoundROI,editedNucSeg)
+
+########################################################################
+######### EXPAND ROI IF SPATIAL TRANSCRIPTOMIC DATA ####################
+########################################################################
+
+# Extract the units of the image 
+nucImpCalibration = nucImp.getCalibration()
+nucImpDims     = nucImp.getDimensions
+lengthUnits    = nucImpCalibration.getUnit()
+
+# Check to see if the micron symbol was used in the length units
+if u'\xb5' in lengthUnits:
+
+	# Convert the micron symbol to a u
+	lengthUnits = lengthUnits.replace(u'\xb5','u')
+
+# Prompt the user to get amount of enlargement / dilation
+unitIncrease = UIs.textFieldsUI('Specify how much you would like to extend the radius of nuclear segmented regions of interest.', ["Extend ROI radius by {} mm".format(roundedPixelArea)], ["0"])[0]
+
+# Convert field size and field overlap from physical units to pixels
+unitIncrease = int(round(nucImpCalibration.getRawX(float(unitIncrease))))
+
+# Iterate through nucROIs and dilate them by unitIncrease defined by user
+if(unitIncrease != 0):
+	psgROIs = nucROIs
+	nucROIs = [roienlarger.enlarge(nucROI,unitIncrease) for nucROI in psgROIs]
+
+# Remove resulting overlap between newly expanded ROI
+    for i in range(len(nucROIs)):
+        # Grab the current ROI to compare to rest of ROIs
+        nucROI = nucROIs[i]
+        # Get the other ROIs using a lambda filter function
+        others = [nucROIs[j] for j in range(len(nucROIs)) if j != i]
+        # Merge the others
+        other = ROITools.combineROIs(others)
+        # Get the intersection of ROIs using the intersecting function
+        intersection = ROITools.getIntersectingROI([nucROI, other])
+        # If there is overlap, then proceed to remove it
+        if intersection.getLength() > 0:
+            # subtract AND from nucROI
+            croppedROI = subtractROI(nucROI, intersection, fit = False)
+            # Combine resulting ROI with original nuclear segmentation
+            nucROIs[i] = ROITools.combineROIs([croppedROI, psgROIs[i]])
+
+    del psgROIs, croppedROI
+    del intersection, other, others, nucROI
 
 ########################################################################
 ####################### LABEL CELLS BY CELL TYPE #######################

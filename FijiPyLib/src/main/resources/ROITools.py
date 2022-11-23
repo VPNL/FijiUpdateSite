@@ -620,7 +620,7 @@ def isContained(containedROI,containingROI):
 ########################################################################
 
 # Define a function to crop out a specified region from an ROI
-def subtractROI(TotalRegion,Region2Remove,img,growth=0):
+def subtractROI(TotalRegion,Region2Remove,img,growth=0, fit = True):
     '''
     Function that will subtract one ROI from another
 
@@ -637,34 +637,49 @@ def subtractROI(TotalRegion,Region2Remove,img,growth=0):
         - growth (int): How much do you want to expand your
                         Region2Remove before subtracting from Total
                         Region (default = 0, no growth)
+        - fit (boolean): Use rectangular fit and croppedCleanedROI. Set
+                         to false for removing overlap after enlarging
+                         ROI
 
     OUTPUT Fiji ROI storing the cropped region of interest
 
     AR Jan 2022
+    AP Jun 2022: Create boolean parameter to condition rectangular fit
+    for spatial transcriptomic enlargement code written in Semi Auto
+    Segmentation plugin.
     '''
 
     # Make sure that the image is displayed
     img.show()
 
-    # Sometimes ROIs will have fuzzy edges, so it's hard to have ROIs
-    # overlap exactly. Given this, we're going to enlarge the region
-    # to remove by 2 pixels to give us wiggle room.
-    EnlargedRegion2Remove = roienlarger.enlarge(Region2Remove,growth)
+    # if fit is true, computer ovelap and fit it to a rectangular shape
+    if fit:
 
-    # Add this enlarged region to remove to our displayed image
-    img.setRoi(EnlargedRegion2Remove)
+        # Sometimes ROIs will have fuzzy edges, so it's hard to have ROIs
+        # overlap exactly. Given this, we're going to enlarge the region
+        # to remove by 2 pixels to give us wiggle room.
+        EnlargedRegion2Remove = roienlarger.enlarge(Region2Remove,growth)
 
-    # Fit this new ROI to a rectangle
-    IJ.run('Fit Rectangle')
+        # Add this enlarged region to remove to our displayed image
+        img.setRoi(EnlargedRegion2Remove)
 
-    # Grab the edited ROI
-    EnlargedRectangularRegion2Remove = img.getRoi()
+        # Fit this new ROI to a rectangle
+        IJ.run('Fit Rectangle')
 
-    # Compute the area where the enlarged region and the total region
-    # overlap
-    FinalRegion2Remove = getIntersectingROI([EnlargedRectangularRegion2Remove,
-                                             TotalRegion])
-    del EnlargedRegion2Remove
+        # Grab the edited ROI
+        EnlargedRectangularRegion2Remove = img.getRoi()
+
+        # Compute the area where the enlarged region and the total region
+        # overlap
+        FinalRegion2Remove = getIntersectingROI([EnlargedRectangularRegion2Remove,
+                                                 TotalRegion])
+        del EnlargedRegion2Remove
+
+    else:
+
+        # Just set the final region to remove equal to initially passed value
+        # Note - Region2Remove must be overlapping completely with total region
+        FinalRegion2Remove = Region2Remove
 
     # Generate shape ROIs for both the total region and the final region
     # to remove
@@ -676,9 +691,15 @@ def subtractROI(TotalRegion,Region2Remove,img,growth=0):
     # region to remove from the total region
     croppedROI = sTotalRegion.xor(sFinalRegion2Remove)
 
-    # Sometimes after cropping, a small stray piece will be left off.
-    # Let's clean up the ROI if necessary before returning the final ROI
-    croppedCleanedROI = cleanUpROI(croppedROI,img)
+    if fit:
+
+        # Sometimes after cropping, a small stray piece will be left off.
+        # Let's clean up the ROI if necessary before returning the final ROI
+        croppedCleanedROI = cleanUpROI(croppedROI,img)
+
+    else:
+
+        croppedCleanedROI = croppedROI
 
     # Remove the ROI from the image and close it
     img.deleteRoi()
