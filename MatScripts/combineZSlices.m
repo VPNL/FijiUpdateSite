@@ -34,6 +34,8 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %                factor of 2.
 %   AR Apr 2022: Check to see which direction we direction we should rotate
 %                                       by actually trying both
+%   AR Jan 2023: Check the dimensions of the image and inspect some pixel
+%                values to determine the optical rotation angle
 
 % Check to see if needsRotation was provided
 if nargin < 2
@@ -140,19 +142,73 @@ if needsRotation
     clear refImgFileName
 
     % Store the width and height of the reference image
-    refImgW = size(refImg,1);
-    refImgH = size(refImg,2);
+    refImgH = size(refImg,1);
+    refImgW = size(refImg,2);
 
+    % Store half of the shorter length
+    half = round(min(refImgW,refImgH) / 2);
+
+    % Count the number of non-zero pixel values in the top left and right
+    % corners of the image
+    topLeftNNZ = nnz(refImg(1:half,1:half));
+    topRightNNZ = nnz(refImg(1:half,end-half:end));
+    clear half
+    
+    % If the image is taller than it is wide...
+    if refImgH > refImgW
+
+        % ... and the image runs from the top left corner to the bottom
+        % right...
+        if topLeftNNZ > topRightNNZ
+            
+            % ... rotate the image clockwise by the arc tangent of the
+            % width over the height
+            rotAngle = -rad2deg(atan(refImgW/refImgH))/2;
+        
+        % If the tilescan runs from the bottom left corner to the top
+        % right...
+        else
+            
+            % ... rotate the image counter-clockwise
+            rotAngle = rad2deg(atan(refImgW/refImgH))/2;
+
+        end
+    
+    % If the image is wider than it is tall...
+    else
+        
+        % ... and runs from top left to bottom right...
+        if topLeftNNZ > topRightNNZ
+            
+            % ... rotate counter-clockwise by the arc tangent of the height
+            % over the width
+            rotAngle = rad2deg(atan(refImgH/refImgW))/2;
+        
+        % If the image runs from the bottom left to the top right...
+        else
+            
+            % ... rotate clockwise
+            rotAngle = -rad2deg(atan(refImgH/refImgW))/2;
+
+        end
+
+    end
+    
     % We will want to rotate the image such that the diagonal from the top
     % left corner to the bottom right corner of the image becomes vertical.
     % Compute the angle of rotation below using the image dimensions and
     % convert this angle from radians to degrees.
-    rotAngle = rad2deg(atan(refImgW/refImgH));
+    %rotAngle = rad2deg(atan(refImgW/refImgH));
     clear refImgW refImgH
 
     % Rotate our reference image one direction
-    rotatedRef1 = imrotate(refImg,rotAngle);
+    rotatedRef = imrotate(refImg,rotAngle);
 
+    % Store what rows and columns of the final image we would want to keep
+    rows2keep = find(any(rotatedRef,2));
+    cols2keep = find(any(rotatedRef,1));
+
+    %{
     % Compute the final area of the image if we would rotate the image this
     % direction
     area2keep1 = sum(any(rotatedRef1,1)) * sum(any(rotatedRef1,2));
@@ -186,6 +242,7 @@ if needsRotation
         clear rotatedRef2
 
     end
+    %}
 
 else
 
