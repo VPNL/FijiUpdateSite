@@ -70,12 +70,12 @@ del img2RotateFile
 
 # Create a z-stack object for this image
 img2RotateStack = ImageProcessing.zStack(img2Rotate)
-img2Rotate.close()
-del img2Rotate
 
 # Generate the maximum intensity projection of the image we want to
 # rotate
 maxProj2Rotate = img2RotateStack.maxProj()
+img2Rotate.close()
+del img2Rotate
 img2RotateStack.orig_z_stack.close()
 del img2RotateStack
 
