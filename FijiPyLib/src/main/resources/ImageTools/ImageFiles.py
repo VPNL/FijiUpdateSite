@@ -531,7 +531,7 @@ def openVirtualStack(path):
 
     # Open the image using bio-formats
     IJ.run("Bio-Formats",
-           'open=F:{} color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT use_virtual_stack'.format(path));
+           'open={} color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT use_virtual_stack'.format(path));
 
     # Grab the image plus object
     imp = IJ.getImage()
@@ -540,4 +540,4 @@ def openVirtualStack(path):
     imp.hide()
 
     # Return the resulting image plus object
-    return imp 
+    return imp
