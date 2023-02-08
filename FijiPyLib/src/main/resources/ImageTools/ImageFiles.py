@@ -33,6 +33,10 @@ This module contains tools to work easily with image files.
 
         - Saves an image with data compression
 
+    openVirtualStack(path)
+
+        - Opens image file as a virtual stack
+
 '''
 
 ########################################################################
@@ -506,3 +510,34 @@ def saveCompressedImg(img,metaData,outFile):
 
     # Close the writer object
     writer.close()
+
+########################################################################
+########################### openVirtualStack ###########################
+########################################################################
+
+# Define a function to open image files as virtual stacks to save memory
+def openVirtualStack(path):
+    '''
+    Opens image file as a virtual stack
+
+    openVirtualStack(path)
+
+        - path (String): File path to image you want to openVirtualStack
+
+    OUTPUT ImagePlus object containing the virtual stack
+
+    AR Feb 2023
+    '''
+
+    # Open the image using bio-formats
+    IJ.run("Bio-Formats",
+           'open=F:{} color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT use_virtual_stack'.format(path));
+
+    # Grab the image plus object
+    imp = IJ.getImage()
+
+    # Hide the image plus object
+    imp.hide()
+
+    # Return the resulting image plus object
+    return imp 
