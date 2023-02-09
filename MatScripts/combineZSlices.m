@@ -36,6 +36,7 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %                                       by actually trying both
 %   AR Jan 2023: Check the dimensions of the image and inspect some pixel
 %                values to determine the optical rotation angle
+%   AR Feb 2023: Export image file as BigTIFF
 
 % Check to see if needsRotation was provided
 if nargin < 2
@@ -80,6 +81,7 @@ tags = getTiffTagValues(fullfile(separateSliceChannelDir,imgFiles{1}));
 % manually set tags related to bits and compression
 tags.BitsPerSample = 8; % Save as 8 bit images
 tags.ImageDescription = regexprep(tags.ImageDescription,'max=([^\.]+)',strcat('max=',num2str(intmax('uint8')))); % Adjust the max integer value for 8 bit images
+tags.MaxSampleValue = double(intmax('uint8'));
 tags.Compression = 8; % Compress image data using the lossless Deflate 
                       % technique from Adobe
 
@@ -225,6 +227,7 @@ if needsRotation
     % Update our TIFF tags with the final image dimensions
     tags.ImageLength = length(rows2keep);
     tags.ImageWidth = length(cols2keep);
+    tags.RowsPerStrip = tags.ImageLength;
 
     %{
     % Compute the final area of the image if we would rotate the image this
@@ -312,7 +315,7 @@ for c = channels
                                        baseFileName));
 
         % Read the image at this file path
-        currImg = uint8(imread(currFilePath));
+        currImg = im2uint8(imread(currFilePath));
         clear currFilePath
 
         % Check to see if we want to rotate and crop the image
@@ -349,16 +352,18 @@ for c = channels
         % Close the Tiff object so that the BigTIFF file gets updated
         close(bt);
 
-        % Open a new Tiff object, this time using the append mode
-        bt = Tiff(filePath4Channel,'a');
+        % If we have more z-slices to append
+        if z < slices(end)
 
-        % Use all of the previous tags for this Tiff object
-        setTag(bt,tags);
+            % Open a new Tiff object, this time using the append mode
+            bt = Tiff(filePath4Channel,'a');
+    
+            % Use all of the previous tags for this Tiff object
+            setTag(bt,tags);
+
+        end
 
     end
-    
-    % Close the Tiff object we used to write this z-stack
-    close(bt);
 
 end
 
