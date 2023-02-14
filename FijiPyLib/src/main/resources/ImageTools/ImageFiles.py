@@ -81,13 +81,6 @@ from loci.formats.out import TiffWriter
 # images into something readable by bio-formats
 from loci.formats.gui import AWTImageTools as tools
 
-# Import bio-formats package
-from loci.plugins import BF
-
-# Import importer options so we can communicate with bio formats as to
-# how to import files
-from loci.plugins.in import ImportOptions
-
 ########################################################################
 ############################ findImgsInDir #############################
 ########################################################################
@@ -536,20 +529,15 @@ def openVirtualStack(path):
     AR Feb 2023
     '''
 
-    # Initialize options for importing images using bio formats
-    options = ImporterOptions()
+    # Open the image using bio-formats
+    IJ.run("Bio-Formats",
+           'open={} color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT use_virtual_stack'.format(path));
 
-    # Specify what image we would like to open
-    options.setId(path)
+    # Grab the image plus object
+    imp = IJ.getImage()
 
-    # Specify that we would like to load a virtual stack
-    options.setVirtual(true)
-
-    # Open the image as a virtual stack
-    imp = BF.openImagePlus(options)
-
-    # Hide the image plus object from view
+    # Hide the image plus object
     imp.hide()
 
-    # Return the final image plus object
+    # Return the resulting image plus object
     return imp
