@@ -239,7 +239,7 @@ class zStack:
 
         # Make sure the central z-plane isn't too close to the edges
         # of the z-stack
-        if self.centralSlice < half_nSlices + 1 or self.centralSlice > self.orig_z_stack.getNSlices() - half_nSlices:
+        if self.centralSlice < half_nSlices + 1 or self.centralSlice > self.orig_z_stack.getStackSize() - half_nSlices:
 
             # If the central slice is too close to the edges, return None
             return
