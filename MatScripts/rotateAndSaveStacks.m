@@ -46,17 +46,20 @@ imgFile4Cropping = fullfile(imgFilesDir,imgFiles2Rotate{~cellfun(@isempty, ...
                                                                         sprintf('c%d_', ...
                                                                         channel4Crop)))});
 
+% Extract the TIFF tags and corresponding values from this image file 
+tags = getTiffTagValues(imgFile4Cropping);
+
 % Get the information of the image we want to use to set our cropping
 % bounds
 imgInfo = imfinfo(imgFile4Cropping);
 
 % Copy the image description, the x and y resolution, and the number of
 % z-planes
-imgDescription = imgInfo(1).ImageDescription;
-imgResolution = [imgInfo(1).XResolution,imgInfo(1).YResolution];
+%imgDescription = imgInfo(1).ImageDescription;
+%imgResolution = [imgInfo(1).XResolution,imgInfo(1).YResolution];
 imgNSlices = numel(imgInfo);
 clear imgInfo
-
+%}
 % Read and rotate the first z-level of the image we want to use to define
 % our crop 
 rotatedImg4CropDef = imrotate(imread(imgFile4Cropping,1),-rotAngle);
@@ -78,6 +81,11 @@ rows2keep = find(any(rotatedImg4CropDef,2));
 cols2keep = find(any(rotatedImg4CropDef,1));
 clear rotatedImg4CropDef
 
+% Update the final image size with our TIFF tags 
+tags.ImageLength = length(rows2keep);
+tags.ImageWidth = length(cols2keep);
+tags.RowsPerStrip = tags.ImageLength;
+
 % Loop across all image files that we want to rotate
 for imgFile2Rotate = imgFiles2Rotate
 
@@ -89,6 +97,12 @@ for imgFile2Rotate = imgFiles2Rotate
                                                 imgFileExt));
     clear imgFileDir imgFileName imgFileExt
 
+    % Create a new BigTIFF file
+    bt = Tiff(rotatedImgFile,'w8');
+
+    % Set our TIFF tags using the image we rotated above 
+    setTag(bt,tags);
+
     % Loop across all z-levels of the image
     for z = 1:imgNSlices
 
@@ -97,11 +111,29 @@ for imgFile2Rotate = imgFiles2Rotate
                                                    imgFile2Rotate{1}),z), ...
                                    -rotAngle);
 
+        % Write the image at this z-level to our composite z-stack file 
+        write(bt,rotatedImgSlice(rows2keep,cols2keep));
+
+        % Close the Tiff object so that the BigTIFF file gets updated
+        close(bt);
+
+        % If we have more z-slices to append
+        if z < imgNSlices
+
+            % Open a new Tiff object, this time using the append mode
+            bt = Tiff(rotatedImgFile,'a');
+
+            % Use all of the previous tags for this Tiff object
+            setTag(bt,tags);
+
+        end
+        
+        %{
         % Crop and save the final rotated image
         imwrite(rotatedImgSlice(rows2keep,cols2keep),rotatedImgFile, ...
                 'Compression','deflate', 'Description', imgDescription, ...
                 'Resolution',imgResolution, 'WriteMode','append');
-
+        %}
     end
 
 end

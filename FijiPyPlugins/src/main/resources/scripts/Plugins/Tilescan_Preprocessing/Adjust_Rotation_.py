@@ -43,13 +43,8 @@ from java.io import File
 inputDir = input_dir.getAbsolutePath()
 del input_dir
 
-# Import ImagePlus so we can read image files and IJ so we can save them
-from ij import ImagePlus, IJ
-
-# Construct a dummy ImagePlus object. For some reason, you need to do
-# this before you can use the ImagePlus() construction to read image
-# files
-ImagePlus()
+# Import IJ so we can save image files
+from ij import IJ
 
 # Import our ImageProcessing module containing functions for rotating
 # images, and the ImageFiles module containing functions for searching
@@ -69,18 +64,18 @@ import os
 img2RotateFile = ImageFiles.findImgsInDir(inputDir,'tif',
                                           'c{}_'.format(channel4ManualRotation))
 
-# Open the image that we want to rotate
-img2Rotate = ImagePlus(img2RotateFile)
+# Open the image that we want to rotate as a virtual stack
+img2Rotate = ImageFiles.openVirtualStack(img2RotateFile)
 del img2RotateFile
 
 # Create a z-stack object for this image
 img2RotateStack = ImageProcessing.zStack(img2Rotate)
-img2Rotate.close()
-del img2Rotate
 
 # Generate the maximum intensity projection of the image we want to
 # rotate
 maxProj2Rotate = img2RotateStack.maxProj()
+img2Rotate.close()
+del img2Rotate
 img2RotateStack.orig_z_stack.close()
 del img2RotateStack
 

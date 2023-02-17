@@ -217,6 +217,7 @@ class gridOfFields:
     AR Feb 2022: Changed the rotation of the fields of view to account
                  for the potential that the image was rotated 180
                  degrees, delete variables and close images after use
+    AR Feb 2023: Don't need to normalize the z-stack, just the max projection 
     '''
 
     # Define initialization function to create new instances of this
@@ -229,6 +230,15 @@ class gridOfFields:
                                        # divisible by 90 and the sign
                                        # needs to be flipped
 
+        # Generate a maximum intensity projection of the input image
+        imgStack = ImageProcessing.zStack(img)
+        maxProj = imgStack.maxProj()
+        del imgStack
+
+        # Normalize the pixel intensities of the max projection
+        maxProj = ImageProcessing.normalizeImg(maxProj)
+
+        '''
         # Normalize the image so that the pixel intensities are brighter
         normalizedImg = ImageProcessing.normalizeImg(img)
 
@@ -241,6 +251,7 @@ class gridOfFields:
         maxProj = imgStack.maxProj()
         imgStack.orig_z_stack.close()
         del imgStack
+        '''
 
         # Create an ROI surrounding just the area of the tile scan that
         # we want to sample from, using the max projection

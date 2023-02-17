@@ -36,6 +36,7 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %                                       by actually trying both
 %   AR Jan 2023: Check the dimensions of the image and inspect some pixel
 %                values to determine the optical rotation angle
+%   AR Feb 2023: Export image file as BigTIFF
 
 % Check to see if needsRotation was provided
 if nargin < 2
@@ -73,6 +74,18 @@ end
 % script
 imgFiles = filesInDir(separateSliceChannelDir);
 
+% Extract the TIFF tags and corresponding values from the first image file
+tags = getTiffTagValues(fullfile(separateSliceChannelDir,imgFiles{1}));
+
+% To help bring down the final filesize of the BigTIFFs we'll save,
+% manually set tags related to bits and compression
+tags.BitsPerSample = 8; % Save as 8 bit images
+tags.ImageDescription = regexprep(tags.ImageDescription,'max=([^\.]+)',strcat('max=',num2str(intmax('uint8')))); % Adjust the max integer value for 8 bit images
+tags.MaxSampleValue = double(intmax('uint8'));
+tags.Compression = 8; % Compress image data using the lossless Deflate 
+                      % technique from Adobe
+
+%{
 % Get information of the first image
 imgInfo = imfinfo(fullfile(separateSliceChannelDir,imgFiles{1}));
 
@@ -80,7 +93,7 @@ imgInfo = imfinfo(fullfile(separateSliceChannelDir,imgFiles{1}));
 imgDescription = imgInfo.ImageDescription;
 imgResolution = [imgInfo.XResolution,imgInfo.YResolution];
 clear imgInfo
-
+%}
 % Define a function that will identify the channel and z-slice numbers of
 % an image file
 function [channel,zSlice] = getChannelSlice(fileName)
@@ -119,6 +132,9 @@ end
 % Store only the unique channels and slices without repeats
 channels = unique(channels);
 slices = unique(slices);
+
+% Store the first slice
+frstSlice = min(slices);
 
 % Store the general name of the image file without the channel and slice
 % information
@@ -182,13 +198,13 @@ if needsRotation
             
             % ... rotate counter-clockwise by the arc tangent of the height
             % over the width
-            rotAngle = rad2deg(atan(refImgH/refImgW))/2;
+            rotAngle = rad2deg(atan(refImgH/refImgW));
         
         % If the image runs from the bottom left to the top right...
         else
             
             % ... rotate clockwise
-            rotAngle = -rad2deg(atan(refImgH/refImgW))/2;
+            rotAngle = -rad2deg(atan(refImgH/refImgW));
 
         end
 
@@ -207,6 +223,11 @@ if needsRotation
     % Store what rows and columns of the final image we would want to keep
     rows2keep = find(any(rotatedRef,2));
     cols2keep = find(any(rotatedRef,1));
+
+    % Update our TIFF tags with the final image dimensions
+    tags.ImageLength = length(rows2keep);
+    tags.ImageWidth = length(cols2keep);
+    tags.RowsPerStrip = tags.ImageLength;
 
     %{
     % Compute the final area of the image if we would rotate the image this
@@ -278,6 +299,13 @@ for c = channels
     filePath4Channel = fullfile(separateSliceChannelDir,'..', ...
                                 append('c',num2str(c),'_',baseFileName));
 
+    % Create a new BigTIFF file
+    bt = Tiff(filePath4Channel,'w8');
+
+    % Copy the TIFF tags used in the first image file we read to this new
+    % bigTIFF
+    setTag(bt,tags);
+    
     % Loop across all slices for this channel
     for z = slices
 
@@ -287,7 +315,7 @@ for c = channels
                                        baseFileName));
 
         % Read the image at this file path
-        currImg = imread(currFilePath);
+        currImg = im2uint8(imread(currFilePath));
         clear currFilePath
 
         % Check to see if we want to rotate and crop the image
@@ -309,12 +337,31 @@ for c = channels
             currImg = rot90(currImg);
 
         end
-
+        
+        % Write the image at this z-level to our composite z-stack file
+        write(bt,currImg);
+        
+        %{
         % Append the image at this z-level to our composite z-stack file
         imwrite(currImg,filePath4Channel,'WriteMode','append', ...
                 'Compression','deflate','Description',imgDescription, ...
                 'Resolution',imgResolution);
+        %}
         clear currImg
+
+        % Close the Tiff object so that the BigTIFF file gets updated
+        close(bt);
+
+        % If we have more z-slices to append
+        if z < slices(end)
+
+            % Open a new Tiff object, this time using the append mode
+            bt = Tiff(filePath4Channel,'a');
+    
+            % Use all of the previous tags for this Tiff object
+            setTag(bt,tags);
+
+        end
 
     end
 

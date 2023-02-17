@@ -148,10 +148,12 @@ class zStack:
                      this slice number as the attribute 'centralSlice'
 
         AR Oct 2021
+        AR Feb 2023 Changed how we identify the stack height to work
+                    more generally
         '''
 
         # Store the total number of z-slices in the image
-        nSlices = self.orig_z_stack.getNSlices()
+        nSlices = self.orig_z_stack.getStackSize()
 
         # Create a list that will store the average gray level at each
         # slice
