@@ -270,6 +270,10 @@ else
     % If we don't need to rotate, the rotation angle is 0
     rotAngle = 0;
 
+    % Store the image dimensions
+    rows2keep = 1:tags.ImageLength;
+    cols2keep = 1:tags.ImageWidth;
+
 end
 
 % We'll want to save this rotation angle to a text file so we can keep
