@@ -36,7 +36,7 @@ function combineZSlices(separateSliceChannelDir,needsRotation,bestChannel)
 %                                       by actually trying both
 %   AR Jan 2023: Check the dimensions of the image and inspect some pixel
 %                values to determine the optical rotation angle
-%   AR Feb 2023: Export image file as BigTIFF
+%   AR Feb 2023: Export image file as BigTIFF   
 
 % Check to see if needsRotation was provided
 if nargin < 2
@@ -186,7 +186,7 @@ if needsRotation
         else
             
             % ... rotate the image counter-clockwise
-            rotAngle = rad2deg(atan(refImgW/refImgH))/2;
+            rotAngle = rad2deg(atan(refImgW/refImgH));
 
         end
     
@@ -301,10 +301,6 @@ for c = channels
 
     % Create a new BigTIFF file
     bt = Tiff(filePath4Channel,'w8');
-
-    % Copy the TIFF tags used in the first image file we read to this new
-    % bigTIFF
-    setTag(bt,tags);
     
     % Loop across all slices for this channel
     for z = slices
@@ -328,7 +324,7 @@ for c = channels
             currImg = currImg(rows2keep,cols2keep);
 
         end
-
+    
         % Check to see if the image is tall or wide
         if size(currImg,1) > size(currImg,2)
 
@@ -336,7 +332,15 @@ for c = channels
             % it by 90 degrees so that it's wider than it is tall
             currImg = rot90(currImg);
 
+            % Update our TIFF tags to reflect the new image dimensinos
+            tags.ImageLength = length(cols2keep);
+            tags.ImageWidth = length(rows2keep);
+            tags.RowsPerStrip = tags.ImageLength;
+
         end
+        
+        % Set the TIFF tags to use for this image
+        setTag(bt,tags);
         
         % Write the image at this z-level to our composite z-stack file
         write(bt,currImg);
@@ -357,9 +361,6 @@ for c = channels
 
             % Open a new Tiff object, this time using the append mode
             bt = Tiff(filePath4Channel,'a');
-    
-            % Use all of the previous tags for this Tiff object
-            setTag(bt,tags);
 
         end
 
