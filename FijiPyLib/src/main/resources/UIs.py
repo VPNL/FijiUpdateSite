@@ -61,10 +61,10 @@ def whichChoiceUI(title,choiceName,choices):
         - title (String): The title of the UI that will appear at the
                           top of the popup window
 
-        - choiceName (String): A name for the choice you are asking the
-                               user to make (e.g. 'Field of view size').
-                               This will appear to the left of a drop
-                               down list of choices.
+        - choiceName (String or List): Name(s) for the choices you are asking
+                                       the user to make (e.g. 'Field of view
+                                       size'). These will appear to the left of
+                                       a drop down list of choices.
 
         - choices (List): List of the different choices the user can
                           make. The default choice will be the first in
@@ -73,21 +73,37 @@ def whichChoiceUI(title,choiceName,choices):
     OUTPUT the choice that the user made
 
     AR Oct 2021
+    AR May 2023 Can make different choices
     '''
 
     # Initialize a generic dialog where we can ask the user to make the
     # choice
     UI = GenericDialog(title)
 
-    # Add the choice options to the UI. Set the default choice to the
-    # first option in the list
-    UI.addChoice(choiceName,choices,choices[0])
+    # Check to see if we are asking the user to make multiple choices
+    if isinstance(choiceName,str):
 
-    # Display the UI to the user
-    UI.showDialog()
+        # Add the choice options to the UI. Set the default choice to the
+        # first option in the list
+        UI.addChoice(choiceName,choices,choices[0])
 
-    # Return the choice that the user made
-    return UI.getNextChoice()
+        # Display the UI to the user
+        UI.showDialog()
+
+        # Return the choice that the user made
+        return UI.getNextChoice()
+
+    # If we are asking the user to make multiple choices
+    else:
+
+        # Add each choice to the UI
+        [UI.addChoice(name,choices,choices[0]) for name in choiceName]
+
+        # Display the UI to the user
+        UI.showDialog()
+
+        # Return each choice that the user made as a dictionary
+        return {name:UI.getNextChoice() for name in choiceName}
 
 ########################################################################
 ############################## checkBoxUI ##############################
