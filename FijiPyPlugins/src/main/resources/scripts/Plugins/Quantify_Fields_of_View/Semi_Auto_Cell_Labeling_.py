@@ -321,14 +321,25 @@ del nucSegOverlay
 # nucleus
 allNucROIs = ImageProcessing.segmentation2ROIs(editedNucSeg)
 
-# Crop this list of ROIs so that they only contain those whose centers
-# are contained within the true field boundary
-nucROIs = ROITools.ROIsInArea(allNucROIs,fieldBoundROI)
-del allNucROIs
+# If we have at least one nucleus contained within the field of view 
+# boundary
+try:
 
-# Store the total number of cell ROIs that need to be labeled by cell
-# type
-nCells2Label = len(nucROIs)
+	# Crop this list of ROIs so that they only contain those whose centers
+	# are contained within the true field boundary
+	nucROIs = ROITools.ROIsInArea(allNucROIs,fieldBoundROI)
+	del allNucROIs
+
+	# Store the total number of cell ROIs that need to be labeled by cell
+	# type
+	nCells2Label = len(nucROIs)
+	
+# If no nuclei were contained within the field of view boundary
+except:
+
+	# Set the number of nuclei to zero
+	nucROIs = None
+	nCells2Label = 0
 
 # Compute the area of the field of view we quantified from
 [field_area,field_length_units] = ROITools.getROIArea(fieldBoundROI,editedNucSeg)
