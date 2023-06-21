@@ -217,7 +217,7 @@ class gridOfFields:
     AR Feb 2022: Changed the rotation of the fields of view to account
                  for the potential that the image was rotated 180
                  degrees, delete variables and close images after use
-    AR Feb 2023: Don't need to normalize the z-stack, just the max projection 
+    AR Feb 2023: Don't need to normalize the z-stack, just the max projection
     '''
 
     # Define initialization function to create new instances of this
@@ -1006,19 +1006,39 @@ def getROIArea(ROI,img):
         - img (Fiji ImagePlus): Image on which the ROI would be
                                 superimposed
 
+    getROIArea(ROI,imgCal)
+
+        - ROI (Fiji ROI): ROI that you want the area of
+
+        - imgCal (Fiji Image Calibration): Calibration of the image
+                                           on which the ROI would be
+                                           superimposed
+
     OUTPUT list of two outputs. The first a float containing the area of
     the ROI. The second, the unit of the area (e.g. microns squared).
 
     AR Nov 2021
+    AR Jun 2023 Correcting output as the previous code only worked for
+                rectangular ROIs that were not rotated
     '''
 
-    # Store the image calibration set for the image. This will contain
-    # information about the pixel to physical unit conversion.
-    imgCal = img.getCalibration()
+    # If we are importing an image rather than an image calibration
+    if isinstance(img,ImagePlus):
+
+        # Store the image calibration set for the image. This will contain
+        # information about the pixel to physical unit conversion.
+        imgCal = img.getCalibration()
+
+    # If our input was an image calibration
+    else:
+        imgCal = img
+
+    # Compute the statistics for this ROI
+    ROIStats = ROI.getStatistics()
 
     # Use the image calibration as well as the size of our ROI to
     # compute the area of the ROI.
-    area = imgCal.getX(ROI.getFloatWidth()) * imgCal.getY(ROI.getFloatHeight())
+    area = ROIStats.area * imgCal.getX(1)**2#imgCal.getX(ROI.getFloatWidth()) * imgCal.getY(ROI.getFloatHeight())
 
     # Get the physical units of the area of the image. Needed to add a
     # squared at the end of the string.
@@ -1276,6 +1296,7 @@ def getLabelsAndLocations(ROIs,img,xForm2Center=True):
     respectively.
 
     AR Feb 2022
+    AR June 2023 Use corrected getROIArea function 
     '''
 
     # Get the calibration for this image
@@ -1328,11 +1349,14 @@ def getLabelsAndLocations(ROIs,img,xForm2Center=True):
         # Store the length of the perimeter of the ROI
         ROIInfo['Perimeter_In_{}'.format(imgUnits)].append(imgCal.getX(ROI.getLength()))
 
-        # Compute the statistics for this ROI
+        # Compute the area of the ROI
+        ROIInfo['Area_In_{}_Squared'.format(imgUnits)].append(getROIArea(ROI,imgCal)[0])
+
+        '''# Compute the statistics for this ROI
         ROIStats = ROI.getStatistics()
 
         # Compute the area of the ROI
-        ROIInfo['Area_In_{}_Squared'.format(imgUnits)].append(ROIStats.area * imgCal.getX(1)**2)
+        ROIInfo['Area_In_{}_Squared'.format(imgUnits)].append(ROIStats.area * imgCal.getX(1)**2)'''
 
         # Store the major and minor diameters of the ROI
         ROIInfo['Major_Diameter_In_{}'.format(imgUnits)].append(imgCal.getX(ROIStats.major))
